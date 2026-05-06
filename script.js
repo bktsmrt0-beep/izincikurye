@@ -39,7 +39,7 @@ async function syncSession() {
   const { data: { session } } = await sb.auth.getSession();
   if (session?.user) {
     const { data: profile } = await sb.from("profiles")
-      .select("ad, soyad, tel")
+      .select("ad, soyad, tel, role")
       .eq("id", session.user.id)
       .single();
     currentUser = {
@@ -47,7 +47,8 @@ async function syncSession() {
       email: session.user.email,
       ad: profile?.ad || "",
       soyad: profile?.soyad || "",
-      tel: profile?.tel || ""
+      tel: profile?.tel || "",
+      role: profile?.role || "user"
     };
   } else {
     currentUser = null;
@@ -93,13 +94,23 @@ function renderTopNav() {
     const chip = document.createElement("span");
     chip.className = "user-chip";
     chip.textContent = "👤 " + (currentUser.ad + " " + currentUser.soyad).trim();
+    topNav.append(chip);
+
+    if (currentUser.role === "admin") {
+      const admin = document.createElement("a");
+      admin.href = "admin.html";
+      admin.className = "btn btn-ghost btn-sm";
+      admin.textContent = "🛡 Admin";
+      topNav.append(admin);
+    }
+
     const out = document.createElement("button");
     out.className = "btn btn-ghost btn-sm";
     out.textContent = "Çıkış";
     out.addEventListener("click", async () => {
       await sb.auth.signOut();
     });
-    topNav.append(chip, out);
+    topNav.append(out);
   } else {
     const giris = document.createElement("button");
     giris.className = "btn btn-ghost"; giris.textContent = "Giriş";
