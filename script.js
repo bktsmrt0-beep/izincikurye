@@ -336,11 +336,22 @@ document.getElementById("forgotResetForm").addEventListener("submit", async e =>
   if (sifre.length < 6) { alert("Şifre en az 6 karakter olmalı."); return; }
   if (sifre !== sifre2) { alert("Şifreler eşleşmiyor."); return; }
 
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) {
+    alert("Oturum bulunamadı. Lütfen e-postandaki şifre sıfırlama linkine yeniden tıkla. (Linkler 1 saat geçerli ve tek kullanımlıktır.)");
+    return;
+  }
+
+  console.log("[reset] Updating password for user:", session.user.email);
   const { error } = await sb.auth.updateUser({ password: sifre });
-  if (error) { alert("Hata: " + error.message); return; }
+  if (error) {
+    console.error("[reset] updateUser error:", error);
+    alert("Hata: " + error.message);
+    return;
+  }
   e.target.reset();
   closeModals();
-  alert("Şifren güncellendi.");
+  alert("Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.");
 });
 
 // =============== İLAN VER ===============
@@ -436,6 +447,10 @@ document.querySelectorAll(".search-list a").forEach(a => {
 districtSelect.addEventListener("change", loadIlanlar);
 
 // =============== İLK YÜKLEME ===============
+// Şifre sıfırlama linkinden gelindiyse hash'i hemen yakala (supabase-js temizlemeden önce)
+const _hashSnapshot = window.location.hash || "";
+const _isRecoveryUrl = _hashSnapshot.includes("type=recovery");
+
 (async () => {
   // Eski localStorage demo verilerini temizle (bir defalık)
   try {
@@ -444,4 +459,10 @@ districtSelect.addEventListener("change", loadIlanlar);
   await syncSession();
   await loadIlanlar();
   renderTopNav();
+
+  // Recovery link ile geldiyse modalı zorla aç (event yetişmezse yedek)
+  if (_isRecoveryUrl) {
+    console.log("[init] Recovery URL algılandı, şifre sıfırlama modalı açılıyor");
+    openModal("forgotResetModal");
+  }
 })();
