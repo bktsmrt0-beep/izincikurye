@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>İzinci Kurye — Ankara</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">
+        <span class="logo-mark">iK</span>
+        <span class="logo-text">izinci<span>kurye</span></span>
+      </a>
+      <nav class="top-nav" id="topNav">
+        <!-- JS dolduracak: Giriş/Kayıt veya Kullanıcı menüsü -->
+      </nav>
+    </div>
+  </header>
+
+  <div class="container layout">
+    <!-- SOL MENÜ -->
+    <aside class="sidebar">
+      <div class="panel">
+        <h3 class="panel-title">İlçe</h3>
+        <select id="districtSelect" class="select">
+          <option value="all">Tümü</option>
+        </select>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel-title">Arama Bölümleri</h3>
+        <ul class="search-list">
+          <li><a href="#" data-section="tam">Tam zamanlı kurye arayanlar</a></li>
+          <li><a href="#" data-section="yari">Yarı zamanlı kurye arayanlar</a></li>
+          <li><a href="#" data-section="esnaf">Esnaf kurye arayanlar</a></li>
+        </ul>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="ilanVerBtn">+ İlan Ver</button>
+    </aside>
+
+    <!-- ANA İÇERİK -->
+    <main class="content">
+      <div class="page-head">
+        <h1>İzinci Kurye İlanları</h1>
+        <p class="page-sub">Ankara&apos;da anlık olarak izinci arayanlar</p>
+      </div>
+
+      <div id="guestNotice" class="notice hidden">
+        🔒 İletişim bilgileri (arama, WhatsApp, adres) sadece kayıtlı kullanıcılara gösterilir.
+        <a href="#" id="guestRegisterLink">Kayıt Ol</a>
+      </div>
+
+      <div id="listings" class="listings"></div>
+      <div id="emptyState" class="empty hidden">Bu ilçede şu an aktif izinci ilanı yok.</div>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 izincikurye — Ankara</p>
+    </div>
+  </footer>
+
+  <!-- ===== KAYIT MODAL ===== -->
+  <div class="modal hidden" id="registerModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>Üye Ol</h2>
+      <p class="muted">Bilgilerin yalnız bu cihazda saklanır (deneme aşaması).</p>
+      <form id="registerForm" class="form">
+        <div class="row-2">
+          <label>Ad <span class="req">*</span>
+            <input type="text" name="ad" required maxlength="40" autocomplete="given-name" />
+          </label>
+          <label>Soyad <span class="req">*</span>
+            <input type="text" name="soyad" required maxlength="40" autocomplete="family-name" />
+          </label>
+        </div>
+
+        <label>E-posta <span class="req">*</span>
+          <input type="email" name="email" required maxlength="80" autocomplete="email" placeholder="ornek@eposta.com" />
+        </label>
+
+        <label>Cep Telefonu <span class="req">*</span>
+          <input type="tel" name="tel" required pattern="0?5[0-9]{2}[ ]?[0-9]{3}[ ]?[0-9]{2}[ ]?[0-9]{2}" placeholder="0532 123 45 67" autocomplete="tel" />
+        </label>
+
+        <div class="row-2">
+          <label>Şifre <span class="req">*</span>
+            <input type="password" name="sifre" required minlength="6" maxlength="40" autocomplete="new-password" />
+          </label>
+          <label>Şifre Tekrar <span class="req">*</span>
+            <input type="password" name="sifre2" required minlength="6" maxlength="40" autocomplete="new-password" />
+          </label>
+        </div>
+        <p class="muted small">Şifre en az 6 karakter olmalıdır.</p>
+
+        <div class="consents">
+          <label class="consent">
+            <input type="checkbox" name="sozlesme" required />
+            <span>
+              <a href="#" data-doc="sozlesme">Üyelik Sözleşmesi</a> ve
+              <a href="#" data-doc="kvkk">KVKK Aydınlatma Metni</a>'ni okudum, kabul ediyorum. <span class="req">*</span>
+            </span>
+          </label>
+          <label class="consent">
+            <input type="checkbox" name="ticari" />
+            <span>
+              Kampanya ve fırsatlardan haberdar olmak için
+              <a href="#" data-doc="ticari">Ticari Elektronik İleti</a> almayı kabul ediyorum. (opsiyonel)
+            </span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">Üye Ol</button>
+        <p class="muted small">Zaten üye misin? <a href="#" id="toLogin">Giriş yap</a></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== GİRİŞ MODAL ===== -->
+  <div class="modal hidden" id="loginModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>Giriş Yap</h2>
+      <form id="loginForm" class="form">
+        <label>E-posta <span class="req">*</span>
+          <input type="email" name="email" required maxlength="80" autocomplete="email" />
+        </label>
+        <label>Şifre <span class="req">*</span>
+          <input type="password" name="sifre" required minlength="6" maxlength="40" autocomplete="current-password" />
+        </label>
+        <div class="form-row-flex">
+          <label class="consent">
+            <input type="checkbox" name="hatirla" />
+            <span>Beni hatırla</span>
+          </label>
+          <a href="#" class="link-orange small" id="forgotPasswordLink">Şifremi unuttum</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Giriş Yap</button>
+        <p class="muted small">Üye değil misin? <a href="#" id="toRegister">Üye ol</a></p>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== İLAN VER MODAL ===== -->
+  <div class="modal hidden" id="ilanModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>İzinci İlanı Ver</h2>
+      <form id="ilanForm" class="form">
+        <label>Başlık
+          <input type="text" name="baslik" required maxlength="80" placeholder="Örn: 5 gün izinci kurye aranıyor" />
+        </label>
+
+        <label>İlçe
+          <select name="ilce" id="ilanIlceSelect" required></select>
+        </label>
+
+        <!-- Saat ölçeği: 4-16 step 1 -->
+        <div class="scale">
+          <div class="scale-head">
+            <span>Çalışılacak Saat</span>
+            <strong><span id="saatVal">4</span> saat</strong>
+          </div>
+          <input type="range" name="saat" id="saatRange" min="4" max="16" step="1" value="4" />
+          <div class="scale-foot"><span>4</span><span>16</span></div>
+        </div>
+
+        <!-- Fiyat ölçeği: 200-300 step 10 -->
+        <div class="scale">
+          <div class="scale-head">
+            <span>Günlük Ücret</span>
+            <strong><span id="fiyatVal">200</span> ₺</strong>
+          </div>
+          <input type="range" name="fiyat" id="fiyatRange" min="200" max="300" step="10" value="200" />
+          <div class="scale-foot"><span>200 ₺</span><span>300 ₺</span></div>
+        </div>
+
+        <!-- KM ücreti ölçeği: 5-10 step 1 -->
+        <div class="scale">
+          <div class="scale-head">
+            <span>KM Ücreti</span>
+            <strong><span id="kmVal">5</span> ₺ / km</strong>
+          </div>
+          <input type="range" name="km" id="kmRange" min="5" max="10" step="1" value="5" />
+          <div class="scale-foot"><span>5 ₺</span><span>10 ₺</span></div>
+        </div>
+
+        <!-- Çalışma saat aralığı -->
+        <div class="row-2">
+          <label>Başlangıç saati
+            <select name="basSaat" id="basSaat" required></select>
+          </label>
+          <label>Bitiş saati
+            <select name="bitSaat" id="bitSaat" required></select>
+          </label>
+        </div>
+
+        <label>İşyeri Adı <span class="req">*</span>
+          <input type="text" name="isyeriAd" required maxlength="80" placeholder="Örn: Kızılay Lokantası" />
+        </label>
+
+        <label>İşyeri Adresi <span class="req">*</span>
+          <input type="text" name="isyeriAdres" required maxlength="160" placeholder="Cadde / sokak / no, mahalle" />
+        </label>
+
+        <label>Açıklama
+          <textarea name="aciklama" rows="3" maxlength="300" placeholder="Bölge, araç durumu, ek notlar..."></textarea>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block">İlanı Yayınla</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== ŞİFREMİ UNUTTUM (E-POSTA) MODAL ===== -->
+  <div class="modal hidden" id="forgotEmailModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>Şifremi Unuttum</h2>
+      <p class="muted">Kayıtlı e-posta adresini gir, sana sıfırlama linki gönderelim.</p>
+      <form id="forgotEmailForm" class="form">
+        <label>E-posta <span class="req">*</span>
+          <input type="email" name="email" required maxlength="80" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Sıfırlama Bağlantısı Gönder</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== ŞİFREMİ UNUTTUM (YENİ ŞİFRE) MODAL ===== -->
+  <div class="modal hidden" id="forgotResetModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>Yeni Şifre Belirle</h2>
+      <p class="muted">Şifren en az 6 karakter olmalı.</p>
+      <form id="forgotResetForm" class="form">
+        <label>Yeni Şifre <span class="req">*</span>
+          <input type="password" name="sifre" required minlength="6" maxlength="40" />
+        </label>
+        <label>Yeni Şifre Tekrar <span class="req">*</span>
+          <input type="password" name="sifre2" required minlength="6" maxlength="40" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Şifreyi Güncelle</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== ADRES MODAL ===== -->
+  <div class="modal hidden" id="adresModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>İşletme Bilgileri</h2>
+      <div id="adresContent"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

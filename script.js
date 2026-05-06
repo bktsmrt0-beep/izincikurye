@@ -1,0 +1,436 @@
+// =============== VERİ ===============
+const ANKARA_ILCELERI = [
+  "Altındağ","Akyurt","Ayaş","Bala","Beypazarı","Çamlıdere","Çankaya","Çubuk",
+  "Elmadağ","Etimesgut","Evren","Gölbaşı","Güdül","Haymana","Kalecik","Kazan",
+  "Keçiören","Kızılcahamam","Mamak","Nallıhan","Polatlı","Pursaklar","Sincan",
+  "Şereflikoçhisar","Yenimahalle"
+];
+
+// =============== DURUM ===============
+let currentUser = null;   // { id, email, ad, soyad, tel }
+let ilanlar = [];
+
+// =============== DOM REF ===============
+const districtSelect = document.getElementById("districtSelect");
+const listingsEl = document.getElementById("listings");
+const emptyEl = document.getElementById("emptyState");
+const guestNotice = document.getElementById("guestNotice");
+const topNav = document.getElementById("topNav");
+const ilanIlceSelect = document.getElementById("ilanIlceSelect");
+const basSaat = document.getElementById("basSaat");
+const bitSaat = document.getElementById("bitSaat");
+
+// İlçe doldur (sol filtre + ilan formu)
+ANKARA_ILCELERI.forEach(ilce => {
+  districtSelect.appendChild(new Option(ilce, ilce));
+  ilanIlceSelect.appendChild(new Option(ilce, ilce));
+});
+// Saat aralığı (00:00 - 23:00)
+for (let h = 0; h < 24; h++) {
+  const v = String(h).padStart(2, "0") + ":00";
+  basSaat.appendChild(new Option(v, v));
+  bitSaat.appendChild(new Option(v, v));
+}
+basSaat.value = "09:00";
+bitSaat.value = "18:00";
+
+// =============== SUPABASE: SESSION ===============
+async function syncSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    const { data: profile } = await sb.from("profiles")
+      .select("ad, soyad, tel")
+      .eq("id", session.user.id)
+      .single();
+    currentUser = {
+      id: session.user.id,
+      email: session.user.email,
+      ad: profile?.ad || "",
+      soyad: profile?.soyad || "",
+      tel: profile?.tel || ""
+    };
+  } else {
+    currentUser = null;
+  }
+}
+
+sb.auth.onAuthStateChange(async (event, session) => {
+  if (event === "PASSWORD_RECOVERY") {
+    openModal("forgotResetModal");
+    return;
+  }
+  await syncSession();
+  await loadIlanlar();
+  renderTopNav();
+});
+
+// =============== SUPABASE: İLANLAR ===============
+async function loadIlanlar() {
+  const filter = districtSelect.value;
+  const tableOrView = currentUser ? "ilanlar" : "ilanlar_public";
+  let q = sb.from(tableOrView).select("*").order("created_at", { ascending: false });
+  if (filter !== "all") q = q.eq("ilce", filter);
+  const { data, error } = await q;
+  if (error) { console.error(error); ilanlar = []; renderListings(); return; }
+  ilanlar = data || [];
+
+  // Auth ise: ilan sahiplerinin profillerini de çek
+  if (currentUser && ilanlar.length) {
+    const userIds = [...new Set(ilanlar.map(i => i.user_id))];
+    const { data: profiles } = await sb.from("profiles")
+      .select("id, ad, soyad, tel")
+      .in("id", userIds);
+    const map = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+    ilanlar.forEach(i => { i.profile = map[i.user_id]; });
+  }
+  renderListings();
+}
+
+// =============== RENDER ===============
+function renderTopNav() {
+  topNav.innerHTML = "";
+  if (currentUser) {
+    const chip = document.createElement("span");
+    chip.className = "user-chip";
+    chip.textContent = "👤 " + (currentUser.ad + " " + currentUser.soyad).trim();
+    const out = document.createElement("button");
+    out.className = "btn btn-ghost btn-sm";
+    out.textContent = "Çıkış";
+    out.addEventListener("click", async () => {
+      await sb.auth.signOut();
+    });
+    topNav.append(chip, out);
+  } else {
+    const giris = document.createElement("button");
+    giris.className = "btn btn-ghost"; giris.textContent = "Giriş";
+    giris.addEventListener("click", () => openModal("loginModal"));
+    const kayit = document.createElement("button");
+    kayit.className = "btn btn-primary"; kayit.textContent = "Kayıt Ol";
+    kayit.addEventListener("click", () => openModal("registerModal"));
+    topNav.append(giris, kayit);
+  }
+}
+
+function renderListings() {
+  guestNotice.classList.toggle("hidden", !!currentUser);
+  listingsEl.innerHTML = "";
+  if (ilanlar.length === 0) {
+    emptyEl.classList.remove("hidden");
+    return;
+  }
+  emptyEl.classList.add("hidden");
+
+  ilanlar.forEach(i => {
+    const card = document.createElement("article");
+    card.className = "card";
+    const lockedClass = currentUser ? "" : "locked";
+    const lockedTitle = currentUser ? "" : 'title="Önce kayıt olun"';
+    const isMine = currentUser && i.user_id === currentUser.id;
+    const mineTag = isMine ? '<span class="mine-tag">Senin ilanın</span>' : "";
+    const deleteBar = isMine
+      ? `<div class="delete-bar"><button class="delete-btn" data-act="delete" data-id="${i.id}">🗑 İlanı Kaldır</button></div>`
+      : "";
+
+    card.innerHTML = `
+      <div class="card-top">
+        <span class="badge">📍 ${i.ilce}</span>
+        <span class="date">${formatDateTime(i.created_at)}</span>
+      </div>
+      <h3>${escapeHtml(i.baslik)}${mineTag}</h3>
+      <p>${escapeHtml(i.aciklama || "")}</p>
+      <div class="card-meta">
+        <span>⏱ ${i.saat} saat · ${i.bas_saat}–${i.bit_saat}</span>
+        <span class="price">${i.fiyat} ₺ · ${i.km} ₺/km</span>
+      </div>
+      <div class="actions">
+        <button class="action-btn call ${lockedClass}" data-act="call" data-id="${i.id}" ${lockedTitle}>📞 Ara</button>
+        <button class="action-btn wa ${lockedClass}" data-act="wa" data-id="${i.id}" ${lockedTitle}>💬 WhatsApp</button>
+        <button class="action-btn addr ${lockedClass}" data-act="addr" data-id="${i.id}" ${lockedTitle}>📍 Adres</button>
+      </div>
+      ${deleteBar}
+    `;
+    listingsEl.appendChild(card);
+  });
+}
+
+// =============== KART AKSİYONLARI ===============
+listingsEl.addEventListener("click", async e => {
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  const act = btn.dataset.act;
+  const id = btn.dataset.id;
+
+  if (act === "delete") {
+    if (!currentUser) return;
+    if (!confirm("Bu ilanı kaldırmak istediğinden emin misin?")) return;
+    const { error } = await sb.from("ilanlar").delete().eq("id", id);
+    if (error) { alert("Silme hatası: " + error.message); return; }
+    await loadIlanlar();
+    return;
+  }
+
+  if (!currentUser) {
+    openModal("registerModal");
+    return;
+  }
+
+  const ilan = ilanlar.find(x => x.id === id);
+  if (!ilan) return;
+  const tel = (ilan.profile?.tel || "").replace(/\s/g, "");
+
+  if (act === "call") {
+    if (!tel) return alert("Telefon bilgisi bulunamadı.");
+    window.location.href = "tel:" + tel;
+  } else if (act === "wa") {
+    if (!tel) return alert("Telefon bilgisi bulunamadı.");
+    let waNum = tel.replace(/\D/g, "");
+    if (waNum.startsWith("0")) waNum = "9" + waNum;        // 0532... → 90532...
+    else if (!waNum.startsWith("90")) waNum = "9" + waNum;
+    window.open("https://wa.me/" + waNum, "_blank");
+  } else if (act === "addr") {
+    showAdres(ilan);
+  }
+});
+
+function showAdres(i) {
+  const tel = i.profile?.tel || "—";
+  const ad = ((i.profile?.ad || "") + " " + (i.profile?.soyad || "")).trim() || "—";
+  document.getElementById("adresContent").innerHTML = `
+    <div class="row"><strong>İşyeri:</strong><span>${escapeHtml(i.isyeri_ad || "—")}</span></div>
+    <div class="row"><strong>İlgili kişi:</strong><span>${escapeHtml(ad)}</span></div>
+    <div class="row"><strong>Adres:</strong><span>${escapeHtml(i.isyeri_adres || "—")}</span></div>
+    <div class="row"><strong>Telefon:</strong><span>${escapeHtml(tel)}</span></div>
+  `;
+  openModal("adresModal");
+}
+
+// =============== MODALLAR ===============
+function openModal(id) {
+  document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+function closeModals() {
+  document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
+}
+document.querySelectorAll("[data-close]").forEach(b =>
+  b.addEventListener("click", closeModals)
+);
+document.querySelectorAll(".modal").forEach(m =>
+  m.addEventListener("click", e => { if (e.target === m) closeModals(); })
+);
+
+document.getElementById("guestRegisterLink").addEventListener("click", e => {
+  e.preventDefault(); openModal("registerModal");
+});
+document.getElementById("toRegister").addEventListener("click", e => {
+  e.preventDefault(); openModal("registerModal");
+});
+document.getElementById("toLogin").addEventListener("click", e => {
+  e.preventDefault(); openModal("loginModal");
+});
+document.getElementById("forgotPasswordLink").addEventListener("click", e => {
+  e.preventDefault(); openModal("forgotEmailModal");
+});
+
+// Sözleşme/KVKK/Ticari ileti linkleri
+document.querySelectorAll("[data-doc]").forEach(a => {
+  a.addEventListener("click", e => {
+    e.preventDefault();
+    const doc = a.dataset.doc;
+    const metinler = {
+      sozlesme: "Üyelik Sözleşmesi (özet):\n\n• izincikurye.com'a üye olarak iletişim bilgilerinin sitede paylaşılmasını kabul edersin.\n• Doğru ve güncel bilgi vermek senin sorumluluğundur.\n• Yanıltıcı veya uygunsuz ilanlar kaldırılır.",
+      kvkk: "KVKK Aydınlatma Metni (özet):\n\n• Kişisel verilerin (ad, e-posta, telefon) yalnız platformun çalışması için işlenir.\n• İletişim bilgilerin yalnız kayıtlı kullanıcılara gösterilir.",
+      ticari: "Ticari Elektronik İleti İzni (özet):\n\n• İşaretlersen kampanya/duyuru e-postaları alabilirsin."
+    };
+    alert(metinler[doc] || "Metin yakında eklenecek.");
+  });
+});
+
+// =============== KAYIT (Supabase Auth) ===============
+function normalizeEmail(s) { return String(s || "").trim().toLowerCase(); }
+
+document.getElementById("registerForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const ad = (fd.get("ad") || "").trim();
+  const soyad = (fd.get("soyad") || "").trim();
+  const email = normalizeEmail(fd.get("email"));
+  const tel = (fd.get("tel") || "").trim();
+  const sifre = fd.get("sifre") || "";
+  const sifre2 = fd.get("sifre2") || "";
+  const sozlesme = fd.get("sozlesme") === "on";
+  const ticari = fd.get("ticari") === "on";
+
+  if (!ad || !soyad || !email || !tel || !sifre) {
+    alert("Lütfen tüm zorunlu alanları doldurun."); return;
+  }
+  if (sifre.length < 6) { alert("Şifre en az 6 karakter olmalı."); return; }
+  if (sifre !== sifre2) { alert("Şifreler eşleşmiyor."); return; }
+  if (!sozlesme) { alert("Üyelik sözleşmesi ve KVKK onayı zorunludur."); return; }
+
+  const { error } = await sb.auth.signUp({
+    email,
+    password: sifre,
+    options: {
+      data: { ad, soyad, tel, ticari },
+      emailRedirectTo: window.location.href
+    }
+  });
+  if (error) { alert("Kayıt hatası: " + error.message); return; }
+
+  closeModals();
+  e.target.reset();
+  alert("Üyelik oluşturuldu. Doğrulama linki için e-postanı kontrol et — onayladıktan sonra giriş yapabilirsin.");
+});
+
+// =============== GİRİŞ ===============
+document.getElementById("loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const email = normalizeEmail(fd.get("email"));
+  const sifre = fd.get("sifre") || "";
+
+  const { error } = await sb.auth.signInWithPassword({ email, password: sifre });
+  if (error) {
+    if (error.message.toLowerCase().includes("email not confirmed")) {
+      alert("E-postanı henüz onaylamadın. Gelen kutunu kontrol et.");
+    } else {
+      alert("E-posta veya şifre hatalı.");
+    }
+    return;
+  }
+  closeModals();
+  e.target.reset();
+});
+
+// =============== ŞİFREMİ UNUTTUM ===============
+document.getElementById("forgotEmailForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const email = normalizeEmail(fd.get("email"));
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.href
+  });
+  if (error) { alert("Hata: " + error.message); return; }
+  e.target.reset();
+  closeModals();
+  alert("Sıfırlama bağlantısı e-postana gönderildi. Linke tıklayınca yeni şifre belirleyebileceğin sayfa açılacak.");
+});
+
+document.getElementById("forgotResetForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const sifre = fd.get("sifre") || "";
+  const sifre2 = fd.get("sifre2") || "";
+  if (sifre.length < 6) { alert("Şifre en az 6 karakter olmalı."); return; }
+  if (sifre !== sifre2) { alert("Şifreler eşleşmiyor."); return; }
+
+  const { error } = await sb.auth.updateUser({ password: sifre });
+  if (error) { alert("Hata: " + error.message); return; }
+  e.target.reset();
+  closeModals();
+  alert("Şifren güncellendi.");
+});
+
+// =============== İLAN VER ===============
+const ilanVerBtn = document.getElementById("ilanVerBtn");
+const saatRange = document.getElementById("saatRange");
+const fiyatRange = document.getElementById("fiyatRange");
+const kmRange = document.getElementById("kmRange");
+const saatVal = document.getElementById("saatVal");
+const fiyatVal = document.getElementById("fiyatVal");
+const kmVal = document.getElementById("kmVal");
+
+saatRange.addEventListener("input", () => saatVal.textContent = saatRange.value);
+fiyatRange.addEventListener("input", () => fiyatVal.textContent = fiyatRange.value);
+kmRange.addEventListener("input", () => kmVal.textContent = kmRange.value);
+
+ilanVerBtn.addEventListener("click", () => {
+  if (!currentUser) {
+    alert("İlan vermek için kayıt olmanız gerekir.");
+    openModal("registerModal");
+    return;
+  }
+  openModal("ilanModal");
+});
+
+document.getElementById("ilanForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const fd = new FormData(e.target);
+
+  const baslik = (fd.get("baslik") || "").trim();
+  const ilce = fd.get("ilce");
+  const isyeri_ad = (fd.get("isyeriAd") || "").trim();
+  const isyeri_adres = (fd.get("isyeriAdres") || "").trim();
+  const bas_saat = fd.get("basSaat");
+  const bit_saat = fd.get("bitSaat");
+
+  if (!baslik || !ilce || !isyeri_ad || !isyeri_adres) {
+    alert("Lütfen tüm zorunlu alanları doldurun."); return;
+  }
+  if (bas_saat >= bit_saat) {
+    alert("Bitiş saati başlangıçtan büyük olmalı."); return;
+  }
+
+  const { error } = await sb.from("ilanlar").insert({
+    user_id: currentUser.id,
+    baslik,
+    ilce,
+    saat: parseInt(fd.get("saat"), 10),
+    fiyat: parseInt(fd.get("fiyat"), 10),
+    km: parseInt(fd.get("km"), 10),
+    bas_saat,
+    bit_saat,
+    aciklama: (fd.get("aciklama") || "").trim() || null,
+    isyeri_ad,
+    isyeri_adres
+  });
+  if (error) { alert("İlan eklenemedi: " + error.message); return; }
+
+  closeModals();
+  e.target.reset();
+  saatRange.value = 4; saatVal.textContent = "4";
+  fiyatRange.value = 200; fiyatVal.textContent = "200";
+  kmRange.value = 5; kmVal.textContent = "5";
+  basSaat.value = "09:00"; bitSaat.value = "18:00";
+  await loadIlanlar();
+  alert("İlanın yayınlandı.");
+});
+
+// =============== YARDIMCI ===============
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c =>
+    ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])
+  );
+}
+function formatDateTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const tarih = d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+  const saat = d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
+  return `${tarih} · ${saat}`;
+}
+
+// Sol menü sekmeleri (henüz hazır değil)
+document.querySelectorAll(".search-list a").forEach(a => {
+  a.addEventListener("click", e => {
+    e.preventDefault();
+    document.querySelectorAll(".search-list a").forEach(x => x.classList.remove("active"));
+    a.classList.add("active");
+    alert("Bu bölüm henüz hazır değil — sonraki adımda eklenecek: " + a.textContent);
+  });
+});
+
+districtSelect.addEventListener("change", loadIlanlar);
+
+// =============== İLK YÜKLEME ===============
+(async () => {
+  // Eski localStorage demo verilerini temizle (bir defalık)
+  try {
+    ["izk_user","izk_users","izk_session","izk_ilanlar"].forEach(k => localStorage.removeItem(k));
+  } catch {}
+  await syncSession();
+  await loadIlanlar();
+  renderTopNav();
+})();
