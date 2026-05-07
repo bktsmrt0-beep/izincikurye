@@ -143,6 +143,7 @@ function renderTopNav() {
     out.addEventListener("click", async () => {
       if (!confirm("Çıkmak istediğine emin misin?")) return;
       await sb.auth.signOut();
+      try { localStorage.removeItem("izk_remember"); } catch {}
       window.location.href = "/";
     });
     topNav.append(out);
@@ -335,6 +336,11 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
   const fd = new FormData(e.target);
   const email = normalizeEmail(fd.get("email"));
   const sifre = fd.get("sifre") || "";
+  const hatirla = fd.get("hatirla") === "on";
+
+  // "Beni hatırla" — signIn'den ÖNCE bayrağı ayarla, oturum doğru depoya yazılsın
+  if (hatirla) localStorage.setItem("izk_remember", "1");
+  else localStorage.removeItem("izk_remember");
 
   const { error } = await sb.auth.signInWithPassword({ email, password: sifre });
   if (error) {
