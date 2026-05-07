@@ -3,6 +3,7 @@ const forbiddenEl = document.getElementById("forbidden");
 const contentEl = document.getElementById("adminContent");
 
 document.getElementById("logoutBtn").addEventListener("click", async () => {
+  if (!confirm("Çıkmak istediğine emin misin?")) return;
   await sb.auth.signOut();
   window.location.href = "/";
 });
