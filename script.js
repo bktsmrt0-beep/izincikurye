@@ -1,9 +1,18 @@
+console.log("[init] script.js v7 başladı");
+
 // =============== BFCACHE FIX ===============
-// Tarayıcı back-forward cache'inden geri yüklenirse sayfayı tazele
-// (admin → ← Anasayfa dönüşünde stale state sorununu önler)
 window.addEventListener("pageshow", (e) => {
-  if (e.persisted) window.location.reload();
+  if (e.persisted) {
+    console.log("[init] bfcache restore — reload");
+    window.location.reload();
+  }
 });
+
+// Fallback butonlara hemen click handler bağla (JS sonradan takılırsa bile çalışsınlar)
+const _fbLogin = document.getElementById("fallbackLoginBtn");
+const _fbReg = document.getElementById("fallbackRegisterBtn");
+if (_fbLogin) _fbLogin.addEventListener("click", () => openModal("loginModal"));
+if (_fbReg) _fbReg.addEventListener("click", () => openModal("registerModal"));
 
 // =============== VERİ ===============
 const ANKARA_ILCELERI = [
@@ -509,12 +518,16 @@ const _hashSnapshot = window.location.hash || "";
 const _isRecoveryUrl = _hashSnapshot.includes("type=recovery");
 
 (async () => {
+  console.log("[init] IIFE start");
   try {
     ["izk_user","izk_users","izk_session","izk_ilanlar"].forEach(k => localStorage.removeItem(k));
   } catch {}
-  try { await syncSession(); } catch (e) { console.error("init syncSession:", e); }
-  try { await loadIlanlar(); } catch (e) { console.error("init loadIlanlar:", e); }
-  try { renderTopNav(); } catch (e) { console.error("init renderTopNav:", e); }
+  try { await syncSession(); console.log("[init] syncSession OK, currentUser:", currentUser); }
+  catch (e) { console.error("init syncSession:", e); }
+  try { await loadIlanlar(); console.log("[init] loadIlanlar OK, ilanlar:", ilanlar.length); }
+  catch (e) { console.error("init loadIlanlar:", e); }
+  try { renderTopNav(); console.log("[init] renderTopNav OK"); }
+  catch (e) { console.error("init renderTopNav:", e); }
 
   if (_isRecoveryUrl) {
     openModal("forgotResetModal");

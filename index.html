@@ -21,7 +21,9 @@
         <span class="logo-text">izinci<span>kurye</span></span>
       </a>
       <nav class="top-nav" id="topNav">
-        <!-- JS dolduracak: Giriş/Kayıt veya Kullanıcı menüsü -->
+        <!-- HTML fallback: JS yüklenmezse de görünsün; JS hesap durumuna göre değiştirir -->
+        <button class="btn btn-ghost" id="fallbackLoginBtn" type="button">Giriş</button>
+        <button class="btn btn-primary" id="fallbackRegisterBtn" type="button">Kayıt Ol</button>
       </nav>
     </div>
   </header>
@@ -258,7 +260,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=7"></script>
-  <script src="script.js?v=7"></script>
+  <script src="supabase-config.js?v=8"></script>
+  <script src="script.js?v=8"></script>
 </body>
 </html>
