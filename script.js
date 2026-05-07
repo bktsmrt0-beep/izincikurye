@@ -63,16 +63,27 @@ function showError(msg) {
 }
 
 // =============== SUPABASE: SESSION ===============
+function _withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, rej) => setTimeout(() => rej(new Error(`TIMEOUT(${ms}ms): ${label}`)), ms))
+  ]);
+}
+
 async function syncSession() {
   try {
-    const { data, error: sErr } = await sb.auth.getSession();
+    console.log("[syncSession] getSession start");
+    const { data, error: sErr } = await _withTimeout(sb.auth.getSession(), 8000, "getSession");
+    console.log("[syncSession] getSession done", { hasSession: !!data?.session, sErr });
     if (sErr) throw sErr;
     const session = data?.session;
     if (session?.user) {
-      const { data: profile, error: pErr } = await sb.from("profiles")
-        .select("ad, soyad, tel, role")
-        .eq("id", session.user.id)
-        .maybeSingle();
+      console.log("[syncSession] profile query start for", session.user.id);
+      const { data: profile, error: pErr } = await _withTimeout(
+        sb.from("profiles").select("ad, soyad, tel, role").eq("id", session.user.id).maybeSingle(),
+        8000, "profiles.select"
+      );
+      console.log("[syncSession] profile query done", { profile, pErr });
       if (pErr) console.warn("[profile]", pErr.message);
       currentUser = {
         id: session.user.id,
