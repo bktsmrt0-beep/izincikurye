@@ -70,10 +70,28 @@ function _withTimeout(promise, ms, label) {
   ]);
 }
 
+function _clearSupabaseStorage() {
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith("sb-")).forEach(k => localStorage.removeItem(k));
+    Object.keys(sessionStorage).filter(k => k.startsWith("sb-")).forEach(k => sessionStorage.removeItem(k));
+    localStorage.removeItem("izk_remember");
+  } catch {}
+}
+
 async function syncSession() {
   try {
     console.log("[syncSession] getSession start");
-    const { data, error: sErr } = await _withTimeout(sb.auth.getSession(), 8000, "getSession");
+    let result;
+    try {
+      result = await _withTimeout(sb.auth.getSession(), 4000, "getSession");
+    } catch (timeoutErr) {
+      // Bozuk/eski token. Storage'i temizle, anon olarak devam et.
+      console.warn("[syncSession] getSession timeout — sb-* anahtarlari temizleniyor");
+      _clearSupabaseStorage();
+      currentUser = null;
+      return;
+    }
+    const { data, error: sErr } = result;
     console.log("[syncSession] getSession done", { hasSession: !!data?.session, sErr });
     if (sErr) throw sErr;
     const session = data?.session;
