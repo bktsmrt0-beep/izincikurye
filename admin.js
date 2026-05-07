@@ -17,13 +17,15 @@ function showError(msg) {
   bar.textContent = "⚠ " + msg;
 }
 
-document.getElementById("logoutBtn").addEventListener("click", async () => {
+document.getElementById("logoutBtn").addEventListener("click", () => {
   if (!confirm("Çıkmak istediğine emin misin?")) return;
-  await sb.auth.signOut().catch((e) => console.warn("[signOut]", e));
   try {
+    Object.keys(localStorage).filter(k => k.startsWith("sb-")).forEach(k => localStorage.removeItem(k));
+    Object.keys(sessionStorage).filter(k => k.startsWith("sb-")).forEach(k => sessionStorage.removeItem(k));
     localStorage.removeItem("izk_remember");
     sessionStorage.removeItem("izk_session_active");
   } catch {}
+  sb.auth.signOut({ scope: "local" }).catch((e) => console.warn("[signOut]", e));
   window.location.href = "/";
 });
 

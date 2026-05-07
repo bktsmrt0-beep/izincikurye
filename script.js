@@ -167,13 +167,17 @@ function renderTopNav() {
     const out = document.createElement("button");
     out.className = "btn btn-ghost btn-sm";
     out.textContent = "Çıkış";
-    out.addEventListener("click", async () => {
+    out.addEventListener("click", () => {
       if (!confirm("Çıkmak istediğine emin misin?")) return;
-      await sb.auth.signOut().catch(() => {});
+      // Storage anahtarlarını hemen sil (network beklemeden)
       try {
+        Object.keys(localStorage).filter(k => k.startsWith("sb-")).forEach(k => localStorage.removeItem(k));
+        Object.keys(sessionStorage).filter(k => k.startsWith("sb-")).forEach(k => sessionStorage.removeItem(k));
         localStorage.removeItem("izk_remember");
         sessionStorage.removeItem("izk_session_active");
       } catch {}
+      // Local scope: revoke network çağrısı yapmaz, hemen döner
+      sb.auth.signOut({ scope: "local" }).catch(() => {});
       window.location.href = "/";
     });
     topNav.append(out);
