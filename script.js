@@ -70,28 +70,10 @@ function _withTimeout(promise, ms, label) {
   ]);
 }
 
-function _clearSupabaseStorage() {
-  try {
-    Object.keys(localStorage).filter(k => k.startsWith("sb-")).forEach(k => localStorage.removeItem(k));
-    Object.keys(sessionStorage).filter(k => k.startsWith("sb-")).forEach(k => sessionStorage.removeItem(k));
-    localStorage.removeItem("izk_remember");
-  } catch {}
-}
-
 async function syncSession() {
   try {
     console.log("[syncSession] getSession start");
-    let result;
-    try {
-      result = await _withTimeout(sb.auth.getSession(), 4000, "getSession");
-    } catch (timeoutErr) {
-      // Bozuk/eski token. Storage'i temizle, anon olarak devam et.
-      console.warn("[syncSession] getSession timeout — sb-* anahtarlari temizleniyor");
-      _clearSupabaseStorage();
-      currentUser = null;
-      return;
-    }
-    const { data, error: sErr } = result;
+    const { data, error: sErr } = await _withTimeout(sb.auth.getSession(), 8000, "getSession");
     console.log("[syncSession] getSession done", { hasSession: !!data?.session, sErr });
     if (sErr) throw sErr;
     const session = data?.session;
@@ -187,8 +169,11 @@ function renderTopNav() {
     out.textContent = "Çıkış";
     out.addEventListener("click", async () => {
       if (!confirm("Çıkmak istediğine emin misin?")) return;
-      await sb.auth.signOut();
-      try { localStorage.removeItem("izk_remember"); } catch {}
+      await sb.auth.signOut().catch(() => {});
+      try {
+        localStorage.removeItem("izk_remember");
+        sessionStorage.removeItem("izk_session_active");
+      } catch {}
       window.location.href = "/";
     });
     topNav.append(out);
@@ -383,9 +368,9 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
   const sifre = fd.get("sifre") || "";
   const hatirla = fd.get("hatirla") === "on";
 
-  // "Beni hatırla" — signIn'den ÖNCE bayrağı ayarla, oturum doğru depoya yazılsın
+  // "Beni hatırla" işaretliyse kalıcı; değilse sekme/tarayıcı kapanışında çıkış yapılır
   if (hatirla) localStorage.setItem("izk_remember", "1");
-  else localStorage.removeItem("izk_remember");
+  else localStorage.setItem("izk_remember", "0");
 
   const { error } = await sb.auth.signInWithPassword({ email, password: sifre });
   if (error) {
@@ -546,11 +531,29 @@ document.querySelectorAll('input[type="password"]').forEach(input => {
 const _hashSnapshot = window.location.hash || "";
 const _isRecoveryUrl = _hashSnapshot.includes("type=recovery");
 
+async function _enforceRememberMe() {
+  // "Beni hatirla" = 0 ise: yeni sekme/tarayici acilisinda oturumu sonlandir.
+  // sessionStorage flag i sadece sayfa yenileme/ic navigasyonda korunur.
+  try {
+    if (localStorage.getItem("izk_remember") !== "0") return;
+    const stillActive = sessionStorage.getItem("izk_session_active") === "1";
+    if (!stillActive) {
+      console.log("[init] Beni-hatirla=0 ve yeni sekme/tarayici → local signOut");
+      await sb.auth.signOut({ scope: "local" }).catch(() => {});
+      localStorage.removeItem("izk_remember");
+    }
+    sessionStorage.setItem("izk_session_active", "1");
+  } catch (e) {
+    console.warn("[enforceRememberMe]", e);
+  }
+}
+
 (async () => {
   console.log("[init] IIFE start");
   try {
     ["izk_user","izk_users","izk_session","izk_ilanlar"].forEach(k => localStorage.removeItem(k));
   } catch {}
+  await _enforceRememberMe();
   try { await syncSession(); console.log("[init] syncSession OK, currentUser:", currentUser); }
   catch (e) { console.error("init syncSession:", e); }
   try { await loadIlanlar(); console.log("[init] loadIlanlar OK, ilanlar:", ilanlar.length); }

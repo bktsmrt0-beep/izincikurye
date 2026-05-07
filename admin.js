@@ -19,13 +19,11 @@ function showError(msg) {
 
 document.getElementById("logoutBtn").addEventListener("click", async () => {
   if (!confirm("Çıkmak istediğine emin misin?")) return;
+  await sb.auth.signOut().catch((e) => console.warn("[signOut]", e));
   try {
-    await sb.auth.signOut();
-  } catch (e) {
-    console.warn("[signOut]", e);
-  }
-  try { localStorage.removeItem("izk_remember"); } catch {}
-  try { sessionStorage.clear(); } catch {}
+    localStorage.removeItem("izk_remember");
+    sessionStorage.removeItem("izk_session_active");
+  } catch {}
   window.location.href = "/";
 });
 
