@@ -1,3 +1,7 @@
+window.addEventListener("pageshow", (e) => {
+  if (e.persisted) window.location.reload();
+});
+
 const loadingEl = document.getElementById("loading");
 const forbiddenEl = document.getElementById("forbidden");
 const contentEl = document.getElementById("adminContent");

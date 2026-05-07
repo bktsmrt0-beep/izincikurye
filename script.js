@@ -1,3 +1,10 @@
+// =============== BFCACHE FIX ===============
+// Tarayıcı back-forward cache'inden geri yüklenirse sayfayı tazele
+// (admin → ← Anasayfa dönüşünde stale state sorununu önler)
+window.addEventListener("pageshow", (e) => {
+  if (e.persisted) window.location.reload();
+});
+
 // =============== VERİ ===============
 const ANKARA_ILCELERI = [
   "Altındağ","Akyurt","Ayaş","Bala","Beypazarı","Çamlıdere","Çankaya","Çubuk",
