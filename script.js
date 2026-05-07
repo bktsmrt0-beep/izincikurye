@@ -34,28 +34,49 @@ for (let h = 0; h < 24; h++) {
 basSaat.value = "09:00";
 bitSaat.value = "18:00";
 
+// =============== HATA BANNER ===============
+function showError(msg) {
+  let bar = document.getElementById("appError");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "appError";
+    bar.style.cssText = "background:#fee2e2;color:#991b1b;padding:10px 16px;border-bottom:1px solid #fecaca;font-size:14px;";
+    document.body.prepend(bar);
+  }
+  bar.textContent = "⚠ " + msg;
+}
+
 // =============== SUPABASE: SESSION ===============
 async function syncSession() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (session?.user) {
-    const { data: profile } = await sb.from("profiles")
-      .select("ad, soyad, tel, role")
-      .eq("id", session.user.id)
-      .single();
-    currentUser = {
-      id: session.user.id,
-      email: session.user.email,
-      ad: profile?.ad || "",
-      soyad: profile?.soyad || "",
-      tel: profile?.tel || "",
-      role: profile?.role || "user"
-    };
-  } else {
+  try {
+    const { data, error: sErr } = await sb.auth.getSession();
+    if (sErr) throw sErr;
+    const session = data?.session;
+    if (session?.user) {
+      const { data: profile, error: pErr } = await sb.from("profiles")
+        .select("ad, soyad, tel, role")
+        .eq("id", session.user.id)
+        .maybeSingle();
+      if (pErr) console.warn("[profile]", pErr.message);
+      currentUser = {
+        id: session.user.id,
+        email: session.user.email,
+        ad: profile?.ad || "",
+        soyad: profile?.soyad || "",
+        tel: profile?.tel || "",
+        role: profile?.role || "user"
+      };
+    } else {
+      currentUser = null;
+    }
+  } catch (e) {
+    console.error("[syncSession]", e);
+    showError("Oturum bilgisi alınamadı: " + (e.message || e));
     currentUser = null;
   }
 }
 
-sb.auth.onAuthStateChange(async (event, session) => {
+sb.auth.onAuthStateChange(async (event) => {
   if (event === "PASSWORD_RECOVERY") {
     openModal("forgotResetModal");
     return;
@@ -67,22 +88,34 @@ sb.auth.onAuthStateChange(async (event, session) => {
 
 // =============== SUPABASE: İLANLAR ===============
 async function loadIlanlar() {
-  const filter = districtSelect.value;
-  const tableOrView = currentUser ? "ilanlar" : "ilanlar_public";
-  let q = sb.from(tableOrView).select("*").order("created_at", { ascending: false });
-  if (filter !== "all") q = q.eq("ilce", filter);
-  const { data, error } = await q;
-  if (error) { console.error(error); ilanlar = []; renderListings(); return; }
-  ilanlar = data || [];
+  try {
+    const filter = districtSelect.value;
+    const tableOrView = currentUser ? "ilanlar" : "ilanlar_public";
+    let q = sb.from(tableOrView).select("*").order("created_at", { ascending: false });
+    if (filter !== "all") q = q.eq("ilce", filter);
+    const { data, error } = await q;
+    if (error) {
+      console.error("[loadIlanlar]", error);
+      showError("İlanlar yüklenemedi: " + error.message);
+      ilanlar = [];
+      renderListings();
+      return;
+    }
+    ilanlar = data || [];
 
-  // Auth ise: ilan sahiplerinin profillerini de çek
-  if (currentUser && ilanlar.length) {
-    const userIds = [...new Set(ilanlar.map(i => i.user_id))];
-    const { data: profiles } = await sb.from("profiles")
-      .select("id, ad, soyad, tel")
-      .in("id", userIds);
-    const map = Object.fromEntries((profiles || []).map(p => [p.id, p]));
-    ilanlar.forEach(i => { i.profile = map[i.user_id]; });
+    if (currentUser && ilanlar.length) {
+      const userIds = [...new Set(ilanlar.map(i => i.user_id))];
+      const { data: profiles, error: pErr } = await sb.from("profiles")
+        .select("id, ad, soyad, tel")
+        .in("id", userIds);
+      if (pErr) console.warn("[profiles batch]", pErr.message);
+      const map = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+      ilanlar.forEach(i => { i.profile = map[i.user_id]; });
+    }
+  } catch (e) {
+    console.error("[loadIlanlar throw]", e);
+    showError("İlan yükleme hatası: " + (e.message || e));
+    ilanlar = [];
   }
   renderListings();
 }
@@ -463,15 +496,13 @@ const _hashSnapshot = window.location.hash || "";
 const _isRecoveryUrl = _hashSnapshot.includes("type=recovery");
 
 (async () => {
-  // Eski localStorage demo verilerini temizle (bir defalık)
   try {
     ["izk_user","izk_users","izk_session","izk_ilanlar"].forEach(k => localStorage.removeItem(k));
   } catch {}
-  await syncSession();
-  await loadIlanlar();
-  renderTopNav();
+  try { await syncSession(); } catch (e) { console.error("init syncSession:", e); }
+  try { await loadIlanlar(); } catch (e) { console.error("init loadIlanlar:", e); }
+  try { renderTopNav(); } catch (e) { console.error("init renderTopNav:", e); }
 
-  // Recovery link ile geldiyse modalı zorla aç (event yetişmezse yedek)
   if (_isRecoveryUrl) {
     openModal("forgotResetModal");
   }
