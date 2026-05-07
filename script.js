@@ -156,6 +156,12 @@ function renderTopNav() {
     chip.textContent = "👤 " + (currentUser.ad + " " + currentUser.soyad).trim();
     topNav.append(chip);
 
+    const profile = document.createElement("button");
+    profile.className = "btn btn-ghost btn-sm";
+    profile.textContent = "👤 Profilim";
+    profile.addEventListener("click", openProfileModal);
+    topNav.append(profile);
+
     if (currentUser.role === "admin") {
       const admin = document.createElement("a");
       admin.href = "admin.html";
@@ -511,7 +517,86 @@ function formatDateTime(iso) {
 
 districtSelect.addEventListener("change", loadIlanlar);
 
-// =============== ŞİFRE GÖSTER / GİZLE ===============
+// =============== PROFİLİM ===============
+function openProfileModal() {
+  if (!currentUser) return;
+  document.getElementById("profileAd").value = currentUser.ad || "";
+  document.getElementById("profileSoyad").value = currentUser.soyad || "";
+  document.getElementById("profileEmail").value = currentUser.email || "";
+  document.getElementById("profileTel").value = currentUser.tel || "";
+  document.getElementById("profileEmailHint").style.display = "none";
+  document.getElementById("profileTelHint").style.display = "none";
+  openModal("profileModal");
+}
+
+// E-posta/telefon değiştirildiğinde uyarıyı göster
+document.getElementById("profileEmail").addEventListener("input", e => {
+  const changed = normalizeEmail(e.target.value) !== normalizeEmail(currentUser?.email || "");
+  document.getElementById("profileEmailHint").style.display = changed ? "block" : "none";
+});
+document.getElementById("profileTel").addEventListener("input", e => {
+  const changed = (e.target.value || "").trim() !== (currentUser?.tel || "").trim();
+  document.getElementById("profileTelHint").style.display = changed ? "block" : "none";
+});
+
+document.getElementById("profileForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const fd = new FormData(e.target);
+  const ad = (fd.get("ad") || "").trim();
+  const soyad = (fd.get("soyad") || "").trim();
+  const email = normalizeEmail(fd.get("email"));
+  const tel = (fd.get("tel") || "").trim();
+
+  if (!ad || !soyad || !email || !tel) {
+    alert("Lütfen tüm alanları doldurun.");
+    return;
+  }
+
+  const emailChanged = email !== normalizeEmail(currentUser.email);
+  const telChanged = tel !== (currentUser.tel || "").trim();
+  const nameChanged = ad !== currentUser.ad || soyad !== currentUser.soyad;
+
+  // 1) profiles tablosunda ad/soyad/tel güncelle (değişmişse)
+  if (nameChanged || telChanged) {
+    const { error: profErr } = await sb.from("profiles")
+      .update({ ad, soyad, tel })
+      .eq("id", currentUser.id);
+    if (profErr) {
+      alert("Profil güncellenemedi: " + profErr.message);
+      return;
+    }
+    currentUser.ad = ad;
+    currentUser.soyad = soyad;
+    currentUser.tel = tel;
+  }
+
+  // 2) E-posta değişikliği — Supabase doğrulama akışı
+  if (emailChanged) {
+    const { error: emailErr } = await sb.auth.updateUser(
+      { email },
+      { emailRedirectTo: window.location.origin + "/" }
+    );
+    if (emailErr) {
+      alert("E-posta güncellenemedi: " + emailErr.message);
+      // ad/soyad/tel zaten güncellendi; kullanıcıyı bilgilendir
+      renderTopNav();
+      return;
+    }
+    closeModals();
+    renderTopNav();
+    alert(
+      "Profil güncellendi.\n\n" +
+      "E-posta değişikliği için her iki adrese de onay maili gönderildi. " +
+      "Her ikisini de onaylayana kadar yeni e-posta aktif olmayacak."
+    );
+    return;
+  }
+
+  closeModals();
+  renderTopNav();
+  alert("Profilin güncellendi.");
+});
 document.querySelectorAll('input[type="password"]').forEach(input => {
   const wrap = document.createElement("span");
   wrap.className = "pw-wrap";

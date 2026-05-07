@@ -259,8 +259,39 @@
     </div>
   </div>
 
+  <!-- ===== PROFİLİM MODAL ===== -->
+  <div class="modal hidden" id="profileModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>Profilim</h2>
+      <p class="muted small">E-posta veya telefon değiştirirsen ilgili doğrulama akışı tetiklenir. (Telefon doğrulama yakında.)</p>
+      <form id="profileForm" class="form">
+        <div class="row-2">
+          <label>Ad <span class="req">*</span>
+            <input type="text" name="ad" id="profileAd" required maxlength="40" autocomplete="given-name" />
+          </label>
+          <label>Soyad <span class="req">*</span>
+            <input type="text" name="soyad" id="profileSoyad" required maxlength="40" autocomplete="family-name" />
+          </label>
+        </div>
+
+        <label>E-posta <span class="req">*</span>
+          <input type="email" name="email" id="profileEmail" required maxlength="80" autocomplete="email" />
+        </label>
+        <p class="muted small" id="profileEmailHint" style="display:none;color:#92400e">⚠ E-postanı değiştirdiğinde her iki adrese de onay maili gönderilir; her ikisini de onaylayana kadar yeni adres aktif olmaz.</p>
+
+        <label>Cep Telefonu <span class="req">*</span>
+          <input type="tel" name="tel" id="profileTel" required pattern="0?5[0-9]{2}[ ]?[0-9]{3}[ ]?[0-9]{2}[ ]?[0-9]{2}" autocomplete="tel" />
+        </label>
+        <p class="muted small" id="profileTelHint" style="display:none;color:#92400e">⚠ Telefon doğrulama (SMS) yakında. Şimdilik değişiklik anında kaydedilir.</p>
+
+        <button type="submit" class="btn btn-primary btn-block">Kaydet</button>
+      </form>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=14"></script>
-  <script src="script.js?v=14"></script>
+  <script src="supabase-config.js?v=15"></script>
+  <script src="script.js?v=15"></script>
 </body>
 </html>
