@@ -195,8 +195,8 @@ listingsEl.addEventListener("click", async e => {
   } else if (act === "wa") {
     if (!tel) return alert("Telefon bilgisi bulunamadı.");
     let waNum = tel.replace(/\D/g, "");
-    if (waNum.startsWith("0")) waNum = "9" + waNum;        // 0532... → 90532...
-    else if (!waNum.startsWith("90")) waNum = "9" + waNum;
+    if (waNum.startsWith("0")) waNum = "9" + waNum;         // 0532... → 90532...
+    else if (!waNum.startsWith("90")) waNum = "90" + waNum; // 532...  → 90532...
     window.open("https://wa.me/" + waNum, "_blank");
   } else if (act === "addr") {
     showAdres(ilan);
@@ -284,7 +284,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
     password: sifre,
     options: {
       data: { ad, soyad, tel, ticari },
-      emailRedirectTo: window.location.href
+      emailRedirectTo: window.location.origin + "/"
     }
   });
   if (error) { alert("Kayıt hatası: " + error.message); return; }
@@ -320,7 +320,7 @@ document.getElementById("forgotEmailForm").addEventListener("submit", async e =>
   const fd = new FormData(e.target);
   const email = normalizeEmail(fd.get("email"));
   const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.href
+    redirectTo: window.location.origin + "/"
   });
   if (error) { alert("Hata: " + error.message); return; }
   e.target.reset();
@@ -342,10 +342,8 @@ document.getElementById("forgotResetForm").addEventListener("submit", async e =>
     return;
   }
 
-  console.log("[reset] Updating password for user:", session.user.email);
   const { error } = await sb.auth.updateUser({ password: sifre });
   if (error) {
-    console.error("[reset] updateUser error:", error);
     alert("Hata: " + error.message);
     return;
   }
@@ -434,16 +432,6 @@ function formatDateTime(iso) {
   return `${tarih} · ${saat}`;
 }
 
-// Sol menü sekmeleri (henüz hazır değil)
-document.querySelectorAll(".search-list a").forEach(a => {
-  a.addEventListener("click", e => {
-    e.preventDefault();
-    document.querySelectorAll(".search-list a").forEach(x => x.classList.remove("active"));
-    a.classList.add("active");
-    alert("Bu bölüm henüz hazır değil — sonraki adımda eklenecek: " + a.textContent);
-  });
-});
-
 districtSelect.addEventListener("change", loadIlanlar);
 
 // =============== İLK YÜKLEME ===============
@@ -462,7 +450,6 @@ const _isRecoveryUrl = _hashSnapshot.includes("type=recovery");
 
   // Recovery link ile geldiyse modalı zorla aç (event yetişmezse yedek)
   if (_isRecoveryUrl) {
-    console.log("[init] Recovery URL algılandı, şifre sıfırlama modalı açılıyor");
     openModal("forgotResetModal");
   }
 })();

@@ -4,6 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>İzinci Kurye — Ankara</title>
+  <meta name="description" content="Ankara'da izinci kurye arayan işletmeler ile boş günü olan kuryeleri buluşturan ilan platformu." />
+  <meta name="theme-color" content="#ff7a00" />
+  <meta property="og:title" content="İzinci Kurye — Ankara" />
+  <meta property="og:description" content="Ankara'da izinci kurye arayan işletmeler ile boş günü olan kuryeleri buluşturan ilan platformu." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://izincikurye.vercel.app/" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23ff7a00'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-family='Arial,sans-serif' font-size='34' font-weight='700' fill='white'%3EiK%3C/text%3E%3C/svg%3E" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
@@ -27,15 +34,6 @@
         <select id="districtSelect" class="select">
           <option value="all">Tümü</option>
         </select>
-      </div>
-
-      <div class="panel">
-        <h3 class="panel-title">Arama Bölümleri</h3>
-        <ul class="search-list">
-          <li><a href="#" data-section="tam">Tam zamanlı kurye arayanlar</a></li>
-          <li><a href="#" data-section="yari">Yarı zamanlı kurye arayanlar</a></li>
-          <li><a href="#" data-section="esnaf">Esnaf kurye arayanlar</a></li>
-        </ul>
       </div>
 
       <button class="btn btn-primary btn-block" id="ilanVerBtn">+ İlan Ver</button>
@@ -69,7 +67,7 @@
     <div class="modal-card modal-wide">
       <button class="modal-close" data-close>&times;</button>
       <h2>Üye Ol</h2>
-      <p class="muted">Bilgilerin yalnız bu cihazda saklanır (deneme aşaması).</p>
+      <p class="muted">Üyeliği aktive etmek için kayıttan sonra e-posta adresine gelen doğrulama linkine tıklaman gerekir.</p>
       <form id="registerForm" class="form">
         <div class="row-2">
           <label>Ad <span class="req">*</span>
