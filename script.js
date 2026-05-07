@@ -110,6 +110,7 @@ function renderTopNav() {
     out.addEventListener("click", async () => {
       if (!confirm("Çıkmak istediğine emin misin?")) return;
       await sb.auth.signOut();
+      window.location.href = "/";
     });
     topNav.append(out);
   } else {
