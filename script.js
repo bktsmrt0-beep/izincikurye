@@ -381,6 +381,8 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
     }
     return;
   }
+  // Bu sekmede oturum AKTİF — sayfa navigasyonlarında çıkış tetiklenmesin
+  try { sessionStorage.setItem("izk_session_active", "1"); } catch {}
   closeModals();
   e.target.reset();
 });
