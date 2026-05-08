@@ -92,10 +92,13 @@ async function syncSession() {
     console.log("[syncSession] storage check", { hasSession: !!session });
     if (session?.user) {
       console.log("[syncSession] profile query start for", session.user.id);
-      const { data: profile, error: pErr } = await _withTimeout(
-        sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle(),
-        8000, "profiles.select"
+      // Ham REST çağrısı: supabase-js bypass
+      const { data: arr, error: pErr } = await rawSelect(
+        `profiles?id=eq.${session.user.id}&select=*`,
+        session.access_token,
+        6000
       );
+      const profile = Array.isArray(arr) ? (arr[0] || null) : null;
       console.log("[syncSession] profile query done", { profile, pErr });
       if (pErr) console.warn("[profile]", pErr.message);
       currentUser = {

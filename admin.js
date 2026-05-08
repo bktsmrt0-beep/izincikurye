@@ -37,10 +37,13 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
       window.location.href = "/";
       return;
     }
-    const { data: me, error: pErr } = await sb.from("profiles")
-      .select("role")
-      .eq("id", session.user.id)
-      .maybeSingle();
+    // Ham REST çağrısı: supabase-js bypass
+    const { data: arr, error: pErr } = await rawSelect(
+      `profiles?id=eq.${session.user.id}&select=role`,
+      session.access_token,
+      6000
+    );
+    const me = Array.isArray(arr) ? (arr[0] || null) : null;
     if (pErr) console.warn("[profile]", pErr.message);
 
     if (me?.role !== "admin") {
