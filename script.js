@@ -1512,53 +1512,63 @@ async function renderKuryeDashboard() {
 }
 
 function syncDashboardToggle() {
-  const sw = document.getElementById("kdMusaitSwitch");
-  const card = document.getElementById("kdToggleCard");
-  const msg = document.getElementById("kdStatusMsg");
-  if (!sw) return;
   const on = !!currentUser?.musait;
-  sw.checked = on;
-  if (card) card.classList.toggle("active", on);
+
+  // Üstteki dashboard mesajını güncelle
+  const msg = document.getElementById("kdStatusMsg");
   if (msg) {
     msg.innerHTML = on
       ? "🟢 İşletmeler seni <strong>Müsait Kuryeler</strong> listesinde görüyor."
-      : "Hazır olduğunda <strong>Müsait</strong> konumuna al.";
+      : "Hazır olduğunda alttaki butondan <strong>Müsait</strong> konumuna al.";
   }
+
+  // Sticky bottom bar'ı senkronize et
+  const sbar = document.getElementById("kuryeStickyBar");
+  const sbsw = document.getElementById("ksbMusaitSwitch");
+  if (sbsw) sbsw.checked = on;
+  if (sbar) {
+    sbar.classList.toggle("active", on);
+    sbar.classList.toggle("hidden", !(currentUser && currentUser.kullaniciTipi === "kurye"));
+  }
+  // Sol/sağ etiket vurgusu
+  document.getElementById("ksbLabelLeft")?.classList.toggle("active", !on);
+  document.getElementById("ksbLabelRight")?.classList.toggle("active", on);
 }
 
-// Dashboard switch handler — DB güncelle + diğer yerlerle senkronize tut
-document.getElementById("kdMusaitSwitch")?.addEventListener("change", async e => {
+// Sticky bar switch handler — tek tıkla DB güncelle, her yerde senkronize tut
+document.getElementById("ksbMusaitSwitch")?.addEventListener("change", async e => {
   if (!currentUser) return;
   const yeni = e.target.checked;
   const nowIso = new Date().toISOString();
   // Anında UI güncelle
-  document.getElementById("kdToggleCard")?.classList.toggle("active", yeni);
-  document.getElementById("kdStatusMsg").innerHTML = yeni
-    ? "🟢 İşletmeler seni <strong>Müsait Kuryeler</strong> listesinde görüyor."
-    : "Hazır olduğunda <strong>Müsait</strong> konumuna al.";
+  const sbar = document.getElementById("kuryeStickyBar");
+  sbar?.classList.toggle("active", yeni);
+  document.getElementById("ksbLabelLeft")?.classList.toggle("active", !yeni);
+  document.getElementById("ksbLabelRight")?.classList.toggle("active", yeni);
 
   const { error } = await sb.from("profiles")
     .update({ musait: yeni, musait_at: nowIso })
     .eq("id", currentUser.id);
 
   if (error) {
+    // Geri al
     e.target.checked = !yeni;
-    document.getElementById("kdToggleCard")?.classList.toggle("active", !yeni);
-    document.getElementById("kdStatusMsg").innerHTML = !yeni
-      ? "🟢 İşletmeler seni <strong>Müsait Kuryeler</strong> listesinde görüyor."
-      : "Hazır olduğunda <strong>Müsait</strong> konumuna al.";
+    sbar?.classList.toggle("active", !yeni);
+    document.getElementById("ksbLabelLeft")?.classList.toggle("active", yeni);
+    document.getElementById("ksbLabelRight")?.classList.toggle("active", !yeni);
     toast("Güncellenemedi: " + error.message, "error");
     return;
   }
   currentUser.musait = yeni;
   currentUser.musaitAt = nowIso;
-  // Profilim modal toggle'ını da senkron tut
+  // Profilim modal + dashboard mesajını senkron tut
   const mt = document.getElementById("musaitToggle");
   if (mt) {
     mt.checked = yeni;
     document.getElementById("musaitTitle").textContent = yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
     document.getElementById("musaitCard")?.classList.toggle("active", yeni);
   }
+  syncDashboardToggle();
   toast(yeni ? "🟢 Müsait olarak işaretlendin" : "🔴 Artık müsait değilsin", "ok");
 });
 

@@ -75,17 +75,7 @@
           <div class="kd-stat"><span class="kd-stat-num" id="kdComplete">0%</span><span class="kd-stat-lbl">Profil</span></div>
         </div>
 
-        <div class="kd-toggle-card" id="kdToggleCard">
-          <div class="kd-toggle-row">
-            <span class="kd-toggle-label">Meşgul</span>
-            <label class="kd-switch">
-              <input type="checkbox" id="kdMusaitSwitch" />
-              <span class="kd-slider"></span>
-            </label>
-            <span class="kd-toggle-label kd-toggle-label-right">Müsait</span>
-          </div>
-          <p class="kd-status-msg" id="kdStatusMsg">Hazır olduğunda <strong>Müsait</strong> konumuna al.</p>
-        </div>
+        <p class="kd-status-msg" id="kdStatusMsg">Hazır olduğunda alttaki butondan <strong>Müsait</strong> konumuna al.</p>
 
         <div class="kd-quick-links">
           <button type="button" class="kd-link" id="kdProfileLink">👤 Profilim</button>
@@ -534,8 +524,18 @@
     </div>
   </div>
 
+  <!-- KURYE STICKY MÜSAİTLİK BAR (sadece kurye girişlilere görünür) -->
+  <div id="kuryeStickyBar" class="kurye-sticky-bar hidden">
+    <span class="ksb-label" id="ksbLabelLeft">Meşgul</span>
+    <label class="ksb-switch">
+      <input type="checkbox" id="ksbMusaitSwitch" />
+      <span class="ksb-slider"></span>
+    </label>
+    <span class="ksb-label ksb-label-right" id="ksbLabelRight">Müsait</span>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=36"></script>
-  <script src="script.js?v=36"></script>
+  <script src="supabase-config.js?v=37"></script>
+  <script src="script.js?v=37"></script>
 </body>
 </html>
