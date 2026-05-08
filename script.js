@@ -170,23 +170,19 @@ async function loadIlanlar() {
 function renderTopNav() {
   topNav.innerHTML = "";
   if (currentUser) {
-    const chip = document.createElement("span");
-    chip.className = "user-chip";
+    const profile = document.createElement("button");
+    profile.className = "btn btn-ghost btn-sm";
+    profile.addEventListener("click", openProfileModal);
+    const adSoyad = (currentUser.ad + " " + currentUser.soyad).trim() || "Profilim";
     if (currentUser.avatarUrl) {
       const av = document.createElement("span");
       av.className = "user-chip-avatar";
       av.style.backgroundImage = `url("${currentUser.avatarUrl}")`;
-      chip.append(av);
-      chip.append(document.createTextNode((currentUser.ad + " " + currentUser.soyad).trim()));
+      profile.append(av);
+      profile.append(document.createTextNode(adSoyad));
     } else {
-      chip.textContent = "👤 " + (currentUser.ad + " " + currentUser.soyad).trim();
+      profile.textContent = "👤 " + adSoyad;
     }
-    topNav.append(chip);
-
-    const profile = document.createElement("button");
-    profile.className = "btn btn-ghost btn-sm";
-    profile.textContent = "👤 Profilim";
-    profile.addEventListener("click", openProfileModal);
     topNav.append(profile);
 
     if (currentUser.role === "admin") {
