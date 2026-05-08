@@ -547,17 +547,90 @@ document.querySelectorAll("#myListingsPanel .seg-btn").forEach(btn => {
   });
 });
 
+// =============== PROFİLİM YARDIMCILARI ===============
+function setStatus(elId, type, msg) {
+  const el = document.getElementById(elId);
+  if (!el) return;
+  if (!msg) { el.classList.add("hidden"); return; }
+  el.className = "form-status " + type;
+  el.textContent = msg;
+}
+function clearStatus(elId) { setStatus(elId, "", ""); }
+
+function setBusy(btnId, busy, busyText) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  if (busy) {
+    btn.dataset.originalText = btn.textContent;
+    btn.textContent = busyText || "Kaydediliyor...";
+    btn.disabled = true;
+  } else {
+    if (btn.dataset.originalText) btn.textContent = btn.dataset.originalText;
+    btn.disabled = false;
+  }
+}
+
+// Telefon otomatik formatla: 05XX XXX XX XX
+function formatTel(raw) {
+  const d = (raw || "").replace(/\D/g, "").slice(0, 11);
+  if (d.length <= 4) return d;
+  if (d.length <= 7) return d.slice(0, 4) + " " + d.slice(4);
+  if (d.length <= 9) return d.slice(0, 4) + " " + d.slice(4, 7) + " " + d.slice(7);
+  return d.slice(0, 4) + " " + d.slice(4, 7) + " " + d.slice(7, 9) + " " + d.slice(9);
+}
+
+function _telDigits(s) { return (s || "").replace(/\D/g, ""); }
+
+function profileHasChanges() {
+  if (!currentUser) return false;
+  const ad = document.getElementById("profileAd").value.trim();
+  const soyad = document.getElementById("profileSoyad").value.trim();
+  const email = normalizeEmail(document.getElementById("profileEmail").value);
+  const tel = _telDigits(document.getElementById("profileTel").value);
+  return ad !== currentUser.ad
+      || soyad !== currentUser.soyad
+      || email !== normalizeEmail(currentUser.email)
+      || tel !== _telDigits(currentUser.tel);
+}
+
+function refreshProfileSaveBtn() {
+  const btn = document.getElementById("profileSaveBtn");
+  if (btn) btn.disabled = !profileHasChanges();
+}
+
 // =============== PROFİLİM ===============
 function openProfileModal() {
   if (!currentUser) return;
   document.getElementById("profileAd").value = currentUser.ad || "";
   document.getElementById("profileSoyad").value = currentUser.soyad || "";
   document.getElementById("profileEmail").value = currentUser.email || "";
-  document.getElementById("profileTel").value = currentUser.tel || "";
+  document.getElementById("profileTel").value = formatTel(currentUser.tel || "");
   document.getElementById("profileEmailHint").style.display = "none";
   document.getElementById("profileTelHint").style.display = "none";
+  clearStatus("profileStatus");
+  refreshProfileSaveBtn();
+
+  // Son güncelleme zamanı (varsa profiles.updated_at; yoksa boş)
+  const lastEl = document.getElementById("profileLastUpdated");
+  if (lastEl) {
+    lastEl.textContent = currentUser.updatedAt
+      ? "Son güncelleme: " + formatDateTime(currentUser.updatedAt)
+      : "";
+  }
+
   openModal("profileModal");
 }
+
+// Her input değişiminde Kaydet butonunu güncelle ve statüsü temizle
+["profileAd","profileSoyad","profileEmail","profileTel"].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener("input", () => {
+    if (id === "profileTel") el.value = formatTel(el.value);
+    refreshProfileSaveBtn();
+    clearStatus("profileStatus");
+  });
+});
 
 // E-posta/telefon değiştirildiğinde uyarıyı göster
 document.getElementById("profileEmail").addEventListener("input", e => {
@@ -565,7 +638,7 @@ document.getElementById("profileEmail").addEventListener("input", e => {
   document.getElementById("profileEmailHint").style.display = changed ? "block" : "none";
 });
 document.getElementById("profileTel").addEventListener("input", e => {
-  const changed = (e.target.value || "").trim() !== (currentUser?.tel || "").trim();
+  const changed = _telDigits(e.target.value) !== _telDigits(currentUser?.tel);
   document.getElementById("profileTelHint").style.display = changed ? "block" : "none";
 });
 
@@ -579,21 +652,28 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   const tel = (fd.get("tel") || "").trim();
 
   if (!ad || !soyad || !email || !tel) {
-    alert("Lütfen tüm alanları doldurun.");
+    setStatus("profileStatus", "error", "Lütfen tüm alanları doldurun.");
+    return;
+  }
+  if (_telDigits(tel).length < 10) {
+    setStatus("profileStatus", "error", "Telefon numarası eksik görünüyor.");
     return;
   }
 
   const emailChanged = email !== normalizeEmail(currentUser.email);
-  const telChanged = tel !== (currentUser.tel || "").trim();
+  const telChanged = _telDigits(tel) !== _telDigits(currentUser.tel);
   const nameChanged = ad !== currentUser.ad || soyad !== currentUser.soyad;
 
-  // 1) profiles tablosunda ad/soyad/tel güncelle (değişmişse)
+  setBusy("profileSaveBtn", true, "Kaydediliyor...");
+
+  // 1) profiles tablosunda ad/soyad/tel güncelle
   if (nameChanged || telChanged) {
     const { error: profErr } = await sb.from("profiles")
       .update({ ad, soyad, tel })
       .eq("id", currentUser.id);
     if (profErr) {
-      alert("Profil güncellenemedi: " + profErr.message);
+      setBusy("profileSaveBtn", false);
+      setStatus("profileStatus", "error", "Profil güncellenemedi: " + profErr.message);
       return;
     }
     currentUser.ad = ad;
@@ -607,30 +687,29 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
       { email },
       { emailRedirectTo: window.location.origin + "/" }
     );
+    setBusy("profileSaveBtn", false);
     if (emailErr) {
-      alert("E-posta güncellenemedi: " + emailErr.message);
-      // ad/soyad/tel zaten güncellendi; kullanıcıyı bilgilendir
       renderTopNav();
+      setStatus("profileStatus", "error", "E-posta güncellenemedi: " + emailErr.message);
       return;
     }
-    closeModals();
     renderTopNav();
-    alert(
-      "Profil güncellendi.\n\n" +
-      "E-posta değişikliği için her iki adrese de onay maili gönderildi. " +
-      "Her ikisini de onaylayana kadar yeni e-posta aktif olmayacak."
-    );
+    refreshProfileSaveBtn();
+    setStatus("profileStatus", "info",
+      "Kaydedildi. E-posta değişikliği için her iki adrese de onay maili gönderildi; ikisini de onaylayana kadar yeni e-posta aktif olmaz.");
     return;
   }
 
-  closeModals();
+  setBusy("profileSaveBtn", false);
   renderTopNav();
-  alert("Profilin güncellendi.");
+  refreshProfileSaveBtn();
+  setStatus("profileStatus", "ok", "Profilin güncellendi.");
 });
 
 // =============== ŞİFRE DEĞİŞTİR (girişli kullanıcı) ===============
 document.getElementById("changePasswordBtn").addEventListener("click", () => {
   document.getElementById("changePasswordForm").reset();
+  clearStatus("changePasswordStatus");
   openModal("changePasswordModal");
 });
 
@@ -642,29 +721,31 @@ document.getElementById("changePasswordForm").addEventListener("submit", async e
   const yeni = fd.get("yeniSifre") || "";
   const yeni2 = fd.get("yeniSifre2") || "";
 
-  if (yeni.length < 6) { alert("Yeni şifre en az 6 karakter olmalı."); return; }
-  if (yeni !== yeni2) { alert("Yeni şifreler eşleşmiyor."); return; }
-  if (yeni === eski) { alert("Yeni şifre eskisiyle aynı olamaz."); return; }
+  if (yeni.length < 6)   { setStatus("changePasswordStatus","error","Yeni şifre en az 6 karakter olmalı."); return; }
+  if (yeni !== yeni2)    { setStatus("changePasswordStatus","error","Yeni şifreler eşleşmiyor."); return; }
+  if (yeni === eski)     { setStatus("changePasswordStatus","error","Yeni şifre eskisiyle aynı olamaz."); return; }
 
-  // Mevcut şifreyi yeniden sign-in ile doğrula
+  setBusy("changePasswordSaveBtn", true, "Güncelleniyor...");
+
   const { error: verifyErr } = await sb.auth.signInWithPassword({
     email: currentUser.email,
     password: eski
   });
   if (verifyErr) {
-    alert("Mevcut şifren hatalı.");
+    setBusy("changePasswordSaveBtn", false);
+    setStatus("changePasswordStatus","error","Mevcut şifren hatalı.");
     return;
   }
 
-  // Yeni şifreyi uygula
   const { error: updErr } = await sb.auth.updateUser({ password: yeni });
+  setBusy("changePasswordSaveBtn", false);
   if (updErr) {
-    alert("Şifre güncellenemedi: " + updErr.message);
+    setStatus("changePasswordStatus","error","Şifre güncellenemedi: " + updErr.message);
     return;
   }
 
-  closeModals();
-  alert("Şifren güncellendi. Bir sonraki girişinde yeni şifreni kullanabilirsin.");
+  e.target.reset();
+  setStatus("changePasswordStatus","ok","Şifren güncellendi. Bir sonraki girişinde yeni şifreni kullanabilirsin.");
 });
 
 // =============== HESABI KAPAT ===============
