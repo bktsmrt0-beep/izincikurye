@@ -170,46 +170,87 @@ async function loadIlanlar() {
 function renderTopNav() {
   topNav.innerHTML = "";
   if (currentUser) {
-    const profile = document.createElement("button");
-    profile.className = "btn btn-ghost btn-sm";
-    profile.addEventListener("click", openProfileModal);
-    const adSoyad = (currentUser.ad + " " + currentUser.soyad).trim() || "Profilim";
+    // Kullanıcı menüsü — tek buton + açılır menü
+    const wrap = document.createElement("div");
+    wrap.className = "user-menu-wrap";
+
+    const trigger = document.createElement("button");
+    trigger.className = "btn btn-ghost btn-sm user-menu-trigger";
+    trigger.setAttribute("aria-haspopup", "true");
+    trigger.setAttribute("aria-expanded", "false");
+    const adSoyad = (currentUser.ad + " " + currentUser.soyad).trim() || "Hesabım";
     if (currentUser.avatarUrl) {
       const av = document.createElement("span");
       av.className = "user-chip-avatar";
       av.style.backgroundImage = `url("${currentUser.avatarUrl}")`;
-      profile.append(av);
-      profile.append(document.createTextNode(adSoyad));
+      trigger.append(av);
+      trigger.append(document.createTextNode(adSoyad));
     } else {
-      profile.textContent = "👤 " + adSoyad;
+      trigger.textContent = "👤 " + adSoyad;
     }
-    topNav.append(profile);
+    const caret = document.createElement("span");
+    caret.className = "user-menu-caret";
+    caret.textContent = " ▾";
+    trigger.append(caret);
+    wrap.append(trigger);
+
+    const menu = document.createElement("div");
+    menu.className = "user-menu hidden";
+
+    const editItem = document.createElement("button");
+    editItem.className = "user-menu-item";
+    editItem.innerHTML = "✏️ <span>Hesabımı Düzenle</span>";
+    editItem.addEventListener("click", () => { closeUserMenu(); openProfileModal(); });
+    menu.append(editItem);
+
+    const myItem = document.createElement("button");
+    myItem.className = "user-menu-item";
+    myItem.innerHTML = "📋 <span>İlanlarım</span>";
+    myItem.addEventListener("click", () => {
+      closeUserMenu();
+      const mineBtn = document.querySelector('#myListingsPanel .seg-btn[data-scope="mine"]');
+      if (mineBtn && !mineBtn.classList.contains("active")) mineBtn.click();
+      document.getElementById("listings")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    menu.append(myItem);
 
     if (currentUser.role === "admin") {
-      const admin = document.createElement("a");
-      admin.href = "admin.html";
-      admin.className = "btn btn-ghost btn-sm";
-      admin.textContent = "🛡 Admin";
-      topNav.append(admin);
+      const adminItem = document.createElement("a");
+      adminItem.href = "admin.html";
+      adminItem.className = "user-menu-item";
+      adminItem.innerHTML = "🛡 <span>Admin Paneli</span>";
+      menu.append(adminItem);
     }
 
+    const sep = document.createElement("div");
+    sep.className = "user-menu-sep";
+    menu.append(sep);
+
     const out = document.createElement("button");
-    out.className = "btn btn-ghost btn-sm";
-    out.textContent = "Çıkış";
+    out.className = "user-menu-item user-menu-item-danger";
+    out.innerHTML = "🚪 <span>Çıkış Yap</span>";
     out.addEventListener("click", () => {
+      closeUserMenu();
       if (!confirm("Çıkmak istediğine emin misin?")) return;
-      // Storage anahtarlarını hemen sil (network beklemeden)
       try {
         Object.keys(localStorage).filter(k => k.startsWith("sb-")).forEach(k => localStorage.removeItem(k));
         Object.keys(sessionStorage).filter(k => k.startsWith("sb-")).forEach(k => sessionStorage.removeItem(k));
         localStorage.removeItem("izk_remember");
         sessionStorage.removeItem("izk_session_active");
       } catch {}
-      // Local scope: revoke network çağrısı yapmaz, hemen döner
       sb.auth.signOut({ scope: "local" }).catch(() => {});
       window.location.href = "/";
     });
-    topNav.append(out);
+    menu.append(out);
+
+    wrap.append(menu);
+    topNav.append(wrap);
+
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = !menu.classList.contains("hidden");
+      isOpen ? closeUserMenu() : openUserMenu();
+    });
   } else {
     const giris = document.createElement("button");
     giris.className = "btn btn-ghost"; giris.textContent = "Giriş";
@@ -346,11 +387,32 @@ function closeModals() {
   document.body.classList.remove("modal-open");
 }
 
-// Esc tuşu açık modalı kapatır
+// Esc tuşu açık modalı kapatır + kullanıcı menüsünü kapatır
 document.addEventListener("keydown", e => {
-  if (e.key === "Escape" && document.querySelector(".modal:not(.hidden)")) {
-    closeModals();
+  if (e.key === "Escape") {
+    if (document.querySelector(".modal:not(.hidden)")) closeModals();
+    closeUserMenu();
   }
+});
+
+// Kullanıcı menüsü helper
+function openUserMenu() {
+  const m = document.querySelector(".user-menu");
+  const t = document.querySelector(".user-menu-trigger");
+  if (!m) return;
+  m.classList.remove("hidden");
+  t?.setAttribute("aria-expanded", "true");
+}
+function closeUserMenu() {
+  const m = document.querySelector(".user-menu");
+  const t = document.querySelector(".user-menu-trigger");
+  if (!m) return;
+  m.classList.add("hidden");
+  t?.setAttribute("aria-expanded", "false");
+}
+// Menü dışına tıklama
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".user-menu-wrap")) closeUserMenu();
 });
 document.querySelectorAll("[data-close]").forEach(b =>
   b.addEventListener("click", closeModals)

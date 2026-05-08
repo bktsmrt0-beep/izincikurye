@@ -517,3 +517,48 @@ body.modal-open { overflow: hidden; }
 .toast.fade-out { animation: toast-out 0.25s ease-in forwards; }
 @keyframes toast-in  { from{opacity:0;transform:translateY(-8px);} to{opacity:1;transform:translateY(0);} }
 @keyframes toast-out { from{opacity:1;transform:translateY(0);}    to{opacity:0;transform:translateY(-8px);} }
+
+/* ===== Kullanıcı menüsü dropdown ===== */
+.user-menu-wrap { position: relative; display: inline-block; }
+.user-menu-trigger { display: inline-flex; align-items: center; gap: 4px; }
+.user-menu-caret { font-size: 10px; opacity: 0.6; }
+.user-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+  padding: 6px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+}
+.user-menu-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font-size: 14px;
+  color: #1f2937;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  width: 100%;
+  font-family: inherit;
+}
+.user-menu-item:hover { background: #f3f4f6; }
+.user-menu-item-danger { color: #b91c1c; }
+.user-menu-item-danger:hover { background: #fee2e2; }
+.user-menu-sep {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 4px 0;
+}
+
+@media (max-width: 520px) {
+  .user-menu { right: -8px; min-width: 200px; }
+}
