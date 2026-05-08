@@ -627,6 +627,45 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   renderTopNav();
   alert("Profilin güncellendi.");
 });
+
+// =============== ŞİFRE DEĞİŞTİR (girişli kullanıcı) ===============
+document.getElementById("changePasswordBtn").addEventListener("click", () => {
+  document.getElementById("changePasswordForm").reset();
+  openModal("changePasswordModal");
+});
+
+document.getElementById("changePasswordForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const fd = new FormData(e.target);
+  const eski = fd.get("oldSifre") || "";
+  const yeni = fd.get("yeniSifre") || "";
+  const yeni2 = fd.get("yeniSifre2") || "";
+
+  if (yeni.length < 6) { alert("Yeni şifre en az 6 karakter olmalı."); return; }
+  if (yeni !== yeni2) { alert("Yeni şifreler eşleşmiyor."); return; }
+  if (yeni === eski) { alert("Yeni şifre eskisiyle aynı olamaz."); return; }
+
+  // Mevcut şifreyi yeniden sign-in ile doğrula
+  const { error: verifyErr } = await sb.auth.signInWithPassword({
+    email: currentUser.email,
+    password: eski
+  });
+  if (verifyErr) {
+    alert("Mevcut şifren hatalı.");
+    return;
+  }
+
+  // Yeni şifreyi uygula
+  const { error: updErr } = await sb.auth.updateUser({ password: yeni });
+  if (updErr) {
+    alert("Şifre güncellenemedi: " + updErr.message);
+    return;
+  }
+
+  closeModals();
+  alert("Şifren güncellendi. Bir sonraki girişinde yeni şifreni kullanabilirsin.");
+});
 document.querySelectorAll('input[type="password"]').forEach(input => {
   const wrap = document.createElement("span");
   wrap.className = "pw-wrap";

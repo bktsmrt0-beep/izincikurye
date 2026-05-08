@@ -295,12 +295,35 @@
         <p class="muted small" id="profileTelHint" style="display:none;color:#92400e">⚠ Telefon doğrulama (SMS) yakında. Şimdilik değişiklik anında kaydedilir.</p>
 
         <button type="submit" class="btn btn-primary btn-block">Kaydet</button>
+        <hr style="margin:16px 0;border:0;border-top:1px solid #e5e7eb" />
+        <button type="button" class="btn btn-ghost btn-block" id="changePasswordBtn">Şifremi Değiştir</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== ŞİFRE DEĞİŞTİR MODAL (girişli kullanıcı) ===== -->
+  <div class="modal hidden" id="changePasswordModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>Şifremi Değiştir</h2>
+      <p class="muted small">Güvenlik için mevcut şifreni de istiyoruz.</p>
+      <form id="changePasswordForm" class="form">
+        <label>Mevcut Şifre <span class="req">*</span>
+          <input type="password" name="oldSifre" required autocomplete="current-password" />
+        </label>
+        <label>Yeni Şifre <span class="req">*</span>
+          <input type="password" name="yeniSifre" required minlength="6" maxlength="40" autocomplete="new-password" />
+        </label>
+        <label>Yeni Şifre (Tekrar) <span class="req">*</span>
+          <input type="password" name="yeniSifre2" required minlength="6" maxlength="40" autocomplete="new-password" />
+        </label>
+        <button type="submit" class="btn btn-primary btn-block">Şifreyi Güncelle</button>
       </form>
     </div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=16"></script>
-  <script src="script.js?v=16"></script>
+  <script src="supabase-config.js?v=17"></script>
+  <script src="script.js?v=17"></script>
 </body>
 </html>
