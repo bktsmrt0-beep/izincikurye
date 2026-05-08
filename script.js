@@ -51,6 +51,20 @@ for (let h = 0; h < 24; h++) {
 basSaat.value = "09:00";
 bitSaat.value = "18:00";
 
+// =============== TOAST ===============
+function toast(msg, type = "info", ms = 3000) {
+  const host = document.getElementById("toastHost");
+  if (!host) { console.log("[toast]", msg); return; }
+  const el = document.createElement("div");
+  el.className = "toast " + type;
+  el.textContent = msg;
+  host.appendChild(el);
+  setTimeout(() => {
+    el.classList.add("fade-out");
+    setTimeout(() => el.remove(), 250);
+  }, ms);
+}
+
 // =============== HATA BANNER ===============
 function showError(msg) {
   let bar = document.getElementById("appError");
@@ -81,7 +95,7 @@ async function syncSession() {
     if (session?.user) {
       console.log("[syncSession] profile query start for", session.user.id);
       const { data: profile, error: pErr } = await _withTimeout(
-        sb.from("profiles").select("ad, soyad, tel, role, avatar_url, created_at").eq("id", session.user.id).maybeSingle(),
+        sb.from("profiles").select("ad, soyad, tel, role, avatar_url, created_at, ticari").eq("id", session.user.id).maybeSingle(),
         8000, "profiles.select"
       );
       console.log("[syncSession] profile query done", { profile, pErr });
@@ -94,7 +108,8 @@ async function syncSession() {
         tel: profile?.tel || "",
         role: profile?.role || "user",
         avatarUrl: profile?.avatar_url || "",
-        createdAt: profile?.created_at || null
+        createdAt: profile?.created_at || null,
+        ticari: !!profile?.ticari
       };
     } else {
       currentUser = null;
@@ -278,8 +293,9 @@ listingsEl.addEventListener("click", async e => {
     if (!currentUser) return;
     if (!confirm("Bu ilanı kaldırmak istediğinden emin misin?")) return;
     const { error } = await sb.from("ilanlar").delete().eq("id", id);
-    if (error) { alert("Silme hatası: " + error.message); return; }
+    if (error) { toast("Silme hatası: " + error.message, "error"); return; }
     await loadIlanlar();
+    toast("İlan kaldırıldı", "ok");
     return;
   }
 
@@ -539,7 +555,7 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   kmRange.value = 5; kmVal.textContent = "5";
   basSaat.value = "09:00"; bitSaat.value = "18:00";
   await loadIlanlar();
-  alert("İlanın yayınlandı.");
+  toast("İlanın yayınlandı", "ok");
 });
 
 // =============== YARDIMCI ===============
@@ -611,10 +627,12 @@ function profileHasChanges() {
   const soyad = document.getElementById("profileSoyad").value.trim();
   const email = normalizeEmail(document.getElementById("profileEmail").value);
   const tel = _telDigits(document.getElementById("profileTel").value);
+  const ticari = document.getElementById("profileTicari").checked;
   return ad !== currentUser.ad
       || soyad !== currentUser.soyad
       || email !== normalizeEmail(currentUser.email)
-      || tel !== _telDigits(currentUser.tel);
+      || tel !== _telDigits(currentUser.tel)
+      || ticari !== !!currentUser.ticari;
 }
 
 function refreshProfileSaveBtn() {
@@ -741,6 +759,7 @@ function openProfileModal() {
   document.getElementById("profileSoyad").value = currentUser.soyad || "";
   document.getElementById("profileEmail").value = currentUser.email || "";
   document.getElementById("profileTel").value = formatTel(currentUser.tel || "");
+  document.getElementById("profileTicari").checked = !!currentUser.ticari;
   document.getElementById("profileEmailHint").style.display = "none";
   document.getElementById("profileTelHint").style.display = "none";
   setAvatarPreview(currentUser.avatarUrl || "");
@@ -771,6 +790,22 @@ function openProfileModal() {
     clearStatus("profileStatus");
   });
 });
+document.getElementById("profileTicari").addEventListener("change", () => {
+  refreshProfileSaveBtn();
+  clearStatus("profileStatus");
+});
+
+// İlanlarımı Görüntüle — modalı kapat, sidebar toggle'ı "İlanlarım"a geçir
+document.getElementById("goToMyListingsBtn").addEventListener("click", async () => {
+  if (!currentUser) return;
+  closeModals();
+  const mineBtn = document.querySelector('#myListingsPanel .seg-btn[data-scope="mine"]');
+  if (mineBtn && !mineBtn.classList.contains("active")) {
+    mineBtn.click();
+  }
+  // Sayfayı listings'e kaydır
+  document.getElementById("listings")?.scrollIntoView({ behavior: "smooth", block: "start" });
+});
 
 // E-posta/telefon değiştirildiğinde uyarıyı göster
 document.getElementById("profileEmail").addEventListener("input", e => {
@@ -790,6 +825,7 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   const soyad = (fd.get("soyad") || "").trim();
   const email = normalizeEmail(fd.get("email"));
   const tel = (fd.get("tel") || "").trim();
+  const ticari = fd.get("ticari") === "on";
 
   if (!ad || !soyad || !email || !tel) {
     setStatus("profileStatus", "error", "Lütfen tüm alanları doldurun.");
@@ -803,13 +839,14 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   const emailChanged = email !== normalizeEmail(currentUser.email);
   const telChanged = _telDigits(tel) !== _telDigits(currentUser.tel);
   const nameChanged = ad !== currentUser.ad || soyad !== currentUser.soyad;
+  const ticariChanged = ticari !== !!currentUser.ticari;
 
   setBusy("profileSaveBtn", true, "Kaydediliyor...");
 
-  // 1) profiles tablosunda ad/soyad/tel güncelle
-  if (nameChanged || telChanged) {
+  // 1) profiles tablosu (ad/soyad/tel/ticari)
+  if (nameChanged || telChanged || ticariChanged) {
     const { error: profErr } = await sb.from("profiles")
-      .update({ ad, soyad, tel })
+      .update({ ad, soyad, tel, ticari })
       .eq("id", currentUser.id);
     if (profErr) {
       setBusy("profileSaveBtn", false);
@@ -819,6 +856,7 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
     currentUser.ad = ad;
     currentUser.soyad = soyad;
     currentUser.tel = tel;
+    currentUser.ticari = ticari;
   }
 
   // 2) E-posta değişikliği — Supabase doğrulama akışı
@@ -836,7 +874,8 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
     renderTopNav();
     refreshProfileSaveBtn();
     setStatus("profileStatus", "info",
-      "Kaydedildi. E-posta değişikliği için her iki adrese de onay maili gönderildi; ikisini de onaylayana kadar yeni e-posta aktif olmaz.");
+      "Kaydedildi. E-posta değişikliği için her iki adrese de onay maili gönderildi.");
+    toast("Profil güncellendi · Onay maillerini kontrol et", "info", 4000);
     return;
   }
 
@@ -844,6 +883,7 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   renderTopNav();
   refreshProfileSaveBtn();
   setStatus("profileStatus", "ok", "Profilin güncellendi.");
+  toast("Profil güncellendi", "ok");
 });
 
 // =============== ŞİFRE DEĞİŞTİR (girişli kullanıcı) ===============
@@ -885,7 +925,8 @@ document.getElementById("changePasswordForm").addEventListener("submit", async e
   }
 
   e.target.reset();
-  setStatus("changePasswordStatus","ok","Şifren güncellendi. Bir sonraki girişinde yeni şifreni kullanabilirsin.");
+  setStatus("changePasswordStatus","ok","Şifren güncellendi.");
+  toast("Şifren güncellendi", "ok");
 });
 
 // =============== HESABI KAPAT ===============

@@ -14,6 +14,8 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="toastHost" class="toast-host"></div>
+
   <header class="site-header">
     <div class="container header-inner">
       <a href="/" class="logo">
@@ -317,10 +319,16 @@
         </label>
         <p class="muted small" id="profileTelHint" style="display:none;color:#92400e">⚠ Telefon doğrulama (SMS) yakında. Şimdilik değişiklik anında kaydedilir.</p>
 
+        <label class="consent" style="margin-top:8px">
+          <input type="checkbox" name="ticari" id="profileTicari" />
+          <span>Kampanya ve duyuru e-postaları almayı kabul ediyorum</span>
+        </label>
+
         <button type="submit" class="btn btn-primary btn-block" id="profileSaveBtn" disabled>Kaydet</button>
         <hr style="margin:16px 0;border:0;border-top:1px solid #e5e7eb" />
-        <button type="button" class="btn btn-ghost btn-block" id="changePasswordBtn">Şifremi Değiştir</button>
-        <button type="button" class="btn btn-block btn-danger" id="deleteAccountBtn" style="margin-top:8px">Hesabımı Kapat</button>
+        <button type="button" class="btn btn-ghost btn-block" id="goToMyListingsBtn">📋 İlanlarımı Görüntüle</button>
+        <button type="button" class="btn btn-ghost btn-block" id="changePasswordBtn" style="margin-top:8px">🔒 Şifremi Değiştir</button>
+        <button type="button" class="btn btn-block btn-danger" id="deleteAccountBtn" style="margin-top:8px">⚠ Hesabımı Kapat</button>
       </form>
     </div>
   </div>
@@ -348,7 +356,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=21"></script>
-  <script src="script.js?v=21"></script>
+  <script src="supabase-config.js?v=22"></script>
+  <script src="script.js?v=22"></script>
 </body>
 </html>
