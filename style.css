@@ -865,3 +865,165 @@ body.modal-open { overflow: hidden; }
   border-radius: 8px;
   border-left: 3px solid var(--orange);
 }
+
+/* ===== Kurye Kontrol Paneli (anasayfa) ===== */
+.kurye-dashboard {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+  padding: 18px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.kd-head {
+  display: flex; align-items: center; gap: 12px;
+}
+.kd-avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: #fde2c4 center/cover no-repeat;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px;
+  color: #c2410c;
+  flex-shrink: 0;
+  border: 2px solid white;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+.kd-avatar[data-has-image="1"]::before { content: ""; }
+.kd-avatar:not([data-has-image="1"])::before { content: attr(data-fallback); }
+.kd-greeting {
+  display: flex; flex-direction: column; gap: 4px;
+}
+.kd-greeting strong {
+  font-size: 17px; font-weight: 700; color: var(--gray-900);
+}
+.kd-greeting strong span { color: var(--orange-dark); }
+
+.kd-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.kd-stat {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.kd-stat-num {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--orange-dark);
+}
+.kd-stat-lbl {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-500);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+/* iOS-style toggle kartı */
+.kd-toggle-card {
+  background: white;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.25s;
+}
+.kd-toggle-card.active {
+  border-color: #86efac;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+  box-shadow: 0 0 0 4px rgba(34,197,94,0.08);
+}
+.kd-toggle-row {
+  display: flex; align-items: center; justify-content: center; gap: 14px;
+}
+.kd-toggle-label {
+  font-size: 15px; font-weight: 700;
+  color: var(--gray-500);
+  flex-shrink: 0;
+  transition: color 0.2s;
+}
+.kd-toggle-card:not(.active) .kd-toggle-label:first-of-type { color: var(--gray-900); }
+.kd-toggle-card.active .kd-toggle-label-right { color: var(--green-dark); }
+
+.kd-switch {
+  position: relative;
+  display: inline-block;
+  width: 64px;
+  height: 36px;
+  flex-shrink: 0;
+}
+.kd-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
+.kd-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background: #d1d5db;
+  border-radius: 999px;
+  transition: 0.25s;
+}
+.kd-slider::before {
+  content: "";
+  position: absolute;
+  height: 28px; width: 28px;
+  left: 4px; top: 4px;
+  background: white;
+  border-radius: 50%;
+  transition: 0.25s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+.kd-switch input:checked + .kd-slider {
+  background: #22c55e;
+}
+.kd-switch input:checked + .kd-slider::before {
+  transform: translateX(28px);
+}
+.kd-switch input:not(:checked) + .kd-slider {
+  background: #fbbf24; /* "meşgul" sarı */
+}
+
+.kd-status-msg {
+  text-align: center;
+  font-size: 13px;
+  color: var(--gray-700);
+  margin: 0;
+}
+.kd-status-msg strong { color: var(--gray-900); font-weight: 700; }
+
+.kd-quick-links {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.kd-link {
+  background: white;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.kd-link:hover {
+  border-color: var(--orange);
+  color: var(--orange-dark);
+}
+
+@media (max-width: 520px) {
+  .kurye-dashboard { padding: 14px; }
+  .kd-greeting strong { font-size: 15px; }
+  .kd-stat-num { font-size: 16px; }
+  .kd-toggle-label { font-size: 14px; }
+}

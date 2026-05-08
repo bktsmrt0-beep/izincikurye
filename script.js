@@ -1351,6 +1351,8 @@ document.getElementById("musaitToggle")?.addEventListener("change", async e => {
   }
   currentUser.musait = yeni;
   currentUser.musaitAt = nowIso;
+  // Dashboard switch'ini de senkron tut
+  syncDashboardToggle();
   toast(yeni ? "🟢 Müsait olarak işaretlendin" : "🔴 Artık müsait değilsin", "ok");
 });
 
@@ -1459,6 +1461,113 @@ document.querySelectorAll('input[type="password"]').forEach(input => {
     btn.setAttribute("aria-label", show ? "Şifreyi gizle" : "Şifreyi göster");
   });
   wrap.appendChild(btn);
+});
+
+// =============== KURYE KONTROL PANELİ ===============
+async function renderKuryeDashboard() {
+  const dash = document.getElementById("kuryeDashboard");
+  if (!dash) return;
+  if (!currentUser || currentUser.kullaniciTipi !== "kurye") {
+    dash.classList.add("hidden");
+    return;
+  }
+  dash.classList.remove("hidden");
+
+  // Greeting
+  const adEl = document.getElementById("kdName");
+  if (adEl) adEl.textContent = (currentUser.ad || "Kurye").trim();
+
+  // Avatar
+  const av = document.getElementById("kdAvatar");
+  if (av) {
+    if (currentUser.avatarUrl) {
+      av.style.backgroundImage = `url("${currentUser.avatarUrl}")`;
+      av.dataset.hasImage = "1";
+    } else {
+      av.style.backgroundImage = "";
+      delete av.dataset.hasImage;
+    }
+  }
+
+  // Stats
+  const days = currentUser.createdAt
+    ? Math.max(0, Math.floor((Date.now() - new Date(currentUser.createdAt).getTime()) / 86400000))
+    : 0;
+  document.getElementById("kdMemberDays").textContent = days;
+  document.getElementById("kdComplete").textContent = computeProfileCompletion() + "%";
+
+  // İlan sayısı (count head)
+  try {
+    const session = readStoredSession();
+    const { data } = await rawSelect(
+      `ilanlar?user_id=eq.${currentUser.id}&select=id`,
+      session?.access_token,
+      4000
+    );
+    document.getElementById("kdMyIlan").textContent = (data || []).length;
+  } catch { document.getElementById("kdMyIlan").textContent = "—"; }
+
+  // Toggle state senkronu
+  syncDashboardToggle();
+}
+
+function syncDashboardToggle() {
+  const sw = document.getElementById("kdMusaitSwitch");
+  const card = document.getElementById("kdToggleCard");
+  const msg = document.getElementById("kdStatusMsg");
+  if (!sw) return;
+  const on = !!currentUser?.musait;
+  sw.checked = on;
+  if (card) card.classList.toggle("active", on);
+  if (msg) {
+    msg.innerHTML = on
+      ? "🟢 İşletmeler seni <strong>Müsait Kuryeler</strong> listesinde görüyor."
+      : "Hazır olduğunda <strong>Müsait</strong> konumuna al.";
+  }
+}
+
+// Dashboard switch handler — DB güncelle + diğer yerlerle senkronize tut
+document.getElementById("kdMusaitSwitch")?.addEventListener("change", async e => {
+  if (!currentUser) return;
+  const yeni = e.target.checked;
+  const nowIso = new Date().toISOString();
+  // Anında UI güncelle
+  document.getElementById("kdToggleCard")?.classList.toggle("active", yeni);
+  document.getElementById("kdStatusMsg").innerHTML = yeni
+    ? "🟢 İşletmeler seni <strong>Müsait Kuryeler</strong> listesinde görüyor."
+    : "Hazır olduğunda <strong>Müsait</strong> konumuna al.";
+
+  const { error } = await sb.from("profiles")
+    .update({ musait: yeni, musait_at: nowIso })
+    .eq("id", currentUser.id);
+
+  if (error) {
+    e.target.checked = !yeni;
+    document.getElementById("kdToggleCard")?.classList.toggle("active", !yeni);
+    document.getElementById("kdStatusMsg").innerHTML = !yeni
+      ? "🟢 İşletmeler seni <strong>Müsait Kuryeler</strong> listesinde görüyor."
+      : "Hazır olduğunda <strong>Müsait</strong> konumuna al.";
+    toast("Güncellenemedi: " + error.message, "error");
+    return;
+  }
+  currentUser.musait = yeni;
+  currentUser.musaitAt = nowIso;
+  // Profilim modal toggle'ını da senkron tut
+  const mt = document.getElementById("musaitToggle");
+  if (mt) {
+    mt.checked = yeni;
+    document.getElementById("musaitTitle").textContent = yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
+    document.getElementById("musaitCard")?.classList.toggle("active", yeni);
+  }
+  toast(yeni ? "🟢 Müsait olarak işaretlendin" : "🔴 Artık müsait değilsin", "ok");
+});
+
+// Hızlı bağlantılar
+document.getElementById("kdProfileLink")?.addEventListener("click", () => openProfileModal());
+document.getElementById("kdMyIlanLink")?.addEventListener("click", () => {
+  const mineBtn = document.querySelector('#myListingsPanel .seg-btn[data-scope="mine"]');
+  if (mineBtn && !mineBtn.classList.contains("active")) mineBtn.click();
+  document.getElementById("listings")?.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
 // =============== KURYELER (Müsait Liste) ===============
@@ -1625,6 +1734,7 @@ async function _enforceRememberMe() {
   catch (e) { console.error("init loadIlanlar:", e); }
   try { renderTopNav(); console.log("[init] renderTopNav OK"); }
   catch (e) { console.error("init renderTopNav:", e); }
+  try { await renderKuryeDashboard(); } catch (e) { console.error("init renderKuryeDashboard:", e); }
 
   if (_isRecoveryUrl) {
     openModal("forgotResetModal");

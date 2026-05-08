@@ -59,6 +59,40 @@
         <p class="page-sub">Ankara&apos;da anlık olarak izinci arayanlar</p>
       </div>
 
+      <!-- KURYE KONTROL PANELİ (sadece kurye için) -->
+      <section id="kuryeDashboard" class="kurye-dashboard hidden">
+        <header class="kd-head">
+          <div class="kd-avatar" id="kdAvatar" data-fallback="👤"></div>
+          <div class="kd-greeting">
+            <strong>Hoş geldin <span id="kdName">Kurye</span></strong>
+            <span class="user-type-badge type-kurye">🏍️ Kurye</span>
+          </div>
+        </header>
+
+        <div class="kd-stats">
+          <div class="kd-stat"><span class="kd-stat-num" id="kdMyIlan">0</span><span class="kd-stat-lbl">İlanım</span></div>
+          <div class="kd-stat"><span class="kd-stat-num" id="kdMemberDays">0</span><span class="kd-stat-lbl">Gündür Üye</span></div>
+          <div class="kd-stat"><span class="kd-stat-num" id="kdComplete">0%</span><span class="kd-stat-lbl">Profil</span></div>
+        </div>
+
+        <div class="kd-toggle-card" id="kdToggleCard">
+          <div class="kd-toggle-row">
+            <span class="kd-toggle-label">Meşgul</span>
+            <label class="kd-switch">
+              <input type="checkbox" id="kdMusaitSwitch" />
+              <span class="kd-slider"></span>
+            </label>
+            <span class="kd-toggle-label kd-toggle-label-right">Müsait</span>
+          </div>
+          <p class="kd-status-msg" id="kdStatusMsg">Hazır olduğunda <strong>Müsait</strong> konumuna al.</p>
+        </div>
+
+        <div class="kd-quick-links">
+          <button type="button" class="kd-link" id="kdProfileLink">👤 Profilim</button>
+          <button type="button" class="kd-link" id="kdMyIlanLink">📋 İlanlarım</button>
+        </div>
+      </section>
+
       <!-- Ana içerik sekmeleri -->
       <div class="content-tabs" role="tablist">
         <button type="button" class="content-tab active" data-content-tab="ilanlar" role="tab">📋 Aktif İlanlar</button>
@@ -501,7 +535,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=35"></script>
-  <script src="script.js?v=35"></script>
+  <script src="supabase-config.js?v=36"></script>
+  <script src="script.js?v=36"></script>
 </body>
 </html>
