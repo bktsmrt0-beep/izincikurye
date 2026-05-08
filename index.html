@@ -276,60 +276,81 @@
       <button class="modal-close" data-close>&times;</button>
       <h2>Profilim</h2>
       <p class="muted small" id="profileLastUpdated"></p>
+
+      <!-- Tamamlama yüzdesi -->
+      <div class="completion-wrap">
+        <div class="completion"><div class="completion-fill" id="completionFill"></div></div>
+        <span class="completion-pct"><span id="completionPct">0</span>% tamamlandı</span>
+      </div>
+
+      <!-- Sekmeler -->
+      <div class="tabs" role="tablist">
+        <button type="button" class="tab-btn active" data-tab="genel" role="tab">Genel</button>
+        <button type="button" class="tab-btn" data-tab="profil" role="tab">Profil</button>
+        <button type="button" class="tab-btn" data-tab="bildirim" role="tab">Bildirimler</button>
+        <button type="button" class="tab-btn" data-tab="guvenlik" role="tab">Güvenlik</button>
+      </div>
+
       <div class="form-status hidden" id="profileStatus"></div>
 
-      <div class="profile-stats" id="profileStats">
-        <div class="stat-item">
-          <span class="stat-num" id="statMyIlan">0</span>
-          <span class="stat-lbl">İlanım</span>
+      <!-- GENEL sekmesi -->
+      <div class="tab-panel" data-tab-panel="genel">
+        <div class="profile-stats">
+          <div class="stat-item"><span class="stat-num" id="statMyIlan">0</span><span class="stat-lbl">İlanım</span></div>
+          <div class="stat-item"><span class="stat-num" id="statMemberDays">0</span><span class="stat-lbl">Gündür Üye</span></div>
         </div>
-        <div class="stat-item">
-          <span class="stat-num" id="statMemberDays">0</span>
-          <span class="stat-lbl">Gündür Üye</span>
+        <div class="avatar-row">
+          <div class="avatar-preview" id="avatarPreview" data-fallback="👤"></div>
+          <div class="avatar-actions">
+            <label class="btn btn-ghost btn-sm" for="avatarFileInput">📷 Fotoğrafı Değiştir</label>
+            <input type="file" id="avatarFileInput" accept="image/*" hidden />
+            <button type="button" class="btn btn-ghost btn-sm hidden" id="avatarRemoveBtn">Kaldır</button>
+            <p class="muted small" style="margin-top:4px">Max 2 MB · JPG/PNG/WebP</p>
+          </div>
         </div>
+        <button type="button" class="btn btn-ghost btn-block" id="goToMyListingsBtn" style="margin-top:8px">📋 İlanlarımı Görüntüle</button>
       </div>
 
-      <div class="avatar-row">
-        <div class="avatar-preview" id="avatarPreview" data-fallback="👤"></div>
-        <div class="avatar-actions">
-          <label class="btn btn-ghost btn-sm" for="avatarFileInput">📷 Fotoğrafı Değiştir</label>
-          <input type="file" id="avatarFileInput" accept="image/*" hidden />
-          <button type="button" class="btn btn-ghost btn-sm hidden" id="avatarRemoveBtn">Kaldır</button>
-          <p class="muted small" style="margin-top:4px">Max 2 MB · JPG/PNG/WebP</p>
-        </div>
-      </div>
-
+      <!-- PROFİL + BİLDİRİM ortak form -->
       <form id="profileForm" class="form">
-        <div class="row-2">
-          <label>Ad <span class="req">*</span>
-            <input type="text" name="ad" id="profileAd" required maxlength="40" autocomplete="given-name" />
+        <!-- Profil alanları -->
+        <div data-tab-section="profil" class="hidden">
+          <div class="row-2">
+            <label>Ad <span class="req">*</span>
+              <input type="text" name="ad" id="profileAd" required maxlength="40" autocomplete="given-name" />
+            </label>
+            <label>Soyad <span class="req">*</span>
+              <input type="text" name="soyad" id="profileSoyad" required maxlength="40" autocomplete="family-name" />
+            </label>
+          </div>
+          <label>E-posta <span class="req">*</span>
+            <input type="email" name="email" id="profileEmail" required maxlength="80" autocomplete="email" />
           </label>
-          <label>Soyad <span class="req">*</span>
-            <input type="text" name="soyad" id="profileSoyad" required maxlength="40" autocomplete="family-name" />
+          <p class="muted small" id="profileEmailHint" style="display:none;color:#92400e">⚠ E-postanı değiştirdiğinde her iki adrese de onay maili gönderilir; her ikisini de onaylayana kadar yeni adres aktif olmaz.</p>
+          <label>Cep Telefonu <span class="req">*</span>
+            <input type="tel" name="tel" id="profileTel" required pattern="0?5[0-9]{2}[ ]?[0-9]{3}[ ]?[0-9]{2}[ ]?[0-9]{2}" autocomplete="tel" placeholder="0532 123 45 67" />
+          </label>
+          <p class="muted small" id="profileTelHint" style="display:none;color:#92400e">⚠ Telefon doğrulama (SMS) yakında. Şimdilik değişiklik anında kaydedilir.</p>
+        </div>
+
+        <!-- Bildirim alanları -->
+        <div data-tab-section="bildirim" class="hidden">
+          <p class="muted small" style="margin-bottom:8px">E-posta bildirim tercihlerini yönet.</p>
+          <label class="consent">
+            <input type="checkbox" name="ticari" id="profileTicari" />
+            <span>Kampanya ve duyuru e-postaları almayı kabul ediyorum</span>
           </label>
         </div>
 
-        <label>E-posta <span class="req">*</span>
-          <input type="email" name="email" id="profileEmail" required maxlength="80" autocomplete="email" />
-        </label>
-        <p class="muted small" id="profileEmailHint" style="display:none;color:#92400e">⚠ E-postanı değiştirdiğinde her iki adrese de onay maili gönderilir; her ikisini de onaylayana kadar yeni adres aktif olmaz.</p>
-
-        <label>Cep Telefonu <span class="req">*</span>
-          <input type="tel" name="tel" id="profileTel" required pattern="0?5[0-9]{2}[ ]?[0-9]{3}[ ]?[0-9]{2}[ ]?[0-9]{2}" autocomplete="tel" placeholder="0532 123 45 67" />
-        </label>
-        <p class="muted small" id="profileTelHint" style="display:none;color:#92400e">⚠ Telefon doğrulama (SMS) yakında. Şimdilik değişiklik anında kaydedilir.</p>
-
-        <label class="consent" style="margin-top:8px">
-          <input type="checkbox" name="ticari" id="profileTicari" />
-          <span>Kampanya ve duyuru e-postaları almayı kabul ediyorum</span>
-        </label>
-
-        <button type="submit" class="btn btn-primary btn-block" id="profileSaveBtn" disabled>Kaydet</button>
-        <hr style="margin:16px 0;border:0;border-top:1px solid #e5e7eb" />
-        <button type="button" class="btn btn-ghost btn-block" id="goToMyListingsBtn">📋 İlanlarımı Görüntüle</button>
-        <button type="button" class="btn btn-ghost btn-block" id="changePasswordBtn" style="margin-top:8px">🔒 Şifremi Değiştir</button>
-        <button type="button" class="btn btn-block btn-danger" id="deleteAccountBtn" style="margin-top:8px">⚠ Hesabımı Kapat</button>
+        <!-- Profil + Bildirim sekmelerinde görünür Kaydet -->
+        <button type="submit" class="btn btn-primary btn-block hidden" id="profileSaveBtn" disabled>Kaydet</button>
       </form>
+
+      <!-- GÜVENLİK sekmesi -->
+      <div class="tab-panel hidden" data-tab-panel="guvenlik">
+        <button type="button" class="btn btn-ghost btn-block" id="changePasswordBtn">🔒 Şifremi Değiştir</button>
+        <button type="button" class="btn btn-block btn-danger" id="deleteAccountBtn" style="margin-top:8px">⚠ Hesabımı Kapat</button>
+      </div>
     </div>
   </div>
 
@@ -356,7 +377,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=25"></script>
-  <script src="script.js?v=25"></script>
+  <script src="supabase-config.js?v=26"></script>
+  <script src="script.js?v=26"></script>
 </body>
 </html>

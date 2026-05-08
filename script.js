@@ -698,6 +698,50 @@ function refreshProfileSaveBtn() {
   if (btn) btn.disabled = !profileHasChanges();
 }
 
+// =============== PROFİL SEKMELERİ ===============
+function switchProfileTab(name) {
+  document.querySelectorAll("#profileModal .tab-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.tab === name);
+  });
+  // Form-dışı paneller (genel, guvenlik)
+  document.querySelectorAll("#profileModal [data-tab-panel]").forEach(p => {
+    p.classList.toggle("hidden", p.dataset.tabPanel !== name);
+  });
+  // Form içi bölümler (profil, bildirim)
+  const showForm = (name === "profil" || name === "bildirim");
+  document.querySelectorAll("#profileModal [data-tab-section]").forEach(s => {
+    s.classList.toggle("hidden", s.dataset.tabSection !== name);
+  });
+  document.getElementById("profileForm").classList.toggle("hidden", !showForm);
+  document.getElementById("profileSaveBtn").classList.toggle("hidden", !showForm);
+}
+
+function computeProfileCompletion() {
+  if (!currentUser) return 0;
+  const fields = [
+    !!(currentUser.ad && currentUser.ad.trim()),
+    !!(currentUser.soyad && currentUser.soyad.trim()),
+    !!(currentUser.email && currentUser.email.trim()),
+    !!(_telDigits(currentUser.tel).length >= 10),
+    !!currentUser.avatarUrl
+  ];
+  const filled = fields.filter(Boolean).length;
+  return Math.round((filled / fields.length) * 100);
+}
+
+function refreshCompletion() {
+  const pct = computeProfileCompletion();
+  const fill = document.getElementById("completionFill");
+  const txt = document.getElementById("completionPct");
+  if (fill) fill.style.width = pct + "%";
+  if (txt) txt.textContent = pct;
+}
+
+// Sekme buton click listener'ları
+document.querySelectorAll("#profileModal .tab-btn").forEach(btn => {
+  btn.addEventListener("click", () => switchProfileTab(btn.dataset.tab));
+});
+
 async function loadProfileStats() {
   if (!currentUser) return;
   // Üyelik gün sayısı
@@ -781,7 +825,9 @@ document.getElementById("avatarFileInput").addEventListener("change", async e =>
   currentUser.avatarUrl = publicUrl;
   setAvatarPreview(publicUrl);
   renderTopNav();
+  refreshCompletion();
   setStatus("profileStatus", "ok", "Profil fotoğrafın güncellendi.");
+  toast("Profil fotoğrafın güncellendi", "ok");
   e.target.value = "";
 });
 
@@ -807,6 +853,7 @@ document.getElementById("avatarRemoveBtn").addEventListener("click", async () =>
   currentUser.avatarUrl = "";
   setAvatarPreview("");
   renderTopNav();
+  refreshCompletion();
   setStatus("profileStatus", "ok", "Profil fotoğrafın kaldırıldı.");
 });
 
@@ -823,6 +870,8 @@ function openProfileModal() {
   setAvatarPreview(currentUser.avatarUrl || "");
   clearStatus("profileStatus");
   refreshProfileSaveBtn();
+  refreshCompletion();
+  switchProfileTab("genel");
 
   // İstatistikler — kendi ilan sayısı + üyelik gün sayısı
   loadProfileStats();
@@ -940,6 +989,7 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   setBusy("profileSaveBtn", false);
   renderTopNav();
   refreshProfileSaveBtn();
+  refreshCompletion();
   setStatus("profileStatus", "ok", "Profilin güncellendi.");
   toast("Profil güncellendi", "ok");
 });

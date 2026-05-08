@@ -562,3 +562,59 @@ body.modal-open { overflow: hidden; }
 @media (max-width: 520px) {
   .user-menu { right: -8px; min-width: 200px; }
 }
+
+/* ===== Profil sekmeleri + tamamlama yüzdesi ===== */
+.completion-wrap {
+  display: flex; align-items: center; gap: 10px;
+  margin: 12px 0 8px;
+}
+.completion {
+  flex: 1;
+  height: 6px;
+  background: #f3f4f6;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.completion-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--orange) 0%, var(--orange-dark) 100%);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+.completion-pct {
+  font-size: 11px; font-weight: 600;
+  color: var(--gray-500);
+  white-space: nowrap;
+}
+
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--gray-200);
+  margin: 12px 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab-btn {
+  padding: 10px 14px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--gray-500);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab-btn:hover { color: var(--gray-900); }
+.tab-btn.active {
+  color: var(--orange-dark);
+  border-bottom-color: var(--orange);
+  font-weight: 600;
+}
+
+@media (max-width: 520px) {
+  .tab-btn { padding: 8px 10px; font-size: 13px; }
+}
