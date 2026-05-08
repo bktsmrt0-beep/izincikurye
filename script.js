@@ -25,6 +25,7 @@ const ANKARA_ILCELERI = [
 // =============== DURUM ===============
 let currentUser = null;   // { id, email, ad, soyad, tel }
 let ilanlar = [];
+let listingScope = "all"; // "all" | "mine"
 
 // =============== DOM REF ===============
 const districtSelect = document.getElementById("districtSelect");
@@ -120,6 +121,7 @@ async function loadIlanlar() {
     const tableOrView = currentUser ? "ilanlar" : "ilanlar_public";
     let q = sb.from(tableOrView).select("*").order("created_at", { ascending: false });
     if (filter !== "all") q = q.eq("ilce", filter);
+    if (listingScope === "mine" && currentUser) q = q.eq("user_id", currentUser.id);
     const { data, error } = await q;
     if (error) {
       console.error("[loadIlanlar]", error);
@@ -200,8 +202,23 @@ function renderTopNav() {
 
 function renderListings() {
   guestNotice.classList.toggle("hidden", !!currentUser);
+
+  // İlanlarım paneli sadece girişli kullanıcıya görünür
+  const myPanel = document.getElementById("myListingsPanel");
+  if (myPanel) myPanel.classList.toggle("hidden", !currentUser);
+
+  // Sayım göstergesi
+  const cntEl = document.getElementById("myListingsCount");
+  if (cntEl && currentUser) {
+    cntEl.textContent = listingScope === "mine"
+      ? `${ilanlar.length} ilanım`
+      : `Toplam ${ilanlar.length} ilan`;
+  }
   listingsEl.innerHTML = "";
   if (ilanlar.length === 0) {
+    emptyEl.textContent = (listingScope === "mine" && currentUser)
+      ? "Henüz hiç ilan yayınlamamışsın."
+      : "Bu ilçede şu an aktif izinci ilanı yok.";
     emptyEl.classList.remove("hidden");
     return;
   }
@@ -516,6 +533,19 @@ function formatDateTime(iso) {
 }
 
 districtSelect.addEventListener("change", loadIlanlar);
+
+// =============== İLANLARIM TOGGLE ===============
+document.querySelectorAll("#myListingsPanel .seg-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const scope = btn.dataset.scope;
+    if (scope === listingScope) return;
+    listingScope = scope;
+    document.querySelectorAll("#myListingsPanel .seg-btn").forEach(b => {
+      b.classList.toggle("active", b.dataset.scope === scope);
+    });
+    await loadIlanlar();
+  });
+});
 
 // =============== PROFİLİM ===============
 function openProfileModal() {

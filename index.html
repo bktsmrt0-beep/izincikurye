@@ -38,6 +38,15 @@
         </select>
       </div>
 
+      <div class="panel hidden" id="myListingsPanel">
+        <h3 class="panel-title">Görünüm</h3>
+        <div class="seg-toggle" role="tablist">
+          <button type="button" class="seg-btn active" data-scope="all" role="tab">Tüm İlanlar</button>
+          <button type="button" class="seg-btn" data-scope="mine" role="tab">İlanlarım</button>
+        </div>
+        <p class="muted small" id="myListingsCount" style="margin-top:8px"></p>
+      </div>
+
       <button class="btn btn-primary btn-block" id="ilanVerBtn">+ İlan Ver</button>
     </aside>
 
@@ -291,7 +300,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=15"></script>
-  <script src="script.js?v=15"></script>
+  <script src="supabase-config.js?v=16"></script>
+  <script src="script.js?v=16"></script>
 </body>
 </html>
