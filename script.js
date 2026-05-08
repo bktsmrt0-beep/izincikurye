@@ -81,7 +81,7 @@ async function syncSession() {
     if (session?.user) {
       console.log("[syncSession] profile query start for", session.user.id);
       const { data: profile, error: pErr } = await _withTimeout(
-        sb.from("profiles").select("ad, soyad, tel, role, avatar_url").eq("id", session.user.id).maybeSingle(),
+        sb.from("profiles").select("ad, soyad, tel, role, avatar_url, created_at").eq("id", session.user.id).maybeSingle(),
         8000, "profiles.select"
       );
       console.log("[syncSession] profile query done", { profile, pErr });
@@ -93,7 +93,8 @@ async function syncSession() {
         soyad: profile?.soyad || "",
         tel: profile?.tel || "",
         role: profile?.role || "user",
-        avatarUrl: profile?.avatar_url || ""
+        avatarUrl: profile?.avatar_url || "",
+        createdAt: profile?.created_at || null
       };
     } else {
       currentUser = null;
@@ -321,10 +322,24 @@ function showAdres(i) {
 function openModal(id) {
   document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
+  document.body.classList.add("modal-open");
+  // İlk inputa odaklan (varsa)
+  setTimeout(() => {
+    const first = document.querySelector("#" + id + " input:not([type='hidden']):not([disabled]), #" + id + " select:not([disabled]), #" + id + " textarea:not([disabled])");
+    if (first) first.focus();
+  }, 50);
 }
 function closeModals() {
   document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
+  document.body.classList.remove("modal-open");
 }
+
+// Esc tuşu açık modalı kapatır
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape" && document.querySelector(".modal:not(.hidden)")) {
+    closeModals();
+  }
+});
 document.querySelectorAll("[data-close]").forEach(b =>
   b.addEventListener("click", closeModals)
 );
@@ -607,6 +622,28 @@ function refreshProfileSaveBtn() {
   if (btn) btn.disabled = !profileHasChanges();
 }
 
+async function loadProfileStats() {
+  if (!currentUser) return;
+  // Üyelik gün sayısı
+  const dayEl = document.getElementById("statMemberDays");
+  if (dayEl && currentUser.createdAt) {
+    const days = Math.max(0, Math.floor((Date.now() - new Date(currentUser.createdAt).getTime()) / 86400000));
+    dayEl.textContent = days;
+  } else if (dayEl) {
+    dayEl.textContent = "—";
+  }
+
+  // Kendi ilan sayısı (count head sorgusu)
+  const ilanEl = document.getElementById("statMyIlan");
+  if (ilanEl) {
+    const { count, error } = await sb.from("ilanlar")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", currentUser.id);
+    if (error) console.warn("[stats]", error.message);
+    ilanEl.textContent = (count ?? 0);
+  }
+}
+
 // =============== AVATAR ===============
 function setAvatarPreview(url) {
   const prev = document.getElementById("avatarPreview");
@@ -709,6 +746,9 @@ function openProfileModal() {
   setAvatarPreview(currentUser.avatarUrl || "");
   clearStatus("profileStatus");
   refreshProfileSaveBtn();
+
+  // İstatistikler — kendi ilan sayısı + üyelik gün sayısı
+  loadProfileStats();
 
   // Son güncelleme zamanı (varsa profiles.updated_at; yoksa boş)
   const lastEl = document.getElementById("profileLastUpdated");

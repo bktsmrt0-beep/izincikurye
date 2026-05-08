@@ -432,3 +432,33 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
   background: #fde2c4 center/cover no-repeat;
   display: inline-block; vertical-align: middle; margin-right: 4px;
 }
+
+/* Modal açıkken arka sayfa kaymasın */
+body.modal-open { overflow: hidden; }
+
+/* Profil hızlı istatistik */
+.profile-stats {
+  display: flex;
+  gap: 16px;
+  margin: 8px 0 12px;
+  padding: 12px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.profile-stats .stat-item {
+  flex: 1;
+  text-align: center;
+}
+.profile-stats .stat-num {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: #c2410c;
+}
+.profile-stats .stat-lbl {
+  color: #7c2d12;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
