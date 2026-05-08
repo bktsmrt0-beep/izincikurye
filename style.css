@@ -674,3 +674,21 @@ body.modal-open { overflow: hidden; }
   color: var(--gray-700);
   border: 1px solid var(--gray-200);
 }
+
+/* ===== İlan kalan süre rozeti ===== */
+.time-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-700);
+  background: var(--gray-100);
+  padding: 3px 8px;
+  border-radius: 999px;
+  align-self: flex-start;
+}
+.time-left.urgent {
+  background: #fef3c7;
+  color: #92400e;
+}

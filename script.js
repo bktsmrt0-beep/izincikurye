@@ -145,6 +145,8 @@ async function loadIlanlar() {
     let q = sb.from(tableOrView).select("*").order("created_at", { ascending: false });
     if (filter !== "all") q = q.eq("ilce", filter);
     if (listingScope === "mine" && currentUser) q = q.eq("user_id", currentUser.id);
+    // ilanlar tablosunda süresi dolmuş ilanları gizle (public view zaten filtreli)
+    if (tableOrView === "ilanlar") q = q.gt("expires_at", new Date().toISOString());
     const { data, error } = await q;
     if (error) {
       console.error("[loadIlanlar]", error);
@@ -303,11 +305,14 @@ function renderListings() {
       ? `<div class="delete-bar"><button class="delete-btn" data-act="delete" data-id="${i.id}">🗑 İlanı Kaldır</button></div>`
       : "";
 
+    const remainingTxt = formatRemaining(i.expires_at);
+    const isUrgent = remainingTxt.urgent;
     card.innerHTML = `
       <div class="card-top">
         <span class="badge">📍 ${i.ilce}</span>
         <span class="date">${formatDateTime(i.created_at)}</span>
       </div>
+      <div class="time-left ${isUrgent ? 'urgent' : ''}">⏳ ${remainingTxt.text}</div>
       <h3>${escapeHtml(i.baslik)}${mineTag}</h3>
       <p>${escapeHtml(i.aciklama || "")}</p>
       <div class="card-meta">
@@ -634,6 +639,19 @@ function formatDateTime(iso) {
   const tarih = d.toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
   const saat = d.toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" });
   return `${tarih} · ${saat}`;
+}
+
+// İlan kalan süre — 24 saatlik yayın
+function formatRemaining(expIso) {
+  if (!expIso) return { text: "", urgent: false };
+  const ms = new Date(expIso).getTime() - Date.now();
+  if (ms <= 0) return { text: "Süresi dolmuş", urgent: true };
+  const totalMin = Math.floor(ms / 60000);
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  const urgent = totalMin <= 60;
+  if (h >= 1) return { text: `${h} sa ${m} dk kaldı`, urgent };
+  return { text: `${m} dk kaldı`, urgent };
 }
 
 districtSelect.addEventListener("change", loadIlanlar);
