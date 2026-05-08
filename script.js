@@ -120,6 +120,7 @@ async function syncSession() {
         maxUcret: profile?.max_ucret ?? null,
         bildirimler: profile?.bildirimler || { yeni_ilan: true, ilanim_goruldu: true, kampanya: false },
         kullaniciTipi: profile?.kullanici_tipi || "",
+        isletmeAdi: profile?.isletme_adi || "",
         isAdresi: profile?.is_adresi || "",
         isTelefonu: profile?.is_telefonu || ""
       };
@@ -475,8 +476,9 @@ document.querySelectorAll('#registerForm input[name="kullanici_tipi"]').forEach(
     const bf = document.getElementById("businessFields");
     if (bf) bf.classList.toggle("hidden", !isBiz);
     // Required toggle
-    const adres = bf?.querySelector('input[name="is_adresi"]');
-    if (adres) adres.required = isBiz;
+    bf?.querySelectorAll('input[name="isletme_adi"], input[name="is_adresi"]').forEach(inp => {
+      inp.required = isBiz;
+    });
   });
 });
 
@@ -493,6 +495,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   const sozlesme = fd.get("sozlesme") === "on";
   const ticari = fd.get("ticari") === "on";
 
+  const isletme_adi = (fd.get("isletme_adi") || "").trim();
   const is_adresi = (fd.get("is_adresi") || "").trim();
   const is_telefonu = (fd.get("is_telefonu") || "").trim();
 
@@ -500,8 +503,8 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   if (!ad || !soyad || !email || !tel || !sifre) {
     alert("Lütfen tüm zorunlu alanları doldurun."); return;
   }
-  if (kullanici_tipi === "isletme" && !is_adresi) {
-    alert("İşletme için iş adresi zorunludur."); return;
+  if (kullanici_tipi === "isletme" && (!isletme_adi || !is_adresi)) {
+    alert("İşletme için işletme adı ve iş adresi zorunludur."); return;
   }
   if (sifre.length < 6) { alert("Şifre en az 6 karakter olmalı."); return; }
   if (sifre !== sifre2) { alert("Şifreler eşleşmiyor."); return; }
@@ -511,7 +514,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
     email,
     password: sifre,
     options: {
-      data: { ad, soyad, tel, ticari, kullanici_tipi, is_adresi, is_telefonu },
+      data: { ad, soyad, tel, ticari, kullanici_tipi, isletme_adi, is_adresi, is_telefonu },
       emailRedirectTo: window.location.origin + "/"
     }
   });
@@ -614,10 +617,9 @@ ilanVerBtn.addEventListener("click", () => {
   const adresHint = document.getElementById("adresEditHint");
 
   if (currentUser.kullaniciTipi === "isletme") {
-    // İşyeri adı için ad+soyad'ı varsayılan göster (yoksa boş)
-    const defaultAd = (currentUser.ad + " " + currentUser.soyad).trim();
-    if (defaultAd && !isyeriAd.value) {
-      isyeriAd.value = defaultAd;
+    // İşyeri adı için kayıtlı işletme adını kullan
+    if (currentUser.isletmeAdi && !isyeriAd.value) {
+      isyeriAd.value = currentUser.isletmeAdi;
       adHint?.classList.remove("hidden");
     }
     if (currentUser.isAdresi && !isyeriAdres.value) {
