@@ -26,6 +26,8 @@ const ANKARA_ILCELERI = [
 let currentUser = null;   // { id, email, ad, soyad, tel }
 let ilanlar = [];
 let listingScope = "all"; // "all" | "mine"
+let contentTab = "ilanlar"; // "ilanlar" | "kuryeler"
+let kuryeler = [];
 
 // =============== DOM REF ===============
 const districtSelect = document.getElementById("districtSelect");
@@ -36,6 +38,9 @@ const topNav = document.getElementById("topNav");
 const ilanIlceSelect = document.getElementById("ilanIlceSelect");
 const basSaat = document.getElementById("basSaat");
 const bitSaat = document.getElementById("bitSaat");
+const kuryeListingsEl = document.getElementById("kuryeListings");
+const kuryeEmptyEl = document.getElementById("kuryeEmptyState");
+const kuryeGuestNoticeEl = document.getElementById("kuryeGuestNotice");
 
 // İlçe doldur (sol filtre + ilan formu)
 ANKARA_ILCELERI.forEach(ilce => {
@@ -122,7 +127,9 @@ async function syncSession() {
         kullaniciTipi: profile?.kullanici_tipi || "",
         isletmeAdi: profile?.isletme_adi || "",
         isAdresi: profile?.is_adresi || "",
-        isTelefonu: profile?.is_telefonu || ""
+        isTelefonu: profile?.is_telefonu || "",
+        musait: !!profile?.musait,
+        musaitAt: profile?.musait_at || null
       };
     } else {
       currentUser = null;
@@ -1139,6 +1146,17 @@ function openProfileModal() {
   loadLastSignIn();
   setAvatarPreview(currentUser.avatarUrl || "");
 
+  // Müsaitlik (sadece kurye)
+  const musaitSec = document.getElementById("musaitToggleSection");
+  if (musaitSec) musaitSec.classList.toggle("hidden", currentUser.kullaniciTipi !== "kurye");
+  const mt = document.getElementById("musaitToggle");
+  const mTitle = document.getElementById("musaitTitle");
+  if (mt) {
+    mt.checked = !!currentUser.musait;
+    if (mTitle) mTitle.textContent = mt.checked ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
+    document.getElementById("musaitCard")?.classList.toggle("active", mt.checked);
+  }
+
   // Kullanıcı tipi rozeti
   const tb = document.getElementById("profileTypeBadge");
   if (tb) {
@@ -1298,6 +1316,31 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   toast("Profil güncellendi", "ok");
 });
 
+// =============== MÜSAİTLİK TOGGLE ===============
+document.getElementById("musaitToggle")?.addEventListener("change", async e => {
+  if (!currentUser) return;
+  const yeni = e.target.checked;
+  const nowIso = new Date().toISOString();
+  // Toggle anında UI güncelle (UX hızlı)
+  document.getElementById("musaitTitle").textContent = yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
+  document.getElementById("musaitCard")?.classList.toggle("active", yeni);
+
+  const { error } = await sb.from("profiles")
+    .update({ musait: yeni, musait_at: nowIso })
+    .eq("id", currentUser.id);
+  if (error) {
+    // Geri al
+    e.target.checked = !yeni;
+    document.getElementById("musaitTitle").textContent = !yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
+    document.getElementById("musaitCard")?.classList.toggle("active", !yeni);
+    toast("Güncellenemedi: " + error.message, "error");
+    return;
+  }
+  currentUser.musait = yeni;
+  currentUser.musaitAt = nowIso;
+  toast(yeni ? "🟢 Müsait olarak işaretlendin" : "🔴 Artık müsait değilsin", "ok");
+});
+
 // =============== ŞİFRE DEĞİŞTİR (girişli kullanıcı) ===============
 document.getElementById("changePasswordBtn").addEventListener("click", () => {
   document.getElementById("changePasswordForm").reset();
@@ -1403,6 +1446,136 @@ document.querySelectorAll('input[type="password"]').forEach(input => {
     btn.setAttribute("aria-label", show ? "Şifreyi gizle" : "Şifreyi göster");
   });
   wrap.appendChild(btn);
+});
+
+// =============== KURYELER (Müsait Liste) ===============
+async function loadMusaitKuryeler() {
+  try {
+    if (!currentUser) {
+      kuryeler = [];
+      renderMusaitKuryeler();
+      return;
+    }
+    const session = readStoredSession();
+    let q = `profiles?kullanici_tipi=eq.kurye&musait=eq.true&id=neq.${currentUser.id}&select=id,ad,soyad,tel,avatar_url,tercih_ilceler,calisma_baslangic,calisma_bitis,musait_at,bio&order=musait_at.desc`;
+    const { data, error } = await rawSelect(q, session?.access_token, 6000);
+    if (error) {
+      console.error("[loadMusaitKuryeler]", error);
+      showError("Müsait kurye listesi yüklenemedi: " + error.message);
+      kuryeler = [];
+    } else {
+      kuryeler = data || [];
+    }
+  } catch (e) {
+    console.error("[loadMusaitKuryeler throw]", e);
+    kuryeler = [];
+  }
+  renderMusaitKuryeler();
+}
+
+function renderMusaitKuryeler() {
+  if (!kuryeListingsEl) return;
+  kuryeListingsEl.innerHTML = "";
+
+  // Anonim kullanıcı görmesin
+  if (!currentUser) {
+    kuryeListingsEl.classList.add("hidden");
+    kuryeEmptyEl.classList.add("hidden");
+    if (kuryeGuestNoticeEl && contentTab === "kuryeler") kuryeGuestNoticeEl.classList.remove("hidden");
+    return;
+  }
+  kuryeGuestNoticeEl?.classList.add("hidden");
+
+  if (kuryeler.length === 0) {
+    kuryeListingsEl.classList.add("hidden");
+    if (contentTab === "kuryeler") kuryeEmptyEl.classList.remove("hidden");
+    return;
+  }
+  kuryeEmptyEl.classList.add("hidden");
+  kuryeListingsEl.classList.remove("hidden");
+
+  kuryeler.forEach(k => {
+    const card = document.createElement("article");
+    card.className = "kurye-card";
+    const adSoyad = ((k.ad || "") + " " + (k.soyad || "")).trim() || "Kurye";
+    const ilceler = (k.tercih_ilceler && k.tercih_ilceler.length)
+      ? k.tercih_ilceler.map(i => `<span class="kurye-ilce">📍 ${escapeHtml(i)}</span>`).join("")
+      : `<span class="muted small">Bölge belirtilmemiş</span>`;
+    const saat = (k.calisma_baslangic != null && k.calisma_bitis != null)
+      ? `<span class="kurye-saat">⏰ ${String(k.calisma_baslangic).padStart(2,"0")}:00 – ${String(k.calisma_bitis).padStart(2,"0")}:00</span>`
+      : "";
+    const avatarStyle = k.avatar_url
+      ? `style="background-image:url('${k.avatar_url.replace(/'/g, "%27")}')"`
+      : "";
+    const avatarFallback = k.avatar_url ? "" : "👤";
+
+    card.innerHTML = `
+      <div class="kurye-head">
+        <div class="kurye-avatar" ${avatarStyle}>${avatarFallback}</div>
+        <div class="kurye-info">
+          <h3>${escapeHtml(adSoyad)}</h3>
+          <div class="kurye-meta">${ilceler}${saat}</div>
+        </div>
+      </div>
+      ${k.bio ? `<p class="kurye-bio">${escapeHtml(k.bio)}</p>` : ""}
+      <div class="actions">
+        <button class="action-btn call" data-kact="call" data-id="${k.id}">📞 Ara</button>
+        <button class="action-btn wa" data-kact="wa" data-id="${k.id}">💬 WhatsApp</button>
+      </div>
+    `;
+    kuryeListingsEl.appendChild(card);
+  });
+}
+
+// Kurye kart aksiyonları
+kuryeListingsEl?.addEventListener("click", e => {
+  const btn = e.target.closest("[data-kact]");
+  if (!btn) return;
+  if (!currentUser) { openModal("registerModal"); return; }
+  const k = kuryeler.find(x => x.id === btn.dataset.id);
+  if (!k) return;
+  const tel = (k.tel || "").replace(/\s/g, "");
+  if (!tel) { toast("Telefon bilgisi bulunamadı.", "warn"); return; }
+  if (btn.dataset.kact === "call") {
+    window.location.href = "tel:" + tel;
+  } else if (btn.dataset.kact === "wa") {
+    let waNum = tel.replace(/\D/g, "");
+    if (waNum.startsWith("0")) waNum = "9" + waNum;
+    else if (!waNum.startsWith("90")) waNum = "90" + waNum;
+    window.open("https://wa.me/" + waNum, "_blank");
+  }
+});
+
+// Ana içerik sekme şeridi
+document.querySelectorAll(".content-tab").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    contentTab = btn.dataset.contentTab;
+    document.querySelectorAll(".content-tab").forEach(b => b.classList.toggle("active", b === btn));
+    const showK = contentTab === "kuryeler";
+    listingsEl.classList.toggle("hidden", showK);
+    emptyEl.classList.toggle("hidden", showK);
+    document.getElementById("myListingsPanel")?.classList.toggle("hidden", showK || !currentUser);
+    if (showK) {
+      if (!currentUser) {
+        kuryeListingsEl.classList.add("hidden");
+        kuryeEmptyEl.classList.add("hidden");
+        kuryeGuestNoticeEl?.classList.remove("hidden");
+      } else {
+        await loadMusaitKuryeler();
+      }
+    } else {
+      kuryeListingsEl.classList.add("hidden");
+      kuryeEmptyEl.classList.add("hidden");
+      kuryeGuestNoticeEl?.classList.add("hidden");
+      // Aktif İlanlar'a dönerken empty/listing durumunu yeniden uygula
+      if (ilanlar.length === 0) emptyEl.classList.remove("hidden");
+    }
+  });
+});
+
+document.getElementById("kuryeGuestLink")?.addEventListener("click", e => {
+  e.preventDefault();
+  openModal("loginModal");
 });
 
 // =============== İLK YÜKLEME ===============

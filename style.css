@@ -759,3 +759,109 @@ body.modal-open { overflow: hidden; }
   color: var(--gray-700);
 }
 .ilan-edit-hint .link-orange { font-weight: 600; }
+
+/* ===== Ana içerik sekmeleri (İlanlar / Müsait Kuryeler) ===== */
+.content-tabs {
+  display: flex;
+  gap: 6px;
+  background: var(--gray-100);
+  padding: 4px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+.content-tab {
+  flex: 1;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  border-radius: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.content-tab:hover { color: var(--gray-900); }
+.content-tab.active {
+  background: white;
+  color: var(--orange-dark);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* ===== Müsaitlik kartı (Profilim Genel) ===== */
+.musait-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px;
+  background: #fee2e2;
+  border: 2px solid #fecaca;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.musait-card.active {
+  background: #dcfce7;
+  border-color: #86efac;
+}
+.musait-card input[type="checkbox"] {
+  width: 22px; height: 22px;
+  accent-color: var(--green);
+  cursor: pointer;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.musait-text { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.musait-text strong { font-size: 15px; }
+.musait-text small { font-size: 12px; color: var(--gray-700); line-height: 1.4; }
+
+/* ===== Müsait kurye kartları ===== */
+.kurye-listings {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 14px;
+}
+.kurye-card {
+  background: #fff;
+  border: 1px solid var(--gray-200);
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.kurye-card:hover { border-color: #fdba74; box-shadow: 0 4px 12px rgba(0,0,0,.05); }
+.kurye-head { display: flex; align-items: center; gap: 12px; }
+.kurye-avatar {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: #fde2c4 center/cover no-repeat;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px;
+  color: #c2410c;
+  flex-shrink: 0;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.kurye-info { flex: 1; min-width: 0; }
+.kurye-info h3 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+.kurye-meta {
+  display: flex; flex-wrap: wrap; gap: 4px 8px;
+  font-size: 12px; color: var(--gray-700);
+}
+.kurye-ilce {
+  background: var(--orange-soft); color: var(--orange-dark);
+  padding: 2px 7px; border-radius: 999px;
+  font-weight: 600;
+}
+.kurye-saat { color: var(--gray-500); }
+.kurye-bio {
+  font-size: 13px; color: var(--gray-700);
+  background: var(--gray-50);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border-left: 3px solid var(--orange);
+}
