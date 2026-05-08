@@ -310,6 +310,28 @@ ul { list-style: none; }
   .actions { grid-template-columns: 1fr 1fr 1fr; }
 }
 
+/* DAR EKRAN — modal ve form düzeni */
+@media (max-width: 520px) {
+  .modal { padding: 8px; }
+  .modal-card { padding: 18px 16px; max-height: 94vh; }
+  .modal-card h2 { font-size: 17px; }
+
+  /* İki sütunlu satırları mobilde tek sütuna düşür */
+  .row-2 { grid-template-columns: 1fr; gap: 12px; }
+
+  /* Header daha kompakt */
+  .header-inner { padding: 0 12px; }
+  .logo-text { font-size: 16px; }
+  .top-nav .btn { padding: 6px 10px; font-size: 13px; }
+
+  /* Stat'ları daha sıkı paketle */
+  .profile-stats { padding: 10px; gap: 10px; }
+  .profile-stats .stat-num { font-size: 18px; }
+
+  /* Avatar bölümü dikey düzene düşsün gerekirse */
+  .avatar-row { padding: 10px; gap: 10px; }
+}
+
 /* ===== Şifre göster/gizle ===== */
 .pw-wrap {
   position: relative;
