@@ -666,6 +666,51 @@ document.getElementById("changePasswordForm").addEventListener("submit", async e
   closeModals();
   alert("Şifren güncellendi. Bir sonraki girişinde yeni şifreni kullanabilirsin.");
 });
+
+// =============== HESABI KAPAT ===============
+document.getElementById("deleteAccountBtn").addEventListener("click", async () => {
+  if (!currentUser) return;
+
+  const ok1 = confirm(
+    "Hesabını kapatmak istediğinden emin misin?\n\n" +
+    "• Tüm ilanların silinecek\n" +
+    "• Profil bilgilerin silinecek\n" +
+    "• Bu işlem GERİ ALINAMAZ"
+  );
+  if (!ok1) return;
+
+  const onay = prompt('Onaylamak için aşağıya tam olarak şunu yaz:\n\nHESABIMI KAPAT');
+  if (onay !== "HESABIMI KAPAT") {
+    alert("Onay metni eşleşmedi, işlem iptal edildi.");
+    return;
+  }
+
+  // 1) Kullanıcının ilanlarını sil
+  const { error: ilanErr } = await sb.from("ilanlar").delete().eq("user_id", currentUser.id);
+  if (ilanErr) {
+    alert("İlanlar silinemedi: " + ilanErr.message);
+    return;
+  }
+
+  // 2) Profil satırını sil
+  const { error: profErr } = await sb.from("profiles").delete().eq("id", currentUser.id);
+  if (profErr) {
+    alert("Profil silinemedi: " + profErr.message);
+    return;
+  }
+
+  // 3) Storage temizle + oturumu kapat (local scope, hızlı)
+  try {
+    Object.keys(localStorage).filter(k => k.startsWith("sb-")).forEach(k => localStorage.removeItem(k));
+    Object.keys(sessionStorage).filter(k => k.startsWith("sb-")).forEach(k => sessionStorage.removeItem(k));
+    localStorage.removeItem("izk_remember");
+    sessionStorage.removeItem("izk_session_active");
+  } catch {}
+  sb.auth.signOut({ scope: "local" }).catch(() => {});
+
+  alert("Hesabın kapatıldı. Geçmişin için teşekkürler.");
+  window.location.href = "/";
+});
 document.querySelectorAll('input[type="password"]').forEach(input => {
   const wrap = document.createElement("span");
   wrap.className = "pw-wrap";
