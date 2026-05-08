@@ -82,6 +82,21 @@
       <h2>Üye Ol</h2>
       <p class="muted">Üyeliği aktive etmek için kayıttan sonra e-posta adresine gelen doğrulama linkine tıklaman gerekir.</p>
       <form id="registerForm" class="form">
+        <div class="user-type-row">
+          <label class="user-type-card">
+            <input type="radio" name="kullanici_tipi" value="kurye" required />
+            <span class="user-type-icon">🏍️</span>
+            <span class="user-type-title">Kurye</span>
+            <span class="user-type-desc">İzinci günlerde iş arıyorum</span>
+          </label>
+          <label class="user-type-card">
+            <input type="radio" name="kullanici_tipi" value="isletme" required />
+            <span class="user-type-icon">🏪</span>
+            <span class="user-type-title">İşletme</span>
+            <span class="user-type-desc">Geçici kurye arıyorum</span>
+          </label>
+        </div>
+
         <div class="row-2">
           <label>Ad <span class="req">*</span>
             <input type="text" name="ad" required maxlength="40" autocomplete="given-name" />
@@ -275,7 +290,7 @@
   <div class="modal hidden" id="profileModal">
     <div class="modal-card modal-wide">
       <button class="modal-close" data-close>&times;</button>
-      <h2>Profilim</h2>
+      <h2>Profilim <span class="user-type-badge hidden" id="profileTypeBadge"></span></h2>
       <p class="muted small" id="profileLastUpdated"></p>
 
       <!-- Tamamlama yüzdesi -->
@@ -436,7 +451,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=30"></script>
-  <script src="script.js?v=30"></script>
+  <script src="supabase-config.js?v=31"></script>
+  <script src="script.js?v=31"></script>
 </body>
 </html>

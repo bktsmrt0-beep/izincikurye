@@ -118,7 +118,8 @@ async function syncSession() {
         calismaGunleri: Array.isArray(profile?.calisma_gunleri) ? profile.calisma_gunleri : [],
         minUcret: profile?.min_ucret ?? null,
         maxUcret: profile?.max_ucret ?? null,
-        bildirimler: profile?.bildirimler || { yeni_ilan: true, ilanim_goruldu: true, kampanya: false }
+        bildirimler: profile?.bildirimler || { yeni_ilan: true, ilanim_goruldu: true, kampanya: false },
+        kullaniciTipi: profile?.kullanici_tipi || ""
       };
     } else {
       currentUser = null;
@@ -468,6 +469,7 @@ function normalizeEmail(s) { return String(s || "").trim().toLowerCase(); }
 document.getElementById("registerForm").addEventListener("submit", async e => {
   e.preventDefault();
   const fd = new FormData(e.target);
+  const kullanici_tipi = fd.get("kullanici_tipi");
   const ad = (fd.get("ad") || "").trim();
   const soyad = (fd.get("soyad") || "").trim();
   const email = normalizeEmail(fd.get("email"));
@@ -477,6 +479,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   const sozlesme = fd.get("sozlesme") === "on";
   const ticari = fd.get("ticari") === "on";
 
+  if (!kullanici_tipi) { alert("Önce hesap tipini seç (Kurye veya İşletme)."); return; }
   if (!ad || !soyad || !email || !tel || !sifre) {
     alert("Lütfen tüm zorunlu alanları doldurun."); return;
   }
@@ -488,7 +491,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
     email,
     password: sifre,
     options: {
-      data: { ad, soyad, tel, ticari },
+      data: { ad, soyad, tel, ticari, kullanici_tipi },
       emailRedirectTo: window.location.origin + "/"
     }
   });
@@ -1074,6 +1077,21 @@ function openProfileModal() {
   // Son giriş zamanı (Güvenlik sekmesi - Paket 4)
   loadLastSignIn();
   setAvatarPreview(currentUser.avatarUrl || "");
+
+  // Kullanıcı tipi rozeti
+  const tb = document.getElementById("profileTypeBadge");
+  if (tb) {
+    if (currentUser.kullaniciTipi === "kurye") {
+      tb.textContent = "🏍️ Kurye";
+      tb.className = "user-type-badge type-kurye";
+    } else if (currentUser.kullaniciTipi === "isletme") {
+      tb.textContent = "🏪 İşletme";
+      tb.className = "user-type-badge type-isletme";
+    } else {
+      tb.className = "user-type-badge hidden";
+    }
+  }
+
   clearStatus("profileStatus");
   refreshProfileSaveBtn();
   refreshCompletion();
