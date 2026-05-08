@@ -56,3 +56,87 @@ async function rawSelect(path, accessToken, ms = 6000) {
   }
 }
 window.rawSelect = rawSelect;
+
+// Ham giriş — supabase-js'i bypass eder (init/lock hang sorunu)
+async function rawSignIn(email, password, ms = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(SUPABASE_URL + "/auth/v1/token?grant_type=password", {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ email, password }),
+      signal: ctrl.signal
+    });
+    clearTimeout(t);
+    const data = await res.json();
+    if (!res.ok) {
+      return {
+        data: null,
+        error: { message: data.error_description || data.msg || data.error || "Giriş başarısız", status: res.status }
+      };
+    }
+    // Storage'a yaz: sb-<ref>-auth-token (Supabase-js v2 ile uyumlu format)
+    const ref = SUPABASE_URL.replace(/^https:\/\//, "").split(".")[0];
+    const key = "sb-" + ref + "-auth-token";
+    const stored = {
+      access_token: data.access_token,
+      refresh_token: data.refresh_token,
+      expires_in: data.expires_in,
+      expires_at: data.expires_at,
+      token_type: data.token_type,
+      user: data.user
+    };
+    try { localStorage.setItem(key, JSON.stringify(stored)); } catch {}
+    return { data, error: null };
+  } catch (e) {
+    clearTimeout(t);
+    return {
+      data: null,
+      error: { message: e.name === "AbortError" ? "Bağlantı zaman aşımı" : (e.message || "Bağlantı hatası") }
+    };
+  }
+}
+window.rawSignIn = rawSignIn;
+
+// Ham kayıt — supabase-js'i bypass eder
+async function rawSignUp(email, password, metadata, redirectTo, ms = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const url = SUPABASE_URL + "/auth/v1/signup";
+    const body = {
+      email, password,
+      data: metadata || {}
+    };
+    if (redirectTo) body.email_redirect_to = redirectTo;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    });
+    clearTimeout(t);
+    const data = await res.json();
+    if (!res.ok) {
+      return {
+        data: null,
+        error: { message: data.error_description || data.msg || data.error || "Kayıt başarısız", status: res.status }
+      };
+    }
+    return { data, error: null };
+  } catch (e) {
+    clearTimeout(t);
+    return {
+      data: null,
+      error: { message: e.name === "AbortError" ? "Bağlantı zaman aşımı" : (e.message || "Bağlantı hatası") }
+    };
+  }
+}
+window.rawSignUp = rawSignUp;

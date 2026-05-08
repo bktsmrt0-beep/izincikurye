@@ -517,14 +517,12 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   if (sifre !== sifre2) { alert("Şifreler eşleşmiyor."); return; }
   if (!sozlesme) { alert("Üyelik sözleşmesi ve KVKK onayı zorunludur."); return; }
 
-  const { error } = await sb.auth.signUp({
+  const { error } = await rawSignUp(
     email,
-    password: sifre,
-    options: {
-      data: { ad, soyad, tel, ticari, kullanici_tipi, isletme_adi, is_adresi, is_telefonu },
-      emailRedirectTo: window.location.origin + "/"
-    }
-  });
+    sifre,
+    { ad, soyad, tel, ticari, kullanici_tipi, isletme_adi, is_adresi, is_telefonu },
+    window.location.origin + "/"
+  );
   if (error) { alert("Kayıt hatası: " + error.message); return; }
 
   closeModals();
@@ -539,24 +537,39 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
   const email = normalizeEmail(fd.get("email"));
   const sifre = fd.get("sifre") || "";
   const hatirla = fd.get("hatirla") === "on";
+  const submitBtn = e.target.querySelector('button[type="submit"]');
+
+  if (!email || !sifre) { alert("E-posta ve şifre gerekli."); return; }
 
   // "Beni hatırla" işaretliyse kalıcı; değilse sekme/tarayıcı kapanışında çıkış yapılır
   if (hatirla) localStorage.setItem("izk_remember", "1");
   else localStorage.setItem("izk_remember", "0");
 
-  const { error } = await sb.auth.signInWithPassword({ email, password: sifre });
+  // Ham fetch ile giriş (supabase-js bypass — hang sorunu için)
+  const orig = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Giriş yapılıyor...";
+
+  const { error } = await rawSignIn(email, sifre);
+
+  submitBtn.disabled = false;
+  submitBtn.textContent = orig;
+
   if (error) {
-    if (error.message.toLowerCase().includes("email not confirmed")) {
+    const msg = (error.message || "").toLowerCase();
+    if (msg.includes("not confirmed") || msg.includes("confirmation")) {
       alert("E-postanı henüz onaylamadın. Gelen kutunu kontrol et.");
-    } else {
+    } else if (msg.includes("invalid") || msg.includes("credentials") || msg.includes("password")) {
       alert("E-posta veya şifre hatalı.");
+    } else {
+      alert("Giriş başarısız: " + error.message);
     }
     return;
   }
   // Bu sekmede oturum AKTİF — sayfa navigasyonlarında çıkış tetiklenmesin
   try { sessionStorage.setItem("izk_session_active", "1"); } catch {}
-  closeModals();
-  e.target.reset();
+  // Yeni oturum yüklensin diye sayfayı yenile (syncSession storage'dan token okuyacak)
+  window.location.href = "/";
 });
 
 // =============== ŞİFREMİ UNUTTUM ===============
