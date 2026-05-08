@@ -275,6 +275,17 @@
       <h2>Profilim</h2>
       <p class="muted small" id="profileLastUpdated"></p>
       <div class="form-status hidden" id="profileStatus"></div>
+
+      <div class="avatar-row">
+        <div class="avatar-preview" id="avatarPreview" data-fallback="👤"></div>
+        <div class="avatar-actions">
+          <label class="btn btn-ghost btn-sm" for="avatarFileInput">📷 Fotoğrafı Değiştir</label>
+          <input type="file" id="avatarFileInput" accept="image/*" hidden />
+          <button type="button" class="btn btn-ghost btn-sm hidden" id="avatarRemoveBtn">Kaldır</button>
+          <p class="muted small" style="margin-top:4px">Max 2 MB · JPG/PNG/WebP</p>
+        </div>
+      </div>
+
       <form id="profileForm" class="form">
         <div class="row-2">
           <label>Ad <span class="req">*</span>
@@ -326,7 +337,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=19"></script>
-  <script src="script.js?v=19"></script>
+  <script src="supabase-config.js?v=20"></script>
+  <script src="script.js?v=20"></script>
 </body>
 </html>

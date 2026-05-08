@@ -81,7 +81,7 @@ async function syncSession() {
     if (session?.user) {
       console.log("[syncSession] profile query start for", session.user.id);
       const { data: profile, error: pErr } = await _withTimeout(
-        sb.from("profiles").select("ad, soyad, tel, role").eq("id", session.user.id).maybeSingle(),
+        sb.from("profiles").select("ad, soyad, tel, role, avatar_url").eq("id", session.user.id).maybeSingle(),
         8000, "profiles.select"
       );
       console.log("[syncSession] profile query done", { profile, pErr });
@@ -92,7 +92,8 @@ async function syncSession() {
         ad: profile?.ad || "",
         soyad: profile?.soyad || "",
         tel: profile?.tel || "",
-        role: profile?.role || "user"
+        role: profile?.role || "user",
+        avatarUrl: profile?.avatar_url || ""
       };
     } else {
       currentUser = null;
@@ -155,7 +156,15 @@ function renderTopNav() {
   if (currentUser) {
     const chip = document.createElement("span");
     chip.className = "user-chip";
-    chip.textContent = "👤 " + (currentUser.ad + " " + currentUser.soyad).trim();
+    if (currentUser.avatarUrl) {
+      const av = document.createElement("span");
+      av.className = "user-chip-avatar";
+      av.style.backgroundImage = `url("${currentUser.avatarUrl}")`;
+      chip.append(av);
+      chip.append(document.createTextNode((currentUser.ad + " " + currentUser.soyad).trim()));
+    } else {
+      chip.textContent = "👤 " + (currentUser.ad + " " + currentUser.soyad).trim();
+    }
     topNav.append(chip);
 
     const profile = document.createElement("button");
@@ -598,6 +607,96 @@ function refreshProfileSaveBtn() {
   if (btn) btn.disabled = !profileHasChanges();
 }
 
+// =============== AVATAR ===============
+function setAvatarPreview(url) {
+  const prev = document.getElementById("avatarPreview");
+  const removeBtn = document.getElementById("avatarRemoveBtn");
+  if (!prev) return;
+  if (url) {
+    prev.style.backgroundImage = `url("${url}")`;
+    prev.dataset.hasImage = "1";
+    if (removeBtn) removeBtn.classList.remove("hidden");
+  } else {
+    prev.style.backgroundImage = "";
+    delete prev.dataset.hasImage;
+    if (removeBtn) removeBtn.classList.add("hidden");
+  }
+}
+
+document.getElementById("avatarFileInput").addEventListener("change", async e => {
+  if (!currentUser) return;
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  if (!file.type.startsWith("image/")) {
+    setStatus("profileStatus", "error", "Sadece görsel dosyalar yüklenebilir.");
+    e.target.value = "";
+    return;
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    setStatus("profileStatus", "error", "Dosya 2 MB'dan büyük olamaz.");
+    e.target.value = "";
+    return;
+  }
+
+  clearStatus("profileStatus");
+  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  const path = `${currentUser.id}/avatar.${ext}`;
+
+  // Yeni dosyayı yükle (üzerine yaz)
+  const { error: upErr } = await sb.storage.from("avatars").upload(path, file, {
+    cacheControl: "3600", upsert: true, contentType: file.type
+  });
+  if (upErr) {
+    setStatus("profileStatus", "error", "Yükleme başarısız: " + upErr.message);
+    return;
+  }
+
+  // Public URL al + cache-bust için ?t= ekle
+  const { data: urlData } = sb.storage.from("avatars").getPublicUrl(path);
+  const publicUrl = urlData.publicUrl + "?t=" + Date.now();
+
+  // profiles.avatar_url güncelle
+  const { error: dbErr } = await sb.from("profiles")
+    .update({ avatar_url: publicUrl })
+    .eq("id", currentUser.id);
+  if (dbErr) {
+    setStatus("profileStatus", "error", "Profil güncellenemedi: " + dbErr.message);
+    return;
+  }
+
+  currentUser.avatarUrl = publicUrl;
+  setAvatarPreview(publicUrl);
+  renderTopNav();
+  setStatus("profileStatus", "ok", "Profil fotoğrafın güncellendi.");
+  e.target.value = "";
+});
+
+document.getElementById("avatarRemoveBtn").addEventListener("click", async () => {
+  if (!currentUser || !currentUser.avatarUrl) return;
+  if (!confirm("Profil fotoğrafını kaldırmak istediğine emin misin?")) return;
+
+  // Storage'dan dosyaları sil (uzantı bilinmiyor olabilir; tüm avatar.* dosyalarını listele/sil)
+  const { data: files } = await sb.storage.from("avatars").list(currentUser.id);
+  if (files?.length) {
+    const paths = files.map(f => `${currentUser.id}/${f.name}`);
+    await sb.storage.from("avatars").remove(paths);
+  }
+
+  const { error: dbErr } = await sb.from("profiles")
+    .update({ avatar_url: null })
+    .eq("id", currentUser.id);
+  if (dbErr) {
+    setStatus("profileStatus", "error", "Profil güncellenemedi: " + dbErr.message);
+    return;
+  }
+
+  currentUser.avatarUrl = "";
+  setAvatarPreview("");
+  renderTopNav();
+  setStatus("profileStatus", "ok", "Profil fotoğrafın kaldırıldı.");
+});
+
 // =============== PROFİLİM ===============
 function openProfileModal() {
   if (!currentUser) return;
@@ -607,6 +706,7 @@ function openProfileModal() {
   document.getElementById("profileTel").value = formatTel(currentUser.tel || "");
   document.getElementById("profileEmailHint").style.display = "none";
   document.getElementById("profileTelHint").style.display = "none";
+  setAvatarPreview(currentUser.avatarUrl || "");
   clearStatus("profileStatus");
   refreshProfileSaveBtn();
 

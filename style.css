@@ -389,3 +389,46 @@ ul { list-style: none; }
 .form-status.warn    { background:#fef3c7; color:#92400e; border-color:#fde68a; }
 
 button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ===== Avatar ===== */
+.avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 8px 0 16px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 10px;
+}
+.avatar-preview {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: #fde2c4 center/cover no-repeat;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px;
+  color: #c2410c;
+  flex-shrink: 0;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.avatar-preview[data-has-image="1"] { background-color: transparent; }
+.avatar-preview[data-has-image="1"]::before { content: ""; }
+.avatar-preview:not([data-has-image="1"])::before { content: attr(data-fallback); }
+.avatar-actions { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.avatar-actions .btn { width: auto; }
+
+/* Top nav user chip avatar */
+.user-chip-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #fde2c4 center/cover no-repeat;
+  display: inline-block; vertical-align: middle; margin-right: 6px;
+  border: 1.5px solid white;
+}
+
+/* İlan kartında küçük sahip avatarı (henüz kullanılmıyor; ileride opsiyonel) */
+.owner-avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: #fde2c4 center/cover no-repeat;
+  display: inline-block; vertical-align: middle; margin-right: 4px;
+}
