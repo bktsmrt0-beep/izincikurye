@@ -618,3 +618,59 @@ body.modal-open { overflow: hidden; }
 @media (max-width: 520px) {
   .tab-btn { padding: 8px 10px; font-size: 13px; }
 }
+
+/* ===== Paket 2: gün seçici, character counter, ===== */
+.day-picker {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  margin-top: 4px;
+}
+.day-chip {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--gray-300);
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  color: var(--gray-700);
+  font-weight: 500;
+}
+.day-chip:hover { border-color: var(--orange); color: var(--orange-dark); }
+.day-chip.active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: white;
+}
+.char-counter {
+  font-size: 11px;
+  color: var(--gray-500);
+  text-align: right;
+  margin-top: -4px;
+}
+
+/* ===== Paket 3: bildirim toggle satırları ===== */
+.toggle-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--gray-200);
+  font-size: 14px;
+}
+.toggle-row:last-of-type { border-bottom: 0; }
+.toggle-row input[type="checkbox"] {
+  width: 18px; height: 18px;
+  accent-color: var(--orange);
+  cursor: pointer;
+}
+
+/* ===== Paket 4: güvenlik info kutusu ===== */
+.security-info {
+  padding: 10px 12px;
+  background: var(--gray-50);
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--gray-700);
+  border: 1px solid var(--gray-200);
+}

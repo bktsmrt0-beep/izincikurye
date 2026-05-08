@@ -331,15 +331,70 @@
             <input type="tel" name="tel" id="profileTel" required pattern="0?5[0-9]{2}[ ]?[0-9]{3}[ ]?[0-9]{2}[ ]?[0-9]{2}" autocomplete="tel" placeholder="0532 123 45 67" />
           </label>
           <p class="muted small" id="profileTelHint" style="display:none;color:#92400e">⚠ Telefon doğrulama (SMS) yakında. Şimdilik değişiklik anında kaydedilir.</p>
+
+          <hr style="margin:14px 0;border:0;border-top:1px solid #e5e7eb" />
+
+          <label>Hakkımda
+            <textarea name="bio" id="profileBio" rows="3" maxlength="300" placeholder="Kendinden kısaca bahset (tecrübe, çalışma tarzı vb.)"></textarea>
+          </label>
+          <p class="char-counter"><span id="bioCount">0</span>/300</p>
+
+          <label>Tercih edilen ilçeler
+            <select name="tercih_ilceler" id="profileTercihIlceler" multiple size="5"></select>
+          </label>
+          <p class="muted small">Ctrl/Cmd ile çoklu seçim — bölgendeki ilanlar için tercih</p>
+
+          <label>Çalışma günleri
+            <div class="day-picker" id="profileGunler">
+              <button type="button" class="day-chip" data-gun="1">Pzt</button>
+              <button type="button" class="day-chip" data-gun="2">Sal</button>
+              <button type="button" class="day-chip" data-gun="3">Çar</button>
+              <button type="button" class="day-chip" data-gun="4">Per</button>
+              <button type="button" class="day-chip" data-gun="5">Cum</button>
+              <button type="button" class="day-chip" data-gun="6">Cmt</button>
+              <button type="button" class="day-chip" data-gun="7">Paz</button>
+            </div>
+          </label>
+
+          <div class="row-2">
+            <label>Çalışma başlangıç
+              <select name="calisma_baslangic" id="profileCalismaBaslangic">
+                <option value="">—</option>
+              </select>
+            </label>
+            <label>Çalışma bitiş
+              <select name="calisma_bitis" id="profileCalismaBitis">
+                <option value="">—</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="row-2">
+            <label>Min. saatlik ücret (₺)
+              <input type="number" name="min_ucret" id="profileMinUcret" min="0" max="10000" step="10" placeholder="200" />
+            </label>
+            <label>Max. saatlik ücret (₺)
+              <input type="number" name="max_ucret" id="profileMaxUcret" min="0" max="10000" step="10" placeholder="300" />
+            </label>
+          </div>
         </div>
 
         <!-- Bildirim alanları -->
         <div data-tab-section="bildirim" class="hidden">
-          <p class="muted small" style="margin-bottom:8px">E-posta bildirim tercihlerini yönet.</p>
-          <label class="consent">
-            <input type="checkbox" name="ticari" id="profileTicari" />
-            <span>Kampanya ve duyuru e-postaları almayı kabul ediyorum</span>
-          </label>
+          <p class="muted small" style="margin-bottom:8px">Hangi durumlarda e-posta almak istediğini seç.</p>
+          <div class="toggle-row">
+            <span>📍 Bölgemde yeni ilan açıldığında</span>
+            <input type="checkbox" id="bildirYeniIlan" />
+          </div>
+          <div class="toggle-row">
+            <span>👁 İlanım görüntülendiğinde</span>
+            <input type="checkbox" id="bildirIlanimGoruldu" />
+          </div>
+          <div class="toggle-row">
+            <span>🎉 Kampanya ve duyurular</span>
+            <input type="checkbox" id="bildirKampanya" />
+          </div>
+          <input type="hidden" name="ticari" id="profileTicari" />
         </div>
 
         <!-- Profil + Bildirim sekmelerinde görünür Kaydet -->
@@ -348,6 +403,9 @@
 
       <!-- GÜVENLİK sekmesi -->
       <div class="tab-panel hidden" data-tab-panel="guvenlik">
+        <div class="security-info" id="lastSignInInfo">Son giriş: —</div>
+        <button type="button" class="btn btn-ghost btn-block" id="downloadDataBtn" style="margin-top:10px">📥 Verilerimi İndir (JSON)</button>
+        <hr style="margin:14px 0;border:0;border-top:1px solid #e5e7eb" />
         <button type="button" class="btn btn-ghost btn-block" id="changePasswordBtn">🔒 Şifremi Değiştir</button>
         <button type="button" class="btn btn-block btn-danger" id="deleteAccountBtn" style="margin-top:8px">⚠ Hesabımı Kapat</button>
       </div>
@@ -377,7 +435,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=26"></script>
-  <script src="script.js?v=26"></script>
+  <script src="supabase-config.js?v=27"></script>
+  <script src="script.js?v=27"></script>
 </body>
 </html>

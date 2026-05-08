@@ -95,7 +95,7 @@ async function syncSession() {
     if (session?.user) {
       console.log("[syncSession] profile query start for", session.user.id);
       const { data: profile, error: pErr } = await _withTimeout(
-        sb.from("profiles").select("ad, soyad, tel, role, avatar_url, created_at, ticari").eq("id", session.user.id).maybeSingle(),
+        sb.from("profiles").select("*").eq("id", session.user.id).maybeSingle(),
         8000, "profiles.select"
       );
       console.log("[syncSession] profile query done", { profile, pErr });
@@ -109,7 +109,15 @@ async function syncSession() {
         role: profile?.role || "user",
         avatarUrl: profile?.avatar_url || "",
         createdAt: profile?.created_at || null,
-        ticari: !!profile?.ticari
+        ticari: !!profile?.ticari,
+        bio: profile?.bio || "",
+        tercihIlceler: Array.isArray(profile?.tercih_ilceler) ? profile.tercih_ilceler : [],
+        calismaBaslangic: profile?.calisma_baslangic ?? null,
+        calismaBitis: profile?.calisma_bitis ?? null,
+        calismaGunleri: Array.isArray(profile?.calisma_gunleri) ? profile.calisma_gunleri : [],
+        minUcret: profile?.min_ucret ?? null,
+        maxUcret: profile?.max_ucret ?? null,
+        bildirimler: profile?.bildirimler || { yeni_ilan: true, ilanim_goruldu: true, kampanya: false }
       };
     } else {
       currentUser = null;
@@ -679,24 +687,121 @@ function formatTel(raw) {
 
 function _telDigits(s) { return (s || "").replace(/\D/g, ""); }
 
+function _readProfileForm() {
+  const tercihIlceler = Array.from(document.getElementById("profileTercihIlceler")?.selectedOptions || []).map(o => o.value);
+  const gunler = Array.from(document.querySelectorAll("#profileGunler .day-chip.active"))
+    .map(c => parseInt(c.dataset.gun, 10))
+    .filter(n => !isNaN(n))
+    .sort((a,b) => a-b);
+  const cbas = document.getElementById("profileCalismaBaslangic")?.value;
+  const cbit = document.getElementById("profileCalismaBitis")?.value;
+  const minU = document.getElementById("profileMinUcret")?.value;
+  const maxU = document.getElementById("profileMaxUcret")?.value;
+  const bildirimler = {
+    yeni_ilan: !!document.getElementById("bildirYeniIlan")?.checked,
+    ilanim_goruldu: !!document.getElementById("bildirIlanimGoruldu")?.checked,
+    kampanya: !!document.getElementById("bildirKampanya")?.checked
+  };
+  return {
+    ad: document.getElementById("profileAd").value.trim(),
+    soyad: document.getElementById("profileSoyad").value.trim(),
+    email: normalizeEmail(document.getElementById("profileEmail").value),
+    tel: document.getElementById("profileTel").value.trim(),
+    bio: document.getElementById("profileBio")?.value.trim() || "",
+    tercih_ilceler: tercihIlceler,
+    calisma_baslangic: cbas === "" ? null : parseInt(cbas, 10),
+    calisma_bitis: cbit === "" ? null : parseInt(cbit, 10),
+    calisma_gunleri: gunler,
+    min_ucret: minU === "" ? null : parseInt(minU, 10),
+    max_ucret: maxU === "" ? null : parseInt(maxU, 10),
+    ticari: !!document.getElementById("bildirKampanya")?.checked,
+    bildirimler
+  };
+}
+
 function profileHasChanges() {
   if (!currentUser) return false;
-  const ad = document.getElementById("profileAd").value.trim();
-  const soyad = document.getElementById("profileSoyad").value.trim();
-  const email = normalizeEmail(document.getElementById("profileEmail").value);
-  const tel = _telDigits(document.getElementById("profileTel").value);
-  const ticari = document.getElementById("profileTicari").checked;
-  return ad !== currentUser.ad
-      || soyad !== currentUser.soyad
-      || email !== normalizeEmail(currentUser.email)
-      || tel !== _telDigits(currentUser.tel)
-      || ticari !== !!currentUser.ticari;
+  const f = _readProfileForm();
+  if (f.ad !== currentUser.ad) return true;
+  if (f.soyad !== currentUser.soyad) return true;
+  if (f.email !== normalizeEmail(currentUser.email)) return true;
+  if (_telDigits(f.tel) !== _telDigits(currentUser.tel)) return true;
+  if (f.bio !== (currentUser.bio || "")) return true;
+  if (JSON.stringify(f.tercih_ilceler) !== JSON.stringify(currentUser.tercihIlceler || [])) return true;
+  if (f.calisma_baslangic !== (currentUser.calismaBaslangic ?? null)) return true;
+  if (f.calisma_bitis !== (currentUser.calismaBitis ?? null)) return true;
+  if (JSON.stringify(f.calisma_gunleri) !== JSON.stringify(currentUser.calismaGunleri || [])) return true;
+  if (f.min_ucret !== (currentUser.minUcret ?? null)) return true;
+  if (f.max_ucret !== (currentUser.maxUcret ?? null)) return true;
+  if (JSON.stringify(f.bildirimler) !== JSON.stringify(currentUser.bildirimler || {})) return true;
+  return false;
 }
 
 function refreshProfileSaveBtn() {
   const btn = document.getElementById("profileSaveBtn");
   if (btn) btn.disabled = !profileHasChanges();
 }
+
+// =============== PROFİL: tercih ilçeler + saat select doldur (bir kerelik) ===============
+(() => {
+  const ti = document.getElementById("profileTercihIlceler");
+  if (ti) ANKARA_ILCELERI.forEach(ilce => ti.appendChild(new Option(ilce, ilce)));
+  const cb = document.getElementById("profileCalismaBaslangic");
+  const cbit = document.getElementById("profileCalismaBitis");
+  for (let h = 0; h < 24; h++) {
+    const lbl = String(h).padStart(2, "0") + ":00";
+    if (cb) cb.appendChild(new Option(lbl, h));
+    if (cbit) cbit.appendChild(new Option(lbl, h));
+  }
+})();
+
+// Day chip toggle
+document.querySelectorAll("#profileGunler .day-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    chip.classList.toggle("active");
+    refreshProfileSaveBtn();
+    clearStatus("profileStatus");
+  });
+});
+
+// Bio character counter
+const _bioEl = document.getElementById("profileBio");
+const _bioCntEl = document.getElementById("bioCount");
+if (_bioEl && _bioCntEl) {
+  _bioEl.addEventListener("input", () => {
+    _bioCntEl.textContent = _bioEl.value.length;
+    refreshProfileSaveBtn();
+    clearStatus("profileStatus");
+  });
+}
+
+// Tercih ilçeler değişimi
+document.getElementById("profileTercihIlceler")?.addEventListener("change", () => {
+  refreshProfileSaveBtn();
+  clearStatus("profileStatus");
+});
+["profileCalismaBaslangic","profileCalismaBitis","profileMinUcret","profileMaxUcret"].forEach(id => {
+  document.getElementById(id)?.addEventListener("change", () => {
+    refreshProfileSaveBtn();
+    clearStatus("profileStatus");
+  });
+  document.getElementById(id)?.addEventListener("input", () => {
+    refreshProfileSaveBtn();
+    clearStatus("profileStatus");
+  });
+});
+
+// Bildirim toggle'ları
+["bildirYeniIlan","bildirIlanimGoruldu","bildirKampanya"].forEach(id => {
+  document.getElementById(id)?.addEventListener("change", (e) => {
+    // Kampanya toggle = ticari kabul (eski alan)
+    if (id === "bildirKampanya") {
+      document.getElementById("profileTicari").value = e.target.checked ? "on" : "";
+    }
+    refreshProfileSaveBtn();
+    clearStatus("profileStatus");
+  });
+});
 
 // =============== PROFİL SEKMELERİ ===============
 function switchProfileTab(name) {
@@ -723,7 +828,12 @@ function computeProfileCompletion() {
     !!(currentUser.soyad && currentUser.soyad.trim()),
     !!(currentUser.email && currentUser.email.trim()),
     !!(_telDigits(currentUser.tel).length >= 10),
-    !!currentUser.avatarUrl
+    !!currentUser.avatarUrl,
+    !!(currentUser.bio && currentUser.bio.trim()),
+    !!(currentUser.tercihIlceler && currentUser.tercihIlceler.length > 0),
+    !!(currentUser.calismaBaslangic != null && currentUser.calismaBitis != null),
+    !!(currentUser.calismaGunleri && currentUser.calismaGunleri.length > 0),
+    !!(currentUser.minUcret != null && currentUser.maxUcret != null)
   ];
   const filled = fields.filter(Boolean).length;
   return Math.round((filled / fields.length) * 100);
@@ -740,6 +850,45 @@ function refreshCompletion() {
 // Sekme buton click listener'ları
 document.querySelectorAll("#profileModal .tab-btn").forEach(btn => {
   btn.addEventListener("click", () => switchProfileTab(btn.dataset.tab));
+});
+
+// =============== PAKET 4: Son giriş + veri indir ===============
+async function loadLastSignIn() {
+  const el = document.getElementById("lastSignInInfo");
+  if (!el) return;
+  try {
+    const { data } = await sb.auth.getUser();
+    const last = data?.user?.last_sign_in_at;
+    el.textContent = "Son giriş: " + (last ? formatDateTime(last) : "—");
+  } catch {
+    el.textContent = "Son giriş: —";
+  }
+}
+
+document.getElementById("downloadDataBtn")?.addEventListener("click", async () => {
+  if (!currentUser) return;
+  toast("Verilerin hazırlanıyor...", "info", 1500);
+  const [{ data: profil }, { data: ilanlar }] = await Promise.all([
+    sb.from("profiles").select("*").eq("id", currentUser.id).maybeSingle(),
+    sb.from("ilanlar").select("*").eq("user_id", currentUser.id)
+  ]);
+  const payload = {
+    indirilme_tarihi: new Date().toISOString(),
+    kullanici: { id: currentUser.id, email: currentUser.email },
+    profil: profil || {},
+    ilanlar: ilanlar || []
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const tarih = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `izincikurye-verilerim-${tarih}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast("Verilerin indirildi", "ok");
 });
 
 async function loadProfileStats() {
@@ -864,9 +1013,47 @@ function openProfileModal() {
   document.getElementById("profileSoyad").value = currentUser.soyad || "";
   document.getElementById("profileEmail").value = currentUser.email || "";
   document.getElementById("profileTel").value = formatTel(currentUser.tel || "");
-  document.getElementById("profileTicari").checked = !!currentUser.ticari;
   document.getElementById("profileEmailHint").style.display = "none";
   document.getElementById("profileTelHint").style.display = "none";
+
+  // Bio + character counter
+  const bioEl = document.getElementById("profileBio");
+  if (bioEl) {
+    bioEl.value = currentUser.bio || "";
+    document.getElementById("bioCount").textContent = bioEl.value.length;
+  }
+
+  // Tercih ilçeler
+  const tiEl = document.getElementById("profileTercihIlceler");
+  if (tiEl) {
+    Array.from(tiEl.options).forEach(o => {
+      o.selected = (currentUser.tercihIlceler || []).includes(o.value);
+    });
+  }
+
+  // Çalışma saatleri
+  document.getElementById("profileCalismaBaslangic").value = currentUser.calismaBaslangic ?? "";
+  document.getElementById("profileCalismaBitis").value = currentUser.calismaBitis ?? "";
+
+  // Çalışma günleri
+  document.querySelectorAll("#profileGunler .day-chip").forEach(c => {
+    const gun = parseInt(c.dataset.gun, 10);
+    c.classList.toggle("active", (currentUser.calismaGunleri || []).includes(gun));
+  });
+
+  // Ücret aralığı
+  document.getElementById("profileMinUcret").value = currentUser.minUcret ?? "";
+  document.getElementById("profileMaxUcret").value = currentUser.maxUcret ?? "";
+
+  // Bildirim toggle'ları
+  const b = currentUser.bildirimler || {};
+  document.getElementById("bildirYeniIlan").checked = b.yeni_ilan !== false;
+  document.getElementById("bildirIlanimGoruldu").checked = b.ilanim_goruldu !== false;
+  document.getElementById("bildirKampanya").checked = !!b.kampanya || !!currentUser.ticari;
+  document.getElementById("profileTicari").value = (b.kampanya || currentUser.ticari) ? "on" : "";
+
+  // Son giriş zamanı (Güvenlik sekmesi - Paket 4)
+  loadLastSignIn();
   setAvatarPreview(currentUser.avatarUrl || "");
   clearStatus("profileStatus");
   refreshProfileSaveBtn();
@@ -927,44 +1114,63 @@ document.getElementById("profileTel").addEventListener("input", e => {
 document.getElementById("profileForm").addEventListener("submit", async e => {
   e.preventDefault();
   if (!currentUser) return;
-  const fd = new FormData(e.target);
-  const ad = (fd.get("ad") || "").trim();
-  const soyad = (fd.get("soyad") || "").trim();
-  const email = normalizeEmail(fd.get("email"));
-  const tel = (fd.get("tel") || "").trim();
-  const ticari = fd.get("ticari") === "on";
+  const f = _readProfileForm();
 
-  if (!ad || !soyad || !email || !tel) {
-    setStatus("profileStatus", "error", "Lütfen tüm alanları doldurun.");
+  if (!f.ad || !f.soyad || !f.email || !f.tel) {
+    setStatus("profileStatus", "error", "Lütfen tüm zorunlu alanları doldurun.");
     return;
   }
-  if (_telDigits(tel).length < 10) {
+  if (_telDigits(f.tel).length < 10) {
     setStatus("profileStatus", "error", "Telefon numarası eksik görünüyor.");
     return;
   }
+  if (f.min_ucret != null && f.max_ucret != null && f.min_ucret > f.max_ucret) {
+    setStatus("profileStatus", "error", "Min. ücret max. ücretten büyük olamaz.");
+    return;
+  }
+  if (f.calisma_baslangic != null && f.calisma_bitis != null && f.calisma_baslangic >= f.calisma_bitis) {
+    setStatus("profileStatus", "error", "Çalışma bitiş saati başlangıçtan büyük olmalı.");
+    return;
+  }
 
-  const emailChanged = email !== normalizeEmail(currentUser.email);
-  const telChanged = _telDigits(tel) !== _telDigits(currentUser.tel);
-  const nameChanged = ad !== currentUser.ad || soyad !== currentUser.soyad;
-  const ticariChanged = ticari !== !!currentUser.ticari;
+  const emailChanged = f.email !== normalizeEmail(currentUser.email);
 
   setBusy("profileSaveBtn", true, "Kaydediliyor...");
 
-  // 1) profiles tablosu (ad/soyad/tel/ticari)
-  if (nameChanged || telChanged || ticariChanged) {
-    const { error: profErr } = await sb.from("profiles")
-      .update({ ad, soyad, tel, ticari })
-      .eq("id", currentUser.id);
-    if (profErr) {
-      setBusy("profileSaveBtn", false);
-      setStatus("profileStatus", "error", "Profil güncellenemedi: " + profErr.message);
-      return;
-    }
-    currentUser.ad = ad;
-    currentUser.soyad = soyad;
-    currentUser.tel = tel;
-    currentUser.ticari = ticari;
+  // 1) profiles tablosu — tüm değişebilen alanlar
+  const updateObj = {
+    ad: f.ad, soyad: f.soyad, tel: f.tel, ticari: f.ticari,
+    bio: f.bio || null,
+    tercih_ilceler: f.tercih_ilceler.length ? f.tercih_ilceler : null,
+    calisma_baslangic: f.calisma_baslangic,
+    calisma_bitis: f.calisma_bitis,
+    calisma_gunleri: f.calisma_gunleri.length ? f.calisma_gunleri : null,
+    min_ucret: f.min_ucret,
+    max_ucret: f.max_ucret,
+    bildirimler: f.bildirimler
+  };
+  const { error: profErr } = await sb.from("profiles").update(updateObj).eq("id", currentUser.id);
+  if (profErr) {
+    setBusy("profileSaveBtn", false);
+    setStatus("profileStatus", "error", "Profil güncellenemedi: " + profErr.message);
+    return;
   }
+  // Bellekte güncelle
+  Object.assign(currentUser, {
+    ad: f.ad, soyad: f.soyad, tel: f.tel, ticari: f.ticari,
+    bio: f.bio,
+    tercihIlceler: f.tercih_ilceler,
+    calismaBaslangic: f.calisma_baslangic,
+    calismaBitis: f.calisma_bitis,
+    calismaGunleri: f.calisma_gunleri,
+    minUcret: f.min_ucret,
+    maxUcret: f.max_ucret,
+    bildirimler: f.bildirimler
+  });
+
+  // E-posta değiştiyse Supabase auth update
+  const email = f.email;
+  if (false) {} // placeholder for old structure
 
   // 2) E-posta değişikliği — Supabase doğrulama akışı
   if (emailChanged) {
