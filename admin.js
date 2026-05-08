@@ -31,9 +31,8 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 
 (async function init() {
   try {
-    const { data, error: sErr } = await sb.auth.getSession();
-    if (sErr) throw sErr;
-    const session = data?.session;
+    // getSession'ı bypass: storage'dan direkt oku
+    const session = (typeof readStoredSession === "function") ? readStoredSession() : null;
     if (!session) {
       window.location.href = "/";
       return;

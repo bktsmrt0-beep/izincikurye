@@ -87,11 +87,9 @@ function _withTimeout(promise, ms, label) {
 
 async function syncSession() {
   try {
-    console.log("[syncSession] getSession start");
-    const { data, error: sErr } = await _withTimeout(sb.auth.getSession(), 8000, "getSession");
-    console.log("[syncSession] getSession done", { hasSession: !!data?.session, sErr });
-    if (sErr) throw sErr;
-    const session = data?.session;
+    // getSession'ı bypass et: storage'dan doğrudan oku (network/init hang riskini ortadan kaldırır)
+    const session = (typeof readStoredSession === "function") ? readStoredSession() : null;
+    console.log("[syncSession] storage check", { hasSession: !!session });
     if (session?.user) {
       console.log("[syncSession] profile query start for", session.user.id);
       const { data: profile, error: pErr } = await _withTimeout(
