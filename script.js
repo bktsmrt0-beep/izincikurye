@@ -28,6 +28,9 @@ let ilanlar = [];
 let listingScope = "all"; // "all" | "mine"
 let contentTab = "ilanlar"; // "ilanlar" | "kuryeler"
 let currentFilters = { saat: "all", fiyat: "all", sort: "new", urgentOnly: false };
+const PAGE_SIZE = 20;
+let pageOffset = 0;
+let hasMoreIlanlar = true;
 let kuryeler = [];
 
 // =============== DOM REF ===============
@@ -153,15 +156,45 @@ sb.auth.onAuthStateChange(async (event) => {
 });
 
 // =============== SUPABASE: İLANLAR ===============
-async function loadIlanlar() {
+function renderSkeletons(n = 4) {
+  emptyEl.classList.add("hidden");
+  const html = Array.from({ length: n }).map(() => `
+    <article class="card skeleton">
+      <div class="card-top">
+        <span class="sk sk-badge"></span>
+        <span class="sk sk-date"></span>
+      </div>
+      <div class="sk sk-line sk-line-md"></div>
+      <div class="sk sk-line sk-line-lg"></div>
+      <div class="sk sk-line sk-line-sm"></div>
+      <div class="card-meta">
+        <span class="sk sk-meta"></span>
+        <span class="sk sk-meta"></span>
+      </div>
+      <div class="actions">
+        <span class="sk sk-btn"></span>
+        <span class="sk sk-btn"></span>
+        <span class="sk sk-btn"></span>
+      </div>
+    </article>
+  `).join("");
+  listingsEl.innerHTML = html;
+}
+
+async function loadIlanlar({ append = false } = {}) {
+  if (!append) {
+    pageOffset = 0;
+    hasMoreIlanlar = true;
+    if (ilanlar.length === 0) renderSkeletons(4);
+  }
   try {
     const filter = districtSelect.value;
     const tableOrView = currentUser ? "ilanlar" : "ilanlar_public";
     let q = sb.from(tableOrView).select("*").order("created_at", { ascending: false });
     if (filter !== "all") q = q.eq("ilce", filter);
     if (listingScope === "mine" && currentUser) q = q.eq("user_id", currentUser.id);
-    // ilanlar tablosunda süresi dolmuş ilanları gizle (public view zaten filtreli)
     if (tableOrView === "ilanlar") q = q.gt("expires_at", new Date().toISOString());
+    q = q.range(pageOffset, pageOffset + PAGE_SIZE - 1);
     const { data, error } = await q;
     if (error) {
       console.error("[loadIlanlar]", error);
@@ -170,16 +203,19 @@ async function loadIlanlar() {
       renderListings();
       return;
     }
-    ilanlar = data || [];
+    const page = data || [];
+    hasMoreIlanlar = page.length === PAGE_SIZE;
+    ilanlar = append ? [...ilanlar, ...page] : page;
+    pageOffset += page.length;
 
-    if (currentUser && ilanlar.length) {
-      const userIds = [...new Set(ilanlar.map(i => i.user_id))];
+    if (currentUser && page.length) {
+      const userIds = [...new Set(page.map(i => i.user_id))];
       const { data: profiles, error: pErr } = await sb.from("profiles")
         .select("id, ad, soyad, tel, created_at, musait, musait_at, kullanici_tipi")
         .in("id", userIds);
       if (pErr) console.warn("[profiles batch]", pErr.message);
       const map = Object.fromEntries((profiles || []).map(p => [p.id, p]));
-      ilanlar.forEach(i => { i.profile = map[i.user_id]; });
+      page.forEach(i => { i.profile = map[i.user_id]; });
     }
   } catch (e) {
     console.error("[loadIlanlar throw]", e);
@@ -438,6 +474,20 @@ function renderListings() {
     `;
     listingsEl.appendChild(card);
   });
+
+  // "Daha Fazla Yükle" butonu — sadece DB'de daha fazla varsa
+  if (hasMoreIlanlar) {
+    const moreWrap = document.createElement("div");
+    moreWrap.className = "load-more-wrap";
+    moreWrap.innerHTML = `<button class="btn btn-ghost" id="loadMoreBtn">Daha Fazla Yükle</button>`;
+    listingsEl.appendChild(moreWrap);
+    document.getElementById("loadMoreBtn")?.addEventListener("click", async (ev) => {
+      const btn = ev.currentTarget;
+      btn.disabled = true;
+      btn.textContent = "Yükleniyor...";
+      await loadIlanlar({ append: true });
+    });
+  }
 }
 
 // Boş durum: bağlama göre yardımcı mesaj + öneri chip'leri
@@ -567,6 +617,15 @@ function showAdres(i) {
   // Sticky CTA göster (tel varsa)
   const cta = document.getElementById("adresStickyCTA");
   if (cta) cta.style.display = (i.profile?.tel) ? "" : "none";
+
+  // URL'i güncelle (paylaşılabilir link) + browser title
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("ilan", i.id);
+    history.replaceState(null, "", url.pathname + url.search);
+    document.title = `${i.baslik} · ${i.ilce} · ${i.fiyat}₺ — izincikurye`;
+  } catch {}
+
   openModal("adresModal");
 }
 
@@ -587,6 +646,11 @@ document.getElementById("adresWaBtn")?.addEventListener("click", () => {
   const msg = `Merhaba, izincikurye.com'da "${i.baslik}" ilanını gördüm. Hâlâ müsait misin?`;
   window.open("https://wa.me/" + waNum + "?text=" + encodeURIComponent(msg), "_blank");
 });
+document.getElementById("adresShareBtn")?.addEventListener("click", () => {
+  const i = _adresCurrentIlan;
+  if (!i) return;
+  copyIlanLink(i.id);
+});
 
 // =============== MODALLAR ===============
 function openModal(id) {
@@ -600,8 +664,18 @@ function openModal(id) {
   }, 50);
 }
 function closeModals() {
+  const adresWasOpen = !document.getElementById("adresModal")?.classList.contains("hidden");
   document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
   document.body.classList.remove("modal-open");
+  // İlan detayı kapanırken URL'i temizle ve title'ı geri al
+  if (adresWasOpen) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("ilan")) {
+      url.searchParams.delete("ilan");
+      history.replaceState(null, "", url.pathname + (url.search || ""));
+    }
+    document.title = "İzinci Kurye — Ankara";
+  }
 }
 
 // Esc tuşu açık modalı kapatır + kullanıcı menüsünü kapatır
@@ -894,7 +968,15 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
     isyeri_ad,
     isyeri_adres
   });
-  if (error) { toast("İlan eklenemedi: " + error.message, "error"); return; }
+  if (error) {
+    // DB trigger rate limit hatası kullanıcı dostu mesaj
+    if (error.message?.includes("GUNLUK_ILAN_LIMITI")) {
+      toast("Günlük ilan limitine ulaştın (24 saatte max 5). Yarın tekrar dene.", "error", 6000);
+    } else {
+      toast("İlan eklenemedi: " + error.message, "error");
+    }
+    return;
+  }
 
   closeModals();
   e.target.reset();
@@ -1972,4 +2054,55 @@ async function _enforceRememberMe() {
   if (_isRecoveryUrl) {
     openModal("forgotResetModal");
   }
+
+  // URL'de ?ilan=<id> varsa o ilanın detayını aç
+  try { await openIlanFromUrl(); } catch (e) { console.error("init openIlanFromUrl:", e); }
 })();
+
+// ===== Paylaşılabilir ilan detay (?ilan=<id>) =====
+async function openIlanFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const id = params.get("ilan");
+  if (!id) return;
+
+  // Önce yüklü listede ara
+  let ilan = ilanlar.find(x => x.id === id);
+
+  // Yüklü değilse direkt çek (deep link senaryosu)
+  if (!ilan) {
+    const tableOrView = currentUser ? "ilanlar" : "ilanlar_public";
+    const { data, error } = await sb.from(tableOrView).select("*").eq("id", id).maybeSingle();
+    if (error || !data) {
+      toast("İlan bulunamadı veya süresi dolmuş.", "error");
+      history.replaceState(null, "", "/");
+      return;
+    }
+    ilan = data;
+    // Profil bilgisini de çek
+    if (currentUser) {
+      const { data: prof } = await sb.from("profiles")
+        .select("id, ad, soyad, tel, created_at, musait, musait_at, kullanici_tipi")
+        .eq("id", ilan.user_id).maybeSingle();
+      ilan.profile = prof || null;
+    }
+  }
+
+  if (!currentUser) {
+    toast("İlan detayı için kayıt ol veya giriş yap.", "ok", 5000);
+    openModal("registerModal");
+    return;
+  }
+  showAdres(ilan);
+}
+
+// Paylaşım: URL kopyala
+async function copyIlanLink(ilanId) {
+  const url = window.location.origin + "/?ilan=" + ilanId;
+  try {
+    await navigator.clipboard.writeText(url);
+    toast("Bağlantı kopyalandı 📋", "ok");
+  } catch {
+    // Fallback: prompt göster
+    prompt("Bağlantıyı kopyala:", url);
+  }
+}
