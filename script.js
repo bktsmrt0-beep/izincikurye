@@ -211,7 +211,7 @@ async function loadIlanlar({ append = false } = {}) {
     if (currentUser && page.length) {
       const userIds = [...new Set(page.map(i => i.user_id))];
       const { data: profiles, error: pErr } = await sb.from("profiles")
-        .select("id, ad, soyad, tel, created_at, musait, musait_at, kullanici_tipi")
+        .select("id, ad, soyad, tel, created_at, musait, musait_at, kullanici_tipi, puan_ort, puan_sayisi")
         .in("id", userIds);
       if (pErr) console.warn("[profiles batch]", pErr.message);
       const map = Object.fromEntries((profiles || []).map(p => [p.id, p]));
@@ -272,6 +272,18 @@ function renderTopNav() {
       document.getElementById("listings")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     menu.append(myItem);
+
+    // İşletme için: Yorum Bekleyen Kuryeler
+    if (currentUser.kullaniciTipi === "isletme") {
+      const reviewItem = document.createElement("button");
+      reviewItem.className = "user-menu-item";
+      reviewItem.id = "userMenuReviewLink";
+      reviewItem.innerHTML = '⭐ <span>Kurye Yorumla <span class="review-badge hidden" id="reviewPendingBadge">0</span></span>';
+      reviewItem.addEventListener("click", () => { closeUserMenu(); openReviewListModal(); });
+      menu.append(reviewItem);
+      // Açılışta bekleyen sayıyı güncelle
+      refreshPendingReviewCount();
+    }
 
     if (currentUser.role === "admin") {
       const adminItem = document.createElement("a");
@@ -442,11 +454,16 @@ function renderListings() {
         ? '<span class="t-badge t-musait">🟢 Müsait</span>'
         : "";
       const memberBadge = memberTxt ? `<span class="t-badge">🕐 ${memberTxt}</span>` : "";
-      // ilan sayısı: yüklü ilanlar üzerinden hızlı sayım
       const ilanSayisi = ilanlar.filter(x => x.user_id === i.user_id).length;
       const ilanBadge = ilanSayisi > 1 ? `<span class="t-badge">📋 ${ilanSayisi} aktif ilan</span>` : "";
       const urgentBadge = isUrgent ? '<span class="t-badge t-urgent">🔥 Az Kaldı</span>' : "";
-      trustBadges = `<div class="trust-badges">${urgentBadge}${musaitBadge}${memberBadge}${ilanBadge}</div>`;
+      // Puan rozeti (sadece kurye, en az 1 yorum)
+      let puanBadge = "";
+      if (isKurye && p.puan_sayisi > 0) {
+        const ort = Number(p.puan_ort).toFixed(1);
+        puanBadge = `<button type="button" class="t-badge t-puan" data-act="show-reviews" data-kurye-id="${p.id}" data-kurye-ad="${escapeHtml(((p.ad||'')+' '+(p.soyad||'')).trim())}">⭐ ${ort} (${p.puan_sayisi})</button>`;
+      }
+      trustBadges = `<div class="trust-badges">${urgentBadge}${puanBadge}${musaitBadge}${memberBadge}${ilanBadge}</div>`;
     } else if (isUrgent) {
       trustBadges = '<div class="trust-badges"><span class="t-badge t-urgent">🔥 Az Kaldı</span></div>';
     }
@@ -558,13 +575,19 @@ listingsEl.addEventListener("click", async e => {
   const act = btn.dataset.act;
   const id = btn.dataset.id;
 
+  if (act === "show-reviews") {
+    const kuryeId = btn.dataset.kuryeId;
+    const kuryeAd = btn.dataset.kuryeAd || "Kurye";
+    openReviewViewModal(kuryeId, kuryeAd);
+    return;
+  }
+
   if (act === "delete") {
     if (!currentUser) return;
-    if (!confirm("Bu ilanı kaldırmak istediğinden emin misin?")) return;
-    const { error } = await sb.from("ilanlar").delete().eq("id", id);
-    if (error) { toast("Silme hatası: " + error.message, "error"); return; }
-    await loadIlanlar();
-    toast("İlan kaldırıldı", "ok");
+    const ilan = ilanlar.find(x => x.id === id);
+    if (!ilan) return;
+    // Yeni akış: telefon girme modalı aç
+    openDeleteIlanModal(ilan);
     return;
   }
 
@@ -590,6 +613,294 @@ listingsEl.addEventListener("click", async e => {
   } else if (act === "addr") {
     showAdres(ilan);
   }
+});
+
+// =============== YORUM / PUAN SİSTEMİ ===============
+
+let _reviewTab = "pending"; // pending | done
+
+async function refreshPendingReviewCount() {
+  if (!currentUser || currentUser.kullaniciTipi !== "isletme") return;
+  const { data, error } = await sb.from("yorum_haklari")
+    .select("id", { count: "exact", head: true })
+    .eq("isletme_id", currentUser.id)
+    .eq("kullanildi", false);
+  const badge = document.getElementById("reviewPendingBadge");
+  if (!badge) return;
+  const count = error ? 0 : (data?.length || 0);
+  // head:true ise count count param ile gelir; fallback olarak ayrı sayım yapalım
+  const { count: realCount } = await sb.from("yorum_haklari")
+    .select("id", { count: "exact", head: true })
+    .eq("isletme_id", currentUser.id)
+    .eq("kullanildi", false);
+  badge.textContent = realCount || 0;
+  badge.classList.toggle("hidden", !realCount);
+}
+
+async function openReviewListModal() {
+  _reviewTab = "pending";
+  document.querySelectorAll("#reviewListModal .seg-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.rtab === "pending");
+  });
+  openModal("reviewListModal");
+  await loadReviewList();
+}
+
+document.querySelectorAll("#reviewListModal .seg-btn").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    _reviewTab = btn.dataset.rtab;
+    document.querySelectorAll("#reviewListModal .seg-btn").forEach(b =>
+      b.classList.toggle("active", b === btn));
+    await loadReviewList();
+  });
+});
+
+async function loadReviewList() {
+  const listEl = document.getElementById("reviewList");
+  listEl.innerHTML = `<p class="muted small">Yükleniyor...</p>`;
+
+  if (_reviewTab === "pending") {
+    const { data: haklar, error } = await sb.from("yorum_haklari")
+      .select("*")
+      .eq("isletme_id", currentUser.id)
+      .eq("kullanildi", false)
+      .order("created_at", { ascending: false });
+    if (error) { listEl.innerHTML = `<p class="muted">Hata: ${error.message}</p>`; return; }
+    if (!haklar?.length) {
+      listEl.innerHTML = `<div class="empty" style="padding:20px"><div class="empty-icon">✨</div><p>Bekleyen yorum yok. İlanını kaldırırken kurye telefonu girersen burada görünür.</p></div>`;
+      return;
+    }
+    const kuryeIds = [...new Set(haklar.map(h => h.kurye_id))];
+    const { data: kuryeler } = await sb.from("profiles")
+      .select("id, ad, soyad, puan_ort, puan_sayisi")
+      .in("id", kuryeIds);
+    const kMap = Object.fromEntries((kuryeler || []).map(k => [k.id, k]));
+    listEl.innerHTML = haklar.map(h => {
+      const k = kMap[h.kurye_id] || {};
+      const name = ((k.ad || "") + " " + (k.soyad || "")).trim() || "Kurye";
+      return `
+        <div class="review-item">
+          <div class="review-item-info">
+            <strong>${escapeHtml(name)}</strong>
+            <small>${escapeHtml(h.ilan_baslik || "")}</small>
+            <small style="color:var(--gray-500)">${formatDateTime(h.created_at)}</small>
+          </div>
+          <button class="btn btn-primary btn-sm review-write-btn" data-hakki-id="${h.id}" data-kurye-id="${h.kurye_id}" data-kurye-ad="${escapeHtml(name)}" data-ilan-id="${h.ilan_id || ''}" data-ilan-baslik="${escapeHtml(h.ilan_baslik || '')}">Yorum Yaz</button>
+        </div>
+      `;
+    }).join("");
+    listEl.querySelectorAll(".review-write-btn").forEach(b => {
+      b.addEventListener("click", () => openReviewWriteModal(b.dataset));
+    });
+  } else {
+    // Yorumladıklarım
+    const { data: yorums, error } = await sb.from("yorumlar")
+      .select("*")
+      .eq("isletme_id", currentUser.id)
+      .order("created_at", { ascending: false });
+    if (error) { listEl.innerHTML = `<p class="muted">Hata: ${error.message}</p>`; return; }
+    if (!yorums?.length) {
+      listEl.innerHTML = `<p class="muted">Henüz yorum yazmadın.</p>`;
+      return;
+    }
+    const kuryeIds = [...new Set(yorums.map(y => y.kurye_id))];
+    const { data: kuryeler } = await sb.from("profiles")
+      .select("id, ad, soyad").in("id", kuryeIds);
+    const kMap = Object.fromEntries((kuryeler || []).map(k => [k.id, k]));
+    listEl.innerHTML = yorums.map(y => {
+      const k = kMap[y.kurye_id] || {};
+      const name = ((k.ad || "") + " " + (k.soyad || "")).trim() || "Kurye";
+      return `
+        <div class="review-item review-item-done">
+          <div class="review-item-info">
+            <strong>${escapeHtml(name)}</strong>
+            <div class="stars-display">${"★".repeat(y.puan)}${"☆".repeat(5 - y.puan)}</div>
+            ${y.yorum ? `<p style="margin:4px 0;font-size:13px">${escapeHtml(y.yorum)}</p>` : ""}
+            <small style="color:var(--gray-500)">${formatDateTime(y.created_at)}</small>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+}
+
+function openReviewWriteModal(d) {
+  document.getElementById("rwHakkiId").value = d.hakkiId;
+  document.getElementById("rwKuryeId").value = d.kuryeId;
+  document.getElementById("rwIlanId").value = d.ilanId || "";
+  document.getElementById("rwPuan").value = "0";
+  document.getElementById("rwYorum").value = "";
+  document.getElementById("rwStatus").textContent = "";
+  document.getElementById("reviewWriteTitle").textContent = `${d.kuryeAd} için Yorum`;
+  document.getElementById("reviewWriteSub").textContent = d.ilanBaslik ? `İlan: ${d.ilanBaslik}` : "";
+  // Yıldızları sıfırla
+  document.querySelectorAll("#rwStars .star").forEach(s => {
+    s.textContent = "☆";
+    s.classList.remove("active");
+  });
+  openModal("reviewWriteModal");
+}
+
+// Yıldız tıklama
+document.querySelectorAll("#rwStars .star").forEach(star => {
+  star.addEventListener("click", () => {
+    const val = parseInt(star.dataset.val, 10);
+    document.getElementById("rwPuan").value = String(val);
+    document.querySelectorAll("#rwStars .star").forEach(s => {
+      const sv = parseInt(s.dataset.val, 10);
+      s.textContent = sv <= val ? "★" : "☆";
+      s.classList.toggle("active", sv <= val);
+    });
+  });
+  star.addEventListener("mouseenter", () => {
+    const val = parseInt(star.dataset.val, 10);
+    document.querySelectorAll("#rwStars .star").forEach(s => {
+      const sv = parseInt(s.dataset.val, 10);
+      s.classList.toggle("hover", sv <= val);
+    });
+  });
+});
+document.getElementById("rwStars")?.addEventListener("mouseleave", () => {
+  document.querySelectorAll("#rwStars .star").forEach(s => s.classList.remove("hover"));
+});
+
+document.getElementById("reviewWriteForm")?.addEventListener("submit", async e => {
+  e.preventDefault();
+  const puan = parseInt(document.getElementById("rwPuan").value, 10);
+  if (!puan || puan < 1 || puan > 5) {
+    setStatus("rwStatus", "error", "1-5 yıldız seç.");
+    return;
+  }
+  const kurye_id = document.getElementById("rwKuryeId").value;
+  const ilan_id = document.getElementById("rwIlanId").value || null;
+  const yorum = document.getElementById("rwYorum").value.trim() || null;
+
+  const btn = e.submitter;
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = "Gönderiliyor...";
+  const { error } = await sb.from("yorumlar").insert({
+    kurye_id, isletme_id: currentUser.id, ilan_id, puan, yorum
+  });
+  btn.disabled = false; btn.textContent = orig;
+
+  if (error) {
+    setStatus("rwStatus", "error", "Hata: " + error.message);
+    return;
+  }
+  closeModals();
+  toast("⭐ Yorumun gönderildi. Teşekkürler!", "ok");
+  refreshPendingReviewCount();
+});
+
+// ===== Kurye için yorumları gösterme modalı =====
+async function openReviewViewModal(kuryeId, kuryeAd) {
+  document.getElementById("reviewViewTitle").textContent = `${kuryeAd} için Yorumlar`;
+  document.getElementById("reviewViewList").innerHTML = `<p class="muted small">Yükleniyor...</p>`;
+  document.getElementById("reviewViewSummary").innerHTML = "";
+  openModal("reviewViewModal");
+
+  // Özet (profiles.puan_ort + sayisi)
+  const { data: prof } = await sb.from("profiles")
+    .select("puan_ort, puan_sayisi").eq("id", kuryeId).maybeSingle();
+  if (prof?.puan_sayisi) {
+    const ort = Number(prof.puan_ort).toFixed(1);
+    const fullStars = Math.round(prof.puan_ort);
+    document.getElementById("reviewViewSummary").innerHTML = `
+      <div class="review-summary-inner">
+        <div class="review-summary-num">${ort}</div>
+        <div class="review-summary-stars">${"★".repeat(fullStars)}${"☆".repeat(5 - fullStars)}</div>
+        <div class="review-summary-count">${prof.puan_sayisi} yorum</div>
+      </div>
+    `;
+  } else {
+    document.getElementById("reviewViewSummary").innerHTML = `<p class="muted small">Bu kurye için henüz yorum yok.</p>`;
+  }
+
+  // Yorum listesi
+  const { data: yorums } = await sb.from("yorumlar")
+    .select("puan, yorum, created_at, isletme_id")
+    .eq("kurye_id", kuryeId)
+    .order("created_at", { ascending: false })
+    .limit(50);
+  const listEl = document.getElementById("reviewViewList");
+  if (!yorums?.length) {
+    listEl.innerHTML = "";
+    return;
+  }
+  // İşletme adı join
+  const isletmeIds = [...new Set(yorums.map(y => y.isletme_id))];
+  const { data: bizs } = await sb.from("profiles")
+    .select("id, ad, soyad, isletme_adi, kullanici_tipi").in("id", isletmeIds);
+  const bMap = Object.fromEntries((bizs || []).map(b => [b.id, b]));
+  listEl.innerHTML = yorums.map(y => {
+    const b = bMap[y.isletme_id] || {};
+    const name = b.isletme_adi || ((b.ad || "") + " " + (b.soyad || "")).trim() || "İşletme";
+    return `
+      <div class="review-item review-item-done">
+        <div class="review-item-info">
+          <strong>${escapeHtml(name)}</strong>
+          <div class="stars-display">${"★".repeat(y.puan)}${"☆".repeat(5 - y.puan)}</div>
+          ${y.yorum ? `<p style="margin:4px 0;font-size:13px">${escapeHtml(y.yorum)}</p>` : ""}
+          <small style="color:var(--gray-500)">${formatDateTime(y.created_at)}</small>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+// =============== İLAN KALDIRMA AKIŞI ===============
+function openDeleteIlanModal(ilan) {
+  document.getElementById("deleteIlanId").value = ilan.id;
+  document.getElementById("deleteIlanSub").textContent = `"${ilan.baslik}" — hangi kurye ile anlaştın?`;
+  document.getElementById("deleteIlanTel").value = "";
+  document.getElementById("deleteIlanStatus").textContent = "";
+  document.getElementById("deleteIlanStatus").className = "status";
+  openModal("deleteIlanModal");
+}
+
+async function performDeleteWithReview(ilanId, kuryeTel) {
+  const { data, error } = await sb.rpc("grant_review_and_delete_ilan", {
+    p_ilan_id: ilanId,
+    p_kurye_tel: kuryeTel || ""
+  });
+  if (error) {
+    toast("İlan silinemedi: " + error.message, "error");
+    return null;
+  }
+  return data;
+}
+
+document.getElementById("deleteIlanForm")?.addEventListener("submit", async e => {
+  e.preventDefault();
+  const id = document.getElementById("deleteIlanId").value;
+  const tel = document.getElementById("deleteIlanTel").value.trim();
+  if (!tel) {
+    setStatus("deleteIlanStatus", "error", "Telefon gir veya 'Atla' tıkla.");
+    return;
+  }
+  const btn = e.submitter;
+  const orig = btn.textContent;
+  btn.disabled = true; btn.textContent = "Kaydediliyor...";
+  const result = await performDeleteWithReview(id, tel);
+  btn.disabled = false; btn.textContent = orig;
+  if (!result) return;
+  closeModals();
+  await loadIlanlar();
+  if (result.matched) {
+    toast("✅ İlan kaldırıldı. Bu kurye için yorum hakkın oluştu.", "ok", 5000);
+  } else {
+    toast("İlan kaldırıldı. Telefon kayıtlı kurye değil — yorum hakkı verilmedi.", "ok", 5000);
+  }
+});
+
+document.getElementById("deleteIlanSkip")?.addEventListener("click", async () => {
+  const id = document.getElementById("deleteIlanId").value;
+  if (!confirm("Yorum hakkı olmadan ilanı kaldıracak. Devam?")) return;
+  const result = await performDeleteWithReview(id, "");
+  if (!result) return;
+  closeModals();
+  await loadIlanlar();
+  toast("İlan kaldırıldı.", "ok");
 });
 
 let _adresCurrentIlan = null;
@@ -1907,7 +2218,10 @@ async function loadMusaitKuryeler() {
       return;
     }
     const session = readStoredSession();
-    let q = `profiles?kullanici_tipi=eq.kurye&musait=eq.true&id=neq.${currentUser.id}&select=id,ad,soyad,tel,avatar_url,tercih_ilceler,calisma_baslangic,calisma_bitis,musait_at,bio&order=musait_at.desc`;
+    // Sıralama: puan_ort DESC (NULL'lar sonda) → puan_sayisi DESC → musait_at DESC
+    let q = `profiles?kullanici_tipi=eq.kurye&musait=eq.true&id=neq.${currentUser.id}`
+      + `&select=id,ad,soyad,tel,avatar_url,tercih_ilceler,calisma_baslangic,calisma_bitis,musait_at,bio,puan_ort,puan_sayisi`
+      + `&order=puan_ort.desc.nullslast,puan_sayisi.desc,musait_at.desc`;
     const { data, error } = await rawSelect(q, session?.access_token, 6000);
     if (error) {
       console.error("[loadMusaitKuryeler]", error);
@@ -1959,12 +2273,26 @@ function renderMusaitKuryeler() {
       : "";
     const avatarFallback = k.avatar_url ? "" : "👤";
 
+    // Puan rozeti
+    let puanHtml = "";
+    if (k.puan_sayisi > 0) {
+      const ort = Number(k.puan_ort).toFixed(1);
+      const fullStars = Math.round(k.puan_ort);
+      puanHtml = `<button type="button" class="kurye-puan" data-kact="show-reviews" data-id="${k.id}" data-ad="${escapeHtml(adSoyad)}" title="Yorumları gör">
+        <span class="kurye-puan-stars">${"★".repeat(fullStars)}${"☆".repeat(5 - fullStars)}</span>
+        <span class="kurye-puan-num"><strong>${ort}</strong> (${k.puan_sayisi})</span>
+      </button>`;
+    } else {
+      puanHtml = `<span class="kurye-puan kurye-puan-empty">Yorum yok</span>`;
+    }
+
     card.innerHTML = `
       <div class="kurye-head">
         <div class="kurye-avatar" ${avatarStyle}>${avatarFallback}</div>
         <div class="kurye-info">
           <h3>${escapeHtml(adSoyad)}</h3>
           <div class="kurye-meta">${ilceler}${saat}</div>
+          ${puanHtml}
         </div>
       </div>
       ${k.bio ? `<p class="kurye-bio">${escapeHtml(k.bio)}</p>` : ""}
@@ -1982,10 +2310,14 @@ kuryeListingsEl?.addEventListener("click", e => {
   const btn = e.target.closest("[data-kact]");
   if (!btn) return;
   if (!currentUser) { openModal("registerModal"); return; }
+  if (btn.dataset.kact === "show-reviews") {
+    openReviewViewModal(btn.dataset.id, btn.dataset.ad || "Kurye");
+    return;
+  }
   const k = kuryeler.find(x => x.id === btn.dataset.id);
   if (!k) return;
   const tel = (k.tel || "").replace(/\s/g, "");
-  if (!tel) { toast("Telefon bilgisi bulunamadı.", "warn"); return; }
+  if (!tel) { toast("Telefon bilgisi bulunamadı.", "error"); return; }
   if (btn.dataset.kact === "call") {
     window.location.href = "tel:" + tel;
   } else if (btn.dataset.kact === "wa") {

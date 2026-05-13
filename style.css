@@ -1249,10 +1249,173 @@ body.modal-open { overflow: hidden; }
   border-color: #fecaca;
   animation: pulse-urgent 2s ease-in-out infinite;
 }
+.t-badge.t-puan {
+  background: #fefce8;
+  color: #854d0e;
+  border-color: #fde68a;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+.t-badge.t-puan:hover {
+  background: #fef3c7;
+  border-color: #fbbf24;
+}
 @keyframes pulse-urgent {
   0%, 100% { transform: scale(1); }
   50% { transform: scale(1.03); }
 }
+
+/* ===== Yıldız / Puan Sistemi ===== */
+.review-badge {
+  background: #ef4444;
+  color: white;
+  border-radius: 999px;
+  padding: 1px 7px;
+  font-size: 11px;
+  font-weight: 800;
+  margin-left: 4px;
+}
+
+.review-tabs {
+  display: flex;
+  gap: 0;
+  border-radius: 8px;
+  background: var(--gray-50);
+  padding: 4px;
+  margin: 16px 0 12px;
+}
+.review-tabs .seg-btn { flex: 1; }
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.review-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  background: white;
+}
+.review-item-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.review-item-info strong { font-size: 14px; }
+.review-item-info small { font-size: 12px; color: var(--gray-500); }
+.review-item-done { background: var(--gray-50); }
+
+.stars-display {
+  color: #f59e0b;
+  letter-spacing: 1px;
+  font-size: 15px;
+}
+
+/* Star rating input (yorum yazma) */
+.star-rating {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.star-rating .star {
+  background: none;
+  border: 0;
+  color: #d1d5db;
+  font-size: 36px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+  transition: color 0.1s, transform 0.1s;
+}
+.star-rating .star:hover,
+.star-rating .star.hover,
+.star-rating .star.active {
+  color: #f59e0b;
+}
+.star-rating .star:hover { transform: scale(1.1); }
+
+textarea#rwYorum {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+textarea#rwYorum:focus {
+  outline: none;
+  border-color: var(--orange);
+}
+
+/* Yorum görüntüleme özet */
+.review-summary {
+  margin: 12px 0;
+}
+.review-summary-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-radius: 10px;
+}
+.review-summary-num {
+  font-size: 36px;
+  font-weight: 800;
+  color: #92400e;
+  line-height: 1;
+}
+.review-summary-stars {
+  color: #f59e0b;
+  font-size: 18px;
+  letter-spacing: 2px;
+}
+.review-summary-count {
+  font-size: 13px;
+  color: #92400e;
+  font-weight: 600;
+}
+
+/* Kurye karti (musait list) puan rozeti */
+.kurye-puan {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 4px 10px;
+  background: #fefce8;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.kurye-puan:hover { background: #fef3c7; }
+.kurye-puan-empty {
+  background: var(--gray-50);
+  border-color: var(--gray-200);
+  color: var(--gray-500);
+  cursor: default;
+  font-style: italic;
+}
+.kurye-puan-empty:hover { background: var(--gray-50); }
+.kurye-puan-stars {
+  color: #f59e0b;
+  letter-spacing: 1px;
+}
+.kurye-puan-num { color: #854d0e; font-weight: 700; }
 
 /* ===== Mobil: sidebar üste alın ===== */
 @media (max-width: 760px) {

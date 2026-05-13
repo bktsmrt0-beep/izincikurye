@@ -381,6 +381,90 @@
     </div>
   </div>
 
+  <!-- ===== YORUM BEKLEYEN KURYELER LİSTESİ (işletme) ===== -->
+  <div class="modal hidden" id="reviewListModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>⭐ Kurye Yorumla</h2>
+      <p class="muted">Anlaştığın kuryelere puan verebilirsin.</p>
+      <div class="review-tabs">
+        <button class="seg-btn active" data-rtab="pending" type="button">Bekleyen</button>
+        <button class="seg-btn" data-rtab="done" type="button">Yorumladıklarım</button>
+      </div>
+      <div id="reviewList" class="review-list">
+        <p class="muted small">Yükleniyor...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== YORUM YAZMA MODALI ===== -->
+  <div class="modal hidden" id="reviewWriteModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2 id="reviewWriteTitle">Yorum Yaz</h2>
+      <p class="muted" id="reviewWriteSub"></p>
+      <form id="reviewWriteForm" autocomplete="off">
+        <input type="hidden" id="rwKuryeId" />
+        <input type="hidden" id="rwIlanId" />
+        <input type="hidden" id="rwHakkiId" />
+
+        <label class="filter-label">Puan</label>
+        <div class="star-rating" id="rwStars" role="radiogroup" aria-label="Puan">
+          <button type="button" class="star" data-val="1" aria-label="1 yıldız">☆</button>
+          <button type="button" class="star" data-val="2" aria-label="2 yıldız">☆</button>
+          <button type="button" class="star" data-val="3" aria-label="3 yıldız">☆</button>
+          <button type="button" class="star" data-val="4" aria-label="4 yıldız">☆</button>
+          <button type="button" class="star" data-val="5" aria-label="5 yıldız">☆</button>
+        </div>
+        <input type="hidden" id="rwPuan" value="0" />
+
+        <label class="filter-label" style="margin-top:14px">Yorum <small style="font-weight:400;color:var(--gray-500)">(opsiyonel, max 500)</small></label>
+        <textarea id="rwYorum" rows="4" maxlength="500" placeholder="Kurye nasıldı? Zamanında geldi mi, dikkatli miydi..."></textarea>
+        <div id="rwStatus" class="status" style="margin-top:8px"></div>
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:14px">Yorumu Gönder</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== KURYE YORUMLARI GÖRÜNTÜLE MODALI ===== -->
+  <div class="modal hidden" id="reviewViewModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2 id="reviewViewTitle">Kurye Yorumları</h2>
+      <div id="reviewViewSummary" class="review-summary"></div>
+      <div id="reviewViewList" class="review-list">
+        <p class="muted small">Yükleniyor...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== İLAN KALDIRMA + KURYE TELEFONU MODAL ===== -->
+  <div class="modal hidden" id="deleteIlanModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>İlanı Kaldır</h2>
+      <p class="muted" id="deleteIlanSub">Hangi kurye ile anlaştın?</p>
+      <p style="font-size:13px;color:var(--gray-500);line-height:1.5">
+        Kuryenin telefon numarasını gir.<br>
+        Bu numara <b>izincikurye'ye kayıtlı bir kurye</b>yse, ona <b>puan/yorum yapma hakkı</b> kazanacaksın.
+        Sonradan profilden bu kuryeye yıldız verip yorum yazabilirsin.
+      </p>
+      <form id="deleteIlanForm" autocomplete="off">
+        <input type="hidden" id="deleteIlanId" />
+        <label class="filter-label" style="margin-top:14px">Kurye Telefonu</label>
+        <input type="tel" id="deleteIlanTel" class="input" placeholder="0532 123 45 67" inputmode="tel" />
+        <div id="deleteIlanStatus" class="status" style="margin-top:8px"></div>
+        <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
+          <button type="submit" class="btn btn-primary" style="flex:1">İlanı Kaldır</button>
+          <button type="button" class="btn btn-ghost" id="deleteIlanSkip">Kurye Bulamadım / Atla</button>
+        </div>
+        <p style="font-size:12px;color:var(--gray-500);margin-top:10px">
+          "Atla" dersen ilan silinir ama yorum hakkı oluşmaz.
+        </p>
+      </form>
+    </div>
+  </div>
+
   <!-- ===== ADRES / İLAN DETAY MODAL ===== -->
   <div class="modal hidden" id="adresModal">
     <div class="modal-card has-sticky-cta">
@@ -585,7 +669,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=43"></script>
-  <script src="script.js?v=43"></script>
+  <script src="supabase-config.js?v=44"></script>
+  <script src="script.js?v=44"></script>
 </body>
 </html>
