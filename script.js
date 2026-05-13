@@ -635,7 +635,6 @@ async function refreshPendingReviewCount() {
   );
   if (error) console.warn("[banner] yorum_haklari sorgu hatası:", error);
   const n = (data || []).length;
-  console.log("[banner] pending count:", n, "userId:", currentUser.id);
 
   if (badge) {
     badge.textContent = n;
