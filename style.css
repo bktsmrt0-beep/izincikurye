@@ -1267,6 +1267,57 @@ body.modal-open { overflow: hidden; }
   50% { transform: scale(1.03); }
 }
 
+/* ===== Telefon Input (+90 prefix) ===== */
+.phone-input-wrap {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+  transition: border-color 0.15s;
+}
+.phone-input-wrap:focus-within {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(255,122,0,0.12);
+}
+.phone-prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  background: var(--gray-50);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--gray-700);
+  border-right: 1px solid var(--gray-200);
+  user-select: none;
+}
+.phone-input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: 1px;
+  background: transparent;
+}
+.phone-input.invalid + .phone-hint,
+.phone-input-wrap:has(.phone-input.invalid) {
+  border-color: #ef4444;
+}
+.phone-input.valid {
+  color: #047857;
+}
+.phone-hint {
+  display: block;
+  font-size: 12px;
+  color: var(--gray-500);
+  margin-top: 6px;
+}
+.phone-hint-warn { color: #b45309; }
+.phone-hint-ok { color: #047857; font-weight: 600; }
+
 /* ===== Yıldız / Puan Sistemi ===== */
 .review-badge {
   background: #ef4444;

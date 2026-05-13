@@ -860,11 +860,60 @@ async function openReviewViewModal(kuryeId, kuryeAd) {
 function openDeleteIlanModal(ilan) {
   document.getElementById("deleteIlanId").value = ilan.id;
   document.getElementById("deleteIlanSub").textContent = `"${ilan.baslik}" — hangi kurye ile anlaştın?`;
-  document.getElementById("deleteIlanTel").value = "";
+  const tel = document.getElementById("deleteIlanTel");
+  tel.value = "";
+  tel.classList.remove("invalid", "valid");
+  document.getElementById("deleteIlanHint").textContent = "10 hane gir (baştaki 0 olmadan)";
+  document.getElementById("deleteIlanHint").className = "phone-hint";
   document.getElementById("deleteIlanStatus").textContent = "";
   document.getElementById("deleteIlanStatus").className = "status";
   openModal("deleteIlanModal");
 }
+
+// +90 telefon input: sadece rakam kabul, baştaki 0/90 strip, canlı format "5XX XXX XX XX"
+function _phoneRaw10(input) {
+  let d = (input || "").replace(/\D/g, "");
+  // Baştaki 0 veya 90 prefix'i kullanıcı kazara yazdıysa kırp
+  if (d.length === 12 && d.startsWith("90")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+  return d.slice(0, 10);
+}
+function _formatPhone10(d) {
+  // "5XX XXX XX XX"
+  let out = "";
+  if (d.length > 0) out += d.slice(0, 3);
+  if (d.length > 3) out += " " + d.slice(3, 6);
+  if (d.length > 6) out += " " + d.slice(6, 8);
+  if (d.length > 8) out += " " + d.slice(8, 10);
+  return out;
+}
+
+document.getElementById("deleteIlanTel")?.addEventListener("input", e => {
+  const d = _phoneRaw10(e.target.value);
+  e.target.value = _formatPhone10(d);
+  const hint = document.getElementById("deleteIlanHint");
+  if (d.length === 0) {
+    e.target.classList.remove("invalid", "valid");
+    hint.textContent = "10 hane gir (baştaki 0 olmadan)";
+    hint.className = "phone-hint";
+  } else if (d.length < 10) {
+    e.target.classList.add("invalid");
+    e.target.classList.remove("valid");
+    hint.textContent = `${10 - d.length} hane daha…`;
+    hint.className = "phone-hint phone-hint-warn";
+  } else {
+    e.target.classList.remove("invalid");
+    e.target.classList.add("valid");
+    // Türkiye mobil 5'le başlar — info notu
+    if (!d.startsWith("5")) {
+      hint.textContent = "⚠ Türkiye mobil numaraları 5 ile başlar.";
+      hint.className = "phone-hint phone-hint-warn";
+    } else {
+      hint.textContent = "✓ Doğru format";
+      hint.className = "phone-hint phone-hint-ok";
+    }
+  }
+});
 
 async function performDeleteWithReview(ilanId, kuryeTel) {
   const session = readStoredSession();
@@ -884,15 +933,21 @@ async function performDeleteWithReview(ilanId, kuryeTel) {
 document.getElementById("deleteIlanForm")?.addEventListener("submit", async e => {
   e.preventDefault();
   const id = document.getElementById("deleteIlanId").value;
-  const tel = document.getElementById("deleteIlanTel").value.trim();
-  if (!tel) {
+  const d = _phoneRaw10(document.getElementById("deleteIlanTel").value);
+  if (d.length === 0) {
     setStatus("deleteIlanStatus", "error", "Telefon gir veya 'Atla' tıkla.");
     return;
   }
+  if (d.length !== 10) {
+    setStatus("deleteIlanStatus", "error", "Telefon eksik — 10 hane gerekli.");
+    return;
+  }
+  // +90 prefix ile gönder (SQL fonksiyonu zaten son 10 haneyi alıp eşleştirir)
+  const telFull = "+90" + d;
   const btn = e.submitter;
   const orig = btn.textContent;
   btn.disabled = true; btn.textContent = "Kaydediliyor...";
-  const result = await performDeleteWithReview(id, tel);
+  const result = await performDeleteWithReview(id, telFull);
   btn.disabled = false; btn.textContent = orig;
   if (!result) return;
   closeModals();

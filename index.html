@@ -452,7 +452,11 @@
       <form id="deleteIlanForm" autocomplete="off">
         <input type="hidden" id="deleteIlanId" />
         <label class="filter-label" style="margin-top:14px">Kurye Telefonu</label>
-        <input type="tel" id="deleteIlanTel" class="input" placeholder="0532 123 45 67" inputmode="tel" />
+        <div class="phone-input-wrap">
+          <span class="phone-prefix">+90</span>
+          <input type="tel" id="deleteIlanTel" class="phone-input" placeholder="5XX XXX XX XX" inputmode="numeric" autocomplete="off" maxlength="13" />
+        </div>
+        <small id="deleteIlanHint" class="phone-hint">10 hane gir (baştaki 0 olmadan)</small>
         <div id="deleteIlanStatus" class="status" style="margin-top:8px"></div>
         <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
           <button type="submit" class="btn btn-primary" style="flex:1">İlanı Kaldır</button>
@@ -669,7 +673,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=45"></script>
-  <script src="script.js?v=45"></script>
+  <script src="supabase-config.js?v=46"></script>
+  <script src="script.js?v=46"></script>
 </body>
 </html>
