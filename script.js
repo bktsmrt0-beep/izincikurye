@@ -1106,6 +1106,11 @@ document.getElementById("sidebarOverlay")?.addEventListener("click", closeSideba
 // İlan Ver tıklanınca drawer kapansın (modal açılacak)
 document.getElementById("ilanVerBtn")?.addEventListener("click", closeSidebar);
 
+// Sağ alt FAB: aynı işi yapsın (mevcut ilanVerBtn click handler'ını tetikle)
+document.getElementById("fabIlanBtn")?.addEventListener("click", () => {
+  document.getElementById("ilanVerBtn")?.click();
+});
+
 // Kullanıcı menüsü helper
 function openUserMenu() {
   const m = document.querySelector(".user-menu");

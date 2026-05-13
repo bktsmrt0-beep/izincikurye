@@ -165,6 +165,56 @@ ul { list-style: none; }
 }
 .sidebar-overlay:not(.hidden) { opacity: 1; }
 body.sidebar-open { overflow: hidden; }
+
+/* ===== FAB: Sağ alt sabit "+ İlan Ver" butonu ===== */
+.fab-ilan {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 55;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--orange);
+  color: white;
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 22px 14px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(255, 122, 0, 0.45), 0 2px 6px rgba(0,0,0,0.1);
+  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.fab-ilan:hover {
+  background: var(--orange-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(255, 122, 0, 0.55), 0 4px 8px rgba(0,0,0,0.12);
+}
+.fab-ilan:active { transform: translateY(0); }
+.fab-plus {
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 800;
+}
+.fab-text { letter-spacing: 0.3px; }
+
+/* Mobilde küçült ama yine de görsel kalsın */
+@media (max-width: 520px) {
+  .fab-ilan {
+    right: 14px;
+    bottom: 14px;
+    padding: 12px 18px 12px 14px;
+    font-size: 14px;
+  }
+  .fab-plus { font-size: 20px; }
+}
+
+/* Çok dar ekranda (320px gibi) sadece + ikon */
+@media (max-width: 360px) {
+  .fab-ilan { padding: 14px; }
+  .fab-text { display: none; }
+}
 .panel {
   background: var(--gray-50);
   border: 1px solid var(--gray-200);
