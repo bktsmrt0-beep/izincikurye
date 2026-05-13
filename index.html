@@ -59,6 +59,16 @@
         <p class="page-sub">Ankara&apos;da anlık olarak izinci arayanlar</p>
       </div>
 
+      <!-- KURYE MÜSAİTLİK TOP BAR (sadece kurye girişli) -->
+      <div id="kuryeTopBar" class="kurye-top-bar hidden">
+        <span class="ktb-label" id="ktbLabelLeft">Meşgul</span>
+        <label class="ktb-switch">
+          <input type="checkbox" id="ktbMusaitSwitch" />
+          <span class="ktb-slider"></span>
+        </label>
+        <span class="ktb-label ktb-label-right" id="ktbLabelRight">Müsait</span>
+      </div>
+
       <!-- KURYE KONTROL PANELİ (sadece kurye için) -->
       <section id="kuryeDashboard" class="kurye-dashboard hidden">
         <header class="kd-head">
@@ -524,18 +534,8 @@
     </div>
   </div>
 
-  <!-- KURYE STICKY MÜSAİTLİK BAR (sadece kurye girişlilere görünür) -->
-  <div id="kuryeStickyBar" class="kurye-sticky-bar hidden">
-    <span class="ksb-label" id="ksbLabelLeft">Meşgul</span>
-    <label class="ksb-switch">
-      <input type="checkbox" id="ksbMusaitSwitch" />
-      <span class="ksb-slider"></span>
-    </label>
-    <span class="ksb-label ksb-label-right" id="ksbLabelRight">Müsait</span>
-  </div>
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=37"></script>
-  <script src="script.js?v=37"></script>
+  <script src="supabase-config.js?v=38"></script>
+  <script src="script.js?v=38"></script>
 </body>
 </html>

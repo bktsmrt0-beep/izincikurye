@@ -1514,37 +1514,37 @@ async function renderKuryeDashboard() {
 function syncDashboardToggle() {
   const on = !!currentUser?.musait;
 
-  // Üstteki dashboard mesajını güncelle
+  // Dashboard mesajını güncelle
   const msg = document.getElementById("kdStatusMsg");
   if (msg) {
     msg.innerHTML = on
       ? "🟢 İşletmeler seni <strong>Müsait Kuryeler</strong> listesinde görüyor."
-      : "Hazır olduğunda alttaki butondan <strong>Müsait</strong> konumuna al.";
+      : "Hazır olduğunda yukarıdaki butondan <strong>Müsait</strong> konumuna al.";
   }
 
-  // Sticky bottom bar'ı senkronize et
-  const sbar = document.getElementById("kuryeStickyBar");
-  const sbsw = document.getElementById("ksbMusaitSwitch");
-  if (sbsw) sbsw.checked = on;
-  if (sbar) {
-    sbar.classList.toggle("active", on);
-    sbar.classList.toggle("hidden", !(currentUser && currentUser.kullaniciTipi === "kurye"));
+  // Top bar'ı senkronize et
+  const tbar = document.getElementById("kuryeTopBar");
+  const tbsw = document.getElementById("ktbMusaitSwitch");
+  if (tbsw) tbsw.checked = on;
+  if (tbar) {
+    tbar.classList.toggle("active", on);
+    tbar.classList.toggle("hidden", !(currentUser && currentUser.kullaniciTipi === "kurye"));
   }
   // Sol/sağ etiket vurgusu
-  document.getElementById("ksbLabelLeft")?.classList.toggle("active", !on);
-  document.getElementById("ksbLabelRight")?.classList.toggle("active", on);
+  document.getElementById("ktbLabelLeft")?.classList.toggle("active", !on);
+  document.getElementById("ktbLabelRight")?.classList.toggle("active", on);
 }
 
-// Sticky bar switch handler — tek tıkla DB güncelle, her yerde senkronize tut
-document.getElementById("ksbMusaitSwitch")?.addEventListener("change", async e => {
+// Top bar switch handler — tek tıkla DB güncelle, her yerde senkronize tut
+document.getElementById("ktbMusaitSwitch")?.addEventListener("change", async e => {
   if (!currentUser) return;
   const yeni = e.target.checked;
   const nowIso = new Date().toISOString();
   // Anında UI güncelle
-  const sbar = document.getElementById("kuryeStickyBar");
-  sbar?.classList.toggle("active", yeni);
-  document.getElementById("ksbLabelLeft")?.classList.toggle("active", !yeni);
-  document.getElementById("ksbLabelRight")?.classList.toggle("active", yeni);
+  const tbar = document.getElementById("kuryeTopBar");
+  tbar?.classList.toggle("active", yeni);
+  document.getElementById("ktbLabelLeft")?.classList.toggle("active", !yeni);
+  document.getElementById("ktbLabelRight")?.classList.toggle("active", yeni);
 
   const { error } = await sb.from("profiles")
     .update({ musait: yeni, musait_at: nowIso })
@@ -1553,9 +1553,9 @@ document.getElementById("ksbMusaitSwitch")?.addEventListener("change", async e =
   if (error) {
     // Geri al
     e.target.checked = !yeni;
-    sbar?.classList.toggle("active", !yeni);
-    document.getElementById("ksbLabelLeft")?.classList.toggle("active", yeni);
-    document.getElementById("ksbLabelRight")?.classList.toggle("active", !yeni);
+    tbar?.classList.toggle("active", !yeni);
+    document.getElementById("ktbLabelLeft")?.classList.toggle("active", yeni);
+    document.getElementById("ktbLabelRight")?.classList.toggle("active", !yeni);
     toast("Güncellenemedi: " + error.message, "error");
     return;
   }
