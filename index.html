@@ -26,6 +26,9 @@
 
   <header class="site-header">
     <div class="container header-inner">
+      <button class="hamburger" id="hamburgerBtn" type="button" aria-label="Menüyü aç" aria-controls="sidebarDrawer" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
       <a href="/" class="logo">
         <span class="logo-mark">iK</span>
         <span class="logo-text">izinci<span>kurye</span></span>
@@ -37,6 +40,9 @@
       </nav>
     </div>
   </header>
+
+  <!-- Hamburger açıkken arkayı karartan overlay -->
+  <div class="sidebar-overlay hidden" id="sidebarOverlay"></div>
 
   <!-- ===== KURYE MÜSAİTLİK BÜYÜK BANNER (sadece kurye girişli, en üstte) ===== -->
   <section id="kuryeMusaitBanner" class="kurye-musait-banner hidden" aria-live="polite">
@@ -63,8 +69,12 @@
   </section>
 
   <div class="container layout">
-    <!-- SOL MENÜ -->
-    <aside class="sidebar">
+    <!-- SOL MENÜ (drawer — hamburger ile açılır) -->
+    <aside class="sidebar" id="sidebarDrawer" aria-label="Filtreler ve menü">
+      <div class="sidebar-head">
+        <h2 class="sidebar-title">Menü</h2>
+        <button type="button" class="sidebar-close" id="sidebarCloseBtn" aria-label="Kapat">&times;</button>
+      </div>
       <button class="btn btn-primary btn-block" id="ilanVerBtn">+ İlan Ver</button>
 
       <div class="panel">
@@ -685,7 +695,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=50"></script>
-  <script src="script.js?v=50"></script>
+  <script src="supabase-config.js?v=51"></script>
+  <script src="script.js?v=51"></script>
 </body>
 </html>

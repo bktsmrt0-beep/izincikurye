@@ -1079,8 +1079,32 @@ document.addEventListener("keydown", e => {
   if (e.key === "Escape") {
     if (document.querySelector(".modal:not(.hidden)")) closeModals();
     closeUserMenu();
+    closeSidebar();
   }
 });
+
+// =============== SIDEBAR DRAWER (Hamburger) ===============
+function openSidebar() {
+  document.getElementById("sidebarDrawer")?.classList.add("open");
+  document.getElementById("sidebarOverlay")?.classList.remove("hidden");
+  document.getElementById("hamburgerBtn")?.setAttribute("aria-expanded", "true");
+  document.body.classList.add("sidebar-open");
+}
+function closeSidebar() {
+  document.getElementById("sidebarDrawer")?.classList.remove("open");
+  document.getElementById("sidebarOverlay")?.classList.add("hidden");
+  document.getElementById("hamburgerBtn")?.setAttribute("aria-expanded", "false");
+  document.body.classList.remove("sidebar-open");
+}
+function toggleSidebar() {
+  const open = document.getElementById("sidebarDrawer")?.classList.contains("open");
+  if (open) closeSidebar(); else openSidebar();
+}
+document.getElementById("hamburgerBtn")?.addEventListener("click", toggleSidebar);
+document.getElementById("sidebarCloseBtn")?.addEventListener("click", closeSidebar);
+document.getElementById("sidebarOverlay")?.addEventListener("click", closeSidebar);
+// İlan Ver tıklanınca drawer kapansın (modal açılacak)
+document.getElementById("ilanVerBtn")?.addEventListener("click", closeSidebar);
 
 // Kullanıcı menüsü helper
 function openUserMenu() {
