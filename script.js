@@ -291,19 +291,32 @@ function renderListings() {
   const myPanel = document.getElementById("myListingsPanel");
   if (myPanel) myPanel.classList.toggle("hidden", !currentUser);
 
-  // Sayım göstergesi
+  // Sayım göstergesi (sidebar)
   const cntEl = document.getElementById("myListingsCount");
   if (cntEl && currentUser) {
     cntEl.textContent = listingScope === "mine"
       ? `${ilanlar.length} ilanım`
       : `Toplam ${ilanlar.length} ilan`;
   }
+
+  // Sayfa başlığı: ilan sayısı + seçili ilçe
+  const pageH1 = document.querySelector(".page-head h1");
+  const pageSub = document.querySelector(".page-head .page-sub");
+  const selectedIlce = districtSelect?.value || "all";
+  if (pageH1) {
+    pageH1.textContent = ilanlar.length > 0
+      ? `İzinci Kurye İlanları (${ilanlar.length})`
+      : "İzinci Kurye İlanları";
+  }
+  if (pageSub) {
+    pageSub.textContent = selectedIlce === "all"
+      ? "Ankara'da anlık olarak izinci arayanlar"
+      : `${selectedIlce} bölgesindeki aktif ilanlar`;
+  }
+
   listingsEl.innerHTML = "";
   if (ilanlar.length === 0) {
-    emptyEl.textContent = (listingScope === "mine" && currentUser)
-      ? "Henüz hiç ilan yayınlamamışsın."
-      : "Bu ilçede şu an aktif izinci ilanı yok.";
-    emptyEl.classList.remove("hidden");
+    renderEmptyState();
     return;
   }
   emptyEl.classList.add("hidden");
@@ -311,6 +324,7 @@ function renderListings() {
   ilanlar.forEach(i => {
     const card = document.createElement("article");
     card.className = "card";
+    if (currentUser) card.classList.add("clickable");
     const lockedClass = currentUser ? "" : "locked";
     const lockedTitle = currentUser ? "" : 'title="Önce kayıt olun"';
     const isMine = currentUser && i.user_id === currentUser.id;
@@ -321,6 +335,7 @@ function renderListings() {
 
     const remainingTxt = formatRemaining(i.expires_at);
     const isUrgent = remainingTxt.urgent;
+    card.dataset.id = i.id;
     card.innerHTML = `
       <div class="card-top">
         <span class="badge">📍 ${i.ilce}</span>
@@ -344,10 +359,58 @@ function renderListings() {
   });
 }
 
+// Boş durum: bağlama göre yardımcı mesaj + öneri chip'leri
+function renderEmptyState() {
+  const selectedIlce = districtSelect?.value || "all";
+  if (listingScope === "mine" && currentUser) {
+    emptyEl.innerHTML = `
+      <div class="empty-icon">📋</div>
+      <h3>Henüz ilan vermemişsin</h3>
+      <p>İlk ilanını verince işletmeler hemen ulaşabilir.</p>
+      <button class="btn btn-primary" id="emptyIlanVerBtn">+ İlk İlanımı Ver</button>
+    `;
+    document.getElementById("emptyIlanVerBtn")?.addEventListener("click", () => ilanVerBtn.click());
+  } else if (selectedIlce !== "all") {
+    // Belirli ilçede ilan yok → diğer ilçelerde olanları öner
+    emptyEl.innerHTML = `
+      <div class="empty-icon">🔍</div>
+      <h3>${selectedIlce}'da şu an aktif ilan yok</h3>
+      <p>Yakın bir ilçeyi dene veya tümünü gör:</p>
+      <div class="empty-chips">
+        <button class="chip" data-ilce="all">Tüm İlçeler</button>
+        ${ANKARA_ILCELERI.filter(i => i !== selectedIlce).slice(0, 6).map(i =>
+          `<button class="chip" data-ilce="${i}">${i}</button>`
+        ).join("")}
+      </div>
+    `;
+    emptyEl.querySelectorAll(".chip").forEach(c => {
+      c.addEventListener("click", () => {
+        districtSelect.value = c.dataset.ilce;
+        loadIlanlar();
+      });
+    });
+  } else {
+    emptyEl.innerHTML = `
+      <div class="empty-icon">⏳</div>
+      <h3>Şu an aktif izinci ilanı yok</h3>
+      <p>Yeni ilanlar genelde sabah ve öğle saatlerinde yayınlanır. Birazdan tekrar bak.</p>
+    `;
+  }
+  emptyEl.classList.remove("hidden");
+}
+
 // =============== KART AKSİYONLARI ===============
 listingsEl.addEventListener("click", async e => {
   const btn = e.target.closest("[data-act]");
-  if (!btn) return;
+
+  // Kart tıklaması (buton dışında bir yere) → detay (adres modalı) aç
+  if (!btn) {
+    const cardEl = e.target.closest(".card.clickable");
+    if (!cardEl || !currentUser) return;
+    const ilan = ilanlar.find(x => x.id === cardEl.dataset.id);
+    if (ilan) showAdres(ilan);
+    return;
+  }
   const act = btn.dataset.act;
   const id = btn.dataset.id;
 
@@ -371,14 +434,15 @@ listingsEl.addEventListener("click", async e => {
   const tel = (ilan.profile?.tel || "").replace(/\s/g, "");
 
   if (act === "call") {
-    if (!tel) return alert("Telefon bilgisi bulunamadı.");
+    if (!tel) return toast("Telefon bilgisi bulunamadı.", "error");
     window.location.href = "tel:" + tel;
   } else if (act === "wa") {
-    if (!tel) return alert("Telefon bilgisi bulunamadı.");
+    if (!tel) return toast("Telefon bilgisi bulunamadı.", "error");
     let waNum = tel.replace(/\D/g, "");
     if (waNum.startsWith("0")) waNum = "9" + waNum;         // 0532... → 90532...
     else if (!waNum.startsWith("90")) waNum = "90" + waNum; // 532...  → 90532...
-    window.open("https://wa.me/" + waNum, "_blank");
+    const msg = `Merhaba, izincikurye.com'da "${ilan.baslik}" ilanını gördüm. Hâlâ müsait misin?`;
+    window.open("https://wa.me/" + waNum + "?text=" + encodeURIComponent(msg), "_blank");
   } else if (act === "addr") {
     showAdres(ilan);
   }
@@ -506,16 +570,16 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   const is_adresi = (fd.get("is_adresi") || "").trim();
   const is_telefonu = (fd.get("is_telefonu") || "").trim();
 
-  if (!kullanici_tipi) { alert("Önce hesap tipini seç (Kurye veya İşletme)."); return; }
+  if (!kullanici_tipi) { toast("Önce hesap tipini seç (Kurye veya İşletme).", "error"); return; }
   if (!ad || !soyad || !email || !tel || !sifre) {
-    alert("Lütfen tüm zorunlu alanları doldurun."); return;
+    toast("Lütfen tüm zorunlu alanları doldurun.", "error"); return;
   }
   if (kullanici_tipi === "isletme" && (!isletme_adi || !is_adresi)) {
-    alert("İşletme için işletme adı ve iş adresi zorunludur."); return;
+    toast("İşletme için işletme adı ve iş adresi zorunludur.", "error"); return;
   }
-  if (sifre.length < 6) { alert("Şifre en az 6 karakter olmalı."); return; }
-  if (sifre !== sifre2) { alert("Şifreler eşleşmiyor."); return; }
-  if (!sozlesme) { alert("Üyelik sözleşmesi ve KVKK onayı zorunludur."); return; }
+  if (sifre.length < 6) { toast("Şifre en az 6 karakter olmalı.", "error"); return; }
+  if (sifre !== sifre2) { toast("Şifreler eşleşmiyor.", "error"); return; }
+  if (!sozlesme) { toast("Üyelik sözleşmesi ve KVKK onayı zorunludur.", "error"); return; }
 
   const { error } = await rawSignUp(
     email,
@@ -523,11 +587,11 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
     { ad, soyad, tel, ticari, kullanici_tipi, isletme_adi, is_adresi, is_telefonu },
     window.location.origin + "/"
   );
-  if (error) { alert("Kayıt hatası: " + error.message); return; }
+  if (error) { toast("Kayıt hatası: " + error.message, "error"); return; }
 
   closeModals();
   e.target.reset();
-  alert("Üyelik oluşturuldu. Doğrulama linki için e-postanı kontrol et — onayladıktan sonra giriş yapabilirsin.");
+  toast("Üyelik oluşturuldu. E-postanı kontrol et ve doğrulama linkine tıkla.", "ok", 6000);
 });
 
 // =============== GİRİŞ ===============
@@ -539,7 +603,7 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
   const hatirla = fd.get("hatirla") === "on";
   const submitBtn = e.target.querySelector('button[type="submit"]');
 
-  if (!email || !sifre) { alert("E-posta ve şifre gerekli."); return; }
+  if (!email || !sifre) { toast("E-posta ve şifre gerekli.", "error"); return; }
 
   // "Beni hatırla" işaretliyse kalıcı; değilse sekme/tarayıcı kapanışında çıkış yapılır
   if (hatirla) localStorage.setItem("izk_remember", "1");
@@ -558,11 +622,11 @@ document.getElementById("loginForm").addEventListener("submit", async e => {
   if (error) {
     const msg = (error.message || "").toLowerCase();
     if (msg.includes("not confirmed") || msg.includes("confirmation")) {
-      alert("E-postanı henüz onaylamadın. Gelen kutunu kontrol et.");
+      toast("E-postanı henüz onaylamadın. Gelen kutunu kontrol et.", "error", 5000);
     } else if (msg.includes("invalid") || msg.includes("credentials") || msg.includes("password")) {
-      alert("E-posta veya şifre hatalı.");
+      toast("E-posta veya şifre hatalı.", "error");
     } else {
-      alert("Giriş başarısız: " + error.message);
+      toast("Giriş başarısız: " + error.message, "error");
     }
     return;
   }
@@ -580,10 +644,10 @@ document.getElementById("forgotEmailForm").addEventListener("submit", async e =>
   const { error } = await sb.auth.resetPasswordForEmail(email, {
     redirectTo: window.location.origin + "/"
   });
-  if (error) { alert("Hata: " + error.message); return; }
+  if (error) { toast("Hata: " + error.message, "error"); return; }
   e.target.reset();
   closeModals();
-  alert("Sıfırlama bağlantısı e-postana gönderildi. Linke tıklayınca yeni şifre belirleyebileceğin sayfa açılacak.");
+  toast("Sıfırlama bağlantısı e-postana gönderildi.", "ok", 5000);
 });
 
 document.getElementById("forgotResetForm").addEventListener("submit", async e => {
@@ -591,23 +655,23 @@ document.getElementById("forgotResetForm").addEventListener("submit", async e =>
   const fd = new FormData(e.target);
   const sifre = fd.get("sifre") || "";
   const sifre2 = fd.get("sifre2") || "";
-  if (sifre.length < 6) { alert("Şifre en az 6 karakter olmalı."); return; }
-  if (sifre !== sifre2) { alert("Şifreler eşleşmiyor."); return; }
+  if (sifre.length < 6) { toast("Şifre en az 6 karakter olmalı.", "error"); return; }
+  if (sifre !== sifre2) { toast("Şifreler eşleşmiyor.", "error"); return; }
 
   const { data: { session } } = await sb.auth.getSession();
   if (!session) {
-    alert("Oturum bulunamadı. Lütfen e-postandaki şifre sıfırlama linkine yeniden tıkla. (Linkler 1 saat geçerli ve tek kullanımlıktır.)");
+    toast("Oturum bulunamadı. E-postandaki sıfırlama linkine yeniden tıkla.", "error", 6000);
     return;
   }
 
   const { error } = await sb.auth.updateUser({ password: sifre });
   if (error) {
-    alert("Hata: " + error.message);
+    toast("Hata: " + error.message, "error");
     return;
   }
   e.target.reset();
   closeModals();
-  alert("Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.");
+  toast("Şifren güncellendi. Yeni şifrenle giriş yapabilirsin.", "ok", 5000);
 });
 
 // =============== İLAN VER ===============
@@ -625,7 +689,7 @@ kmRange.addEventListener("input", () => kmVal.textContent = kmRange.value);
 
 ilanVerBtn.addEventListener("click", () => {
   if (!currentUser) {
-    alert("İlan vermek için kayıt olmanız gerekir.");
+    toast("İlan vermek için önce kayıt ol.", "error");
     openModal("registerModal");
     return;
   }
@@ -683,10 +747,10 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   const bit_saat = fd.get("bitSaat");
 
   if (!baslik || !ilce || !isyeri_ad || !isyeri_adres) {
-    alert("Lütfen tüm zorunlu alanları doldurun."); return;
+    toast("Lütfen tüm zorunlu alanları doldurun.", "error"); return;
   }
   if (bas_saat >= bit_saat) {
-    alert("Bitiş saati başlangıçtan büyük olmalı."); return;
+    toast("Bitiş saati başlangıçtan büyük olmalı.", "error"); return;
   }
 
   const { error } = await sb.from("ilanlar").insert({
@@ -702,7 +766,7 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
     isyeri_ad,
     isyeri_adres
   });
-  if (error) { alert("İlan eklenemedi: " + error.message); return; }
+  if (error) { toast("İlan eklenemedi: " + error.message, "error"); return; }
 
   closeModals();
   e.target.reset();
@@ -1413,21 +1477,21 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async () =
 
   const onay = prompt('Onaylamak için aşağıya tam olarak şunu yaz:\n\nHESABIMI KAPAT');
   if (onay !== "HESABIMI KAPAT") {
-    alert("Onay metni eşleşmedi, işlem iptal edildi.");
+    toast("Onay metni eşleşmedi, işlem iptal edildi.", "error");
     return;
   }
 
   // 1) Kullanıcının ilanlarını sil
   const { error: ilanErr } = await sb.from("ilanlar").delete().eq("user_id", currentUser.id);
   if (ilanErr) {
-    alert("İlanlar silinemedi: " + ilanErr.message);
+    toast("İlanlar silinemedi: " + ilanErr.message, "error");
     return;
   }
 
   // 2) Profil satırını sil
   const { error: profErr } = await sb.from("profiles").delete().eq("id", currentUser.id);
   if (profErr) {
-    alert("Profil silinemedi: " + profErr.message);
+    toast("Profil silinemedi: " + profErr.message, "error");
     return;
   }
 
@@ -1440,8 +1504,8 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async () =
   } catch {}
   sb.auth.signOut({ scope: "local" }).catch(() => {});
 
-  alert("Hesabın kapatıldı. Geçmişin için teşekkürler.");
-  window.location.href = "/";
+  toast("Hesabın kapatıldı. Geçmişin için teşekkürler.", "ok", 5000);
+  setTimeout(() => { window.location.href = "/"; }, 1500);
 });
 document.querySelectorAll('input[type="password"]').forEach(input => {
   const wrap = document.createElement("span");
