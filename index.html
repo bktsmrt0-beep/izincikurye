@@ -38,6 +38,18 @@
     </div>
   </header>
 
+  <!-- ===== KURYE MÜSAİTLİK BÜYÜK BANNER (sadece kurye girişli, en üstte) ===== -->
+  <section id="kuryeMusaitBanner" class="kurye-musait-banner hidden" aria-live="polite">
+    <button type="button" class="kmb-btn" id="kmbToggle" aria-pressed="false">
+      <span class="kmb-icon" id="kmbIcon">🟠</span>
+      <span class="kmb-text">
+        <strong id="kmbHeadline">MEŞGUL DURUMDASIN</strong>
+        <small id="kmbHint">Tek tıkla <b>Müsait</b> ol — işletmeler seni görür</small>
+      </span>
+      <span class="kmb-action" id="kmbAction">MÜSAİT OL</span>
+    </button>
+  </section>
+
   <div class="container layout">
     <!-- SOL MENÜ -->
     <aside class="sidebar">
@@ -100,16 +112,6 @@
       <div class="page-head">
         <h1>İzinci Kurye İlanları</h1>
         <p class="page-sub">Ankara&apos;da anlık olarak izinci arayanlar</p>
-      </div>
-
-      <!-- KURYE MÜSAİTLİK TOP BAR (sadece kurye girişli) -->
-      <div id="kuryeTopBar" class="kurye-top-bar hidden">
-        <span class="ktb-label" id="ktbLabelLeft">Meşgul</span>
-        <label class="ktb-switch">
-          <input type="checkbox" id="ktbMusaitSwitch" />
-          <span class="ktb-slider"></span>
-        </label>
-        <span class="ktb-label ktb-label-right" id="ktbLabelRight">Müsait</span>
       </div>
 
       <!-- KURYE KONTROL PANELİ (sadece kurye için) -->
@@ -583,7 +585,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=41"></script>
-  <script src="script.js?v=41"></script>
+  <script src="supabase-config.js?v=42"></script>
+  <script src="script.js?v=42"></script>
 </body>
 </html>

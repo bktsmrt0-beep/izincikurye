@@ -1818,38 +1818,53 @@ async function renderKuryeDashboard() {
 
 function syncDashboardToggle() {
   const on = !!currentUser?.musait;
+  const isKurye = currentUser && currentUser.kullaniciTipi === "kurye";
 
   // Dashboard mesajını güncelle
   const msg = document.getElementById("kdStatusMsg");
   if (msg) {
     msg.innerHTML = on
       ? "🟢 İşletmeler seni <strong>Müsait Kuryeler</strong> listesinde görüyor."
-      : "Hazır olduğunda yukarıdaki butondan <strong>Müsait</strong> konumuna al.";
+      : "Hazır olduğunda yukarıdaki banner'dan <strong>Müsait</strong> konumuna al.";
   }
 
-  // Top bar'ı senkronize et
-  const tbar = document.getElementById("kuryeTopBar");
-  const tbsw = document.getElementById("ktbMusaitSwitch");
-  if (tbsw) tbsw.checked = on;
-  if (tbar) {
-    tbar.classList.toggle("active", on);
-    tbar.classList.toggle("hidden", !(currentUser && currentUser.kullaniciTipi === "kurye"));
+  // Büyük banner'ı senkronize et
+  const banner = document.getElementById("kuryeMusaitBanner");
+  if (banner) {
+    banner.classList.toggle("hidden", !isKurye);
+    banner.classList.toggle("active", on);
   }
-  // Sol/sağ etiket vurgusu
-  document.getElementById("ktbLabelLeft")?.classList.toggle("active", !on);
-  document.getElementById("ktbLabelRight")?.classList.toggle("active", on);
+  const btn = document.getElementById("kmbToggle");
+  if (btn) btn.setAttribute("aria-pressed", on ? "true" : "false");
+
+  const icon = document.getElementById("kmbIcon");
+  const headline = document.getElementById("kmbHeadline");
+  const hint = document.getElementById("kmbHint");
+  const action = document.getElementById("kmbAction");
+  if (icon && headline && hint && action) {
+    if (on) {
+      icon.textContent = "🟢";
+      headline.textContent = "ŞU AN MÜSAİTSİN";
+      hint.innerHTML = "İşletmeler seni listede görüyor — meşgul olunca tıkla";
+      action.textContent = "MEŞGUL'E GEÇ";
+    } else {
+      icon.textContent = "🟠";
+      headline.textContent = "MEŞGUL DURUMDASIN";
+      hint.innerHTML = "Tek tıkla <b>Müsait</b> ol — işletmeler seni görür";
+      action.textContent = "MÜSAİT OL";
+    }
+  }
 }
 
-// Top bar switch handler — tek tıkla DB güncelle, her yerde senkronize tut
-document.getElementById("ktbMusaitSwitch")?.addEventListener("change", async e => {
+// Büyük banner handler — tek tıkla DB güncelle, her yerde senkronize tut
+document.getElementById("kmbToggle")?.addEventListener("click", async () => {
   if (!currentUser) return;
-  const yeni = e.target.checked;
+  const yeni = !currentUser.musait;
   const nowIso = new Date().toISOString();
-  // Anında UI güncelle
-  const tbar = document.getElementById("kuryeTopBar");
-  tbar?.classList.toggle("active", yeni);
-  document.getElementById("ktbLabelLeft")?.classList.toggle("active", !yeni);
-  document.getElementById("ktbLabelRight")?.classList.toggle("active", yeni);
+
+  // Optimistic UI — anında banner'ı güncelle
+  currentUser.musait = yeni;
+  syncDashboardToggle();
 
   const { error } = await sb.from("profiles")
     .update({ musait: yeni, musait_at: nowIso })
@@ -1857,24 +1872,22 @@ document.getElementById("ktbMusaitSwitch")?.addEventListener("change", async e =
 
   if (error) {
     // Geri al
-    e.target.checked = !yeni;
-    tbar?.classList.toggle("active", !yeni);
-    document.getElementById("ktbLabelLeft")?.classList.toggle("active", yeni);
-    document.getElementById("ktbLabelRight")?.classList.toggle("active", !yeni);
+    currentUser.musait = !yeni;
+    syncDashboardToggle();
     toast("Güncellenemedi: " + error.message, "error");
     return;
   }
-  currentUser.musait = yeni;
   currentUser.musaitAt = nowIso;
-  // Profilim modal + dashboard mesajını senkron tut
+
+  // Profilim modal toggle'ı da senkron tut
   const mt = document.getElementById("musaitToggle");
   if (mt) {
     mt.checked = yeni;
-    document.getElementById("musaitTitle").textContent = yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
+    const t = document.getElementById("musaitTitle");
+    if (t) t.textContent = yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
     document.getElementById("musaitCard")?.classList.toggle("active", yeni);
   }
-  syncDashboardToggle();
-  toast(yeni ? "🟢 Müsait olarak işaretlendin" : "🔴 Artık müsait değilsin", "ok");
+  toast(yeni ? "🟢 Müsait olarak işaretlendin" : "🟠 Artık meşgulsün", "ok");
 });
 
 // Hızlı bağlantılar
