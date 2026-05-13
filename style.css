@@ -1149,3 +1149,151 @@ body.modal-open { overflow: hidden; }
   color: var(--orange);
   background: #fff5eb;
 }
+
+/* ===== Filtre Paneli (yeni) ===== */
+.panel-head-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.panel-head-row .panel-title { margin: 0; }
+.filter-reset {
+  background: none;
+  border: none;
+  color: var(--orange);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.filter-reset:hover { background: #fff5eb; }
+.filter-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-500);
+  margin: 12px 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.filter-label:first-of-type { margin-top: 0; }
+.panel .select { width: 100%; }
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 8px 10px;
+  background: var(--gray-50);
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gray-900);
+  user-select: none;
+}
+.toggle-row input[type="checkbox"] {
+  width: 18px; height: 18px;
+  accent-color: var(--orange);
+  cursor: pointer;
+}
+.toggle-row:hover { background: #fff5eb; }
+
+/* ===== Güven Rozetleri (kart üstü) ===== */
+.trust-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 4px;
+}
+.t-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--gray-50);
+  color: var(--gray-500);
+  border: 1px solid var(--gray-200);
+  white-space: nowrap;
+}
+.t-badge.t-musait {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+}
+.t-badge.t-urgent {
+  background: #fef2f2;
+  color: #b91c1c;
+  border-color: #fecaca;
+  animation: pulse-urgent 2s ease-in-out infinite;
+}
+@keyframes pulse-urgent {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.03); }
+}
+
+/* ===== Mobil: sidebar üste alın ===== */
+@media (max-width: 760px) {
+  .sidebar { order: 1 !important; }
+  .content { order: 2; }
+}
+
+/* ===== Adres modal sticky CTA ===== */
+.modal-card.has-sticky-cta {
+  padding-bottom: 80px;
+  position: relative;
+}
+.modal-sticky-cta {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  gap: 10px;
+  padding: 14px 18px;
+  background: white;
+  border-top: 1px solid var(--gray-200);
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.05);
+}
+.modal-sticky-cta .btn {
+  flex: 1;
+  padding: 12px 0;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+.btn-call {
+  background: var(--orange);
+  color: white;
+}
+.btn-call:hover { background: #e56a00; }
+.btn-wa {
+  background: #25d366;
+  color: white;
+}
+.btn-wa:hover { background: #1ebd5d; }
+
+.urgent-text { color: #b91c1c; font-weight: 700; }
+
+/* Adres modal mobilde tam ekran hissi */
+@media (max-width: 520px) {
+  .modal-card.has-sticky-cta {
+    padding-bottom: 90px;
+  }
+  .modal-sticky-cta {
+    padding: 12px 14px;
+    position: fixed;
+    border-radius: 0;
+  }
+}

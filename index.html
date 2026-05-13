@@ -41,11 +41,48 @@
   <div class="container layout">
     <!-- SOL MENÜ -->
     <aside class="sidebar">
+      <button class="btn btn-primary btn-block" id="ilanVerBtn">+ İlan Ver</button>
+
       <div class="panel">
-        <h3 class="panel-title">İlçe</h3>
+        <div class="panel-head-row">
+          <h3 class="panel-title">Filtreler</h3>
+          <button type="button" class="filter-reset hidden" id="filterResetBtn">Sıfırla</button>
+        </div>
+
+        <label class="filter-label">İlçe</label>
         <select id="districtSelect" class="select">
-          <option value="all">Tümü</option>
+          <option value="all">Tüm İlçeler</option>
         </select>
+
+        <label class="filter-label">Saat</label>
+        <select id="saatFilter" class="select">
+          <option value="all">Tüm Süreler</option>
+          <option value="4-7">Kısa (4-7 saat)</option>
+          <option value="8-11">Orta (8-11 saat)</option>
+          <option value="12-16">Uzun (12-16 saat)</option>
+        </select>
+
+        <label class="filter-label">Fiyat</label>
+        <select id="fiyatFilter" class="select">
+          <option value="all">Tüm Fiyatlar</option>
+          <option value="0-225">200–225 ₺</option>
+          <option value="225-250">225–250 ₺</option>
+          <option value="250-275">250–275 ₺</option>
+          <option value="275-999">275 ₺+</option>
+        </select>
+
+        <label class="filter-label">Sıralama</label>
+        <select id="sortFilter" class="select">
+          <option value="new">En Yeni</option>
+          <option value="urgent">Az Kaldı (Acil)</option>
+          <option value="price-asc">Fiyat (Artan)</option>
+          <option value="price-desc">Fiyat (Azalan)</option>
+        </select>
+
+        <label class="toggle-row">
+          <input type="checkbox" id="urgentOnly" />
+          <span>🔥 Sadece Az Kaldı</span>
+        </label>
       </div>
 
       <div class="panel hidden" id="myListingsPanel">
@@ -56,8 +93,6 @@
         </div>
         <p class="muted small" id="myListingsCount" style="margin-top:8px"></p>
       </div>
-
-      <button class="btn btn-primary btn-block" id="ilanVerBtn">+ İlan Ver</button>
     </aside>
 
     <!-- ANA İÇERİK -->
@@ -344,12 +379,16 @@
     </div>
   </div>
 
-  <!-- ===== ADRES MODAL ===== -->
+  <!-- ===== ADRES / İLAN DETAY MODAL ===== -->
   <div class="modal hidden" id="adresModal">
-    <div class="modal-card">
+    <div class="modal-card has-sticky-cta">
       <button class="modal-close" data-close>&times;</button>
-      <h2>İşletme Bilgileri</h2>
+      <h2 id="adresModalTitle">İşletme Bilgileri</h2>
       <div id="adresContent"></div>
+      <div class="modal-sticky-cta" id="adresStickyCTA">
+        <button class="btn btn-call" id="adresCallBtn">📞 Ara</button>
+        <button class="btn btn-wa" id="adresWaBtn">💬 WhatsApp</button>
+      </div>
     </div>
   </div>
 
@@ -543,7 +582,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=39"></script>
-  <script src="script.js?v=39"></script>
+  <script src="supabase-config.js?v=40"></script>
+  <script src="script.js?v=40"></script>
 </body>
 </html>

@@ -27,6 +27,7 @@ let currentUser = null;   // { id, email, ad, soyad, tel }
 let ilanlar = [];
 let listingScope = "all"; // "all" | "mine"
 let contentTab = "ilanlar"; // "ilanlar" | "kuryeler"
+let currentFilters = { saat: "all", fiyat: "all", sort: "new", urgentOnly: false };
 let kuryeler = [];
 
 // =============== DOM REF ===============
@@ -174,7 +175,7 @@ async function loadIlanlar() {
     if (currentUser && ilanlar.length) {
       const userIds = [...new Set(ilanlar.map(i => i.user_id))];
       const { data: profiles, error: pErr } = await sb.from("profiles")
-        .select("id, ad, soyad, tel")
+        .select("id, ad, soyad, tel, created_at, musait, musait_at, kullanici_tipi")
         .in("id", userIds);
       if (pErr) console.warn("[profiles batch]", pErr.message);
       const map = Object.fromEntries((profiles || []).map(p => [p.id, p]));
@@ -284,12 +285,59 @@ function renderTopNav() {
   }
 }
 
+function getFilteredIlanlar() {
+  let arr = ilanlar.slice();
+  const { saat, fiyat, sort, urgentOnly } = currentFilters;
+
+  if (saat !== "all") {
+    const [min, max] = saat.split("-").map(Number);
+    arr = arr.filter(i => i.saat >= min && i.saat <= max);
+  }
+  if (fiyat !== "all") {
+    const [min, max] = fiyat.split("-").map(Number);
+    arr = arr.filter(i => i.fiyat >= min && i.fiyat <= max);
+  }
+  if (urgentOnly) {
+    arr = arr.filter(i => formatRemaining(i.expires_at).urgent);
+  }
+
+  if (sort === "urgent") {
+    arr.sort((a, b) => new Date(a.expires_at) - new Date(b.expires_at));
+  } else if (sort === "price-asc") {
+    arr.sort((a, b) => a.fiyat - b.fiyat);
+  } else if (sort === "price-desc") {
+    arr.sort((a, b) => b.fiyat - a.fiyat);
+  }
+  // "new" is default DB order (created_at desc)
+  return arr;
+}
+
+function activeFilterCount() {
+  let n = 0;
+  if (currentFilters.saat !== "all") n++;
+  if (currentFilters.fiyat !== "all") n++;
+  if (currentFilters.urgentOnly) n++;
+  if (currentFilters.sort !== "new") n++;
+  if (districtSelect?.value && districtSelect.value !== "all") n++;
+  return n;
+}
+
+function formatMembership(createdAtIso) {
+  if (!createdAtIso) return "";
+  const days = Math.floor((Date.now() - new Date(createdAtIso).getTime()) / 86400000);
+  if (days < 7) return "Yeni üye";
+  if (days < 30) return `Üye ${Math.floor(days / 7)} hafta`;
+  if (days < 365) return `Üye ${Math.floor(days / 30)} ay`;
+  return `Üye ${Math.floor(days / 365)} yıl`;
+}
+
 function renderListings() {
   guestNotice.classList.toggle("hidden", !!currentUser);
 
-  // İlanlarım paneli sadece girişli kullanıcıya görünür
   const myPanel = document.getElementById("myListingsPanel");
   if (myPanel) myPanel.classList.toggle("hidden", !currentUser);
+
+  const filtered = getFilteredIlanlar();
 
   // Sayım göstergesi (sidebar)
   const cntEl = document.getElementById("myListingsCount");
@@ -299,14 +347,26 @@ function renderListings() {
       : `Toplam ${ilanlar.length} ilan`;
   }
 
-  // Sayfa başlığı: ilan sayısı + seçili ilçe
+  // Sıfırla butonu görünürlüğü
+  const resetBtn = document.getElementById("filterResetBtn");
+  if (resetBtn) {
+    const n = activeFilterCount();
+    resetBtn.classList.toggle("hidden", n === 0);
+    resetBtn.textContent = n > 0 ? `Sıfırla (${n})` : "Sıfırla";
+  }
+
+  // Sayfa başlığı: gösterilen sayı / toplam + seçili ilçe
   const pageH1 = document.querySelector(".page-head h1");
   const pageSub = document.querySelector(".page-head .page-sub");
   const selectedIlce = districtSelect?.value || "all";
   if (pageH1) {
-    pageH1.textContent = ilanlar.length > 0
-      ? `İzinci Kurye İlanları (${ilanlar.length})`
-      : "İzinci Kurye İlanları";
+    if (filtered.length === ilanlar.length) {
+      pageH1.textContent = ilanlar.length > 0
+        ? `İzinci Kurye İlanları (${ilanlar.length})`
+        : "İzinci Kurye İlanları";
+    } else {
+      pageH1.textContent = `İlanlar (${filtered.length} / ${ilanlar.length})`;
+    }
   }
   if (pageSub) {
     pageSub.textContent = selectedIlce === "all"
@@ -315,13 +375,13 @@ function renderListings() {
   }
 
   listingsEl.innerHTML = "";
-  if (ilanlar.length === 0) {
+  if (filtered.length === 0) {
     renderEmptyState();
     return;
   }
   emptyEl.classList.add("hidden");
 
-  ilanlar.forEach(i => {
+  filtered.forEach(i => {
     const card = document.createElement("article");
     card.className = "card";
     if (currentUser) card.classList.add("clickable");
@@ -335,6 +395,26 @@ function renderListings() {
 
     const remainingTxt = formatRemaining(i.expires_at);
     const isUrgent = remainingTxt.urgent;
+
+    // Güven rozetleri (sadece girişli kullanıcı görür, profile yüklendiyse)
+    let trustBadges = "";
+    if (currentUser && i.profile) {
+      const p = i.profile;
+      const isKurye = p.kullanici_tipi === "kurye";
+      const memberTxt = formatMembership(p.created_at);
+      const musaitBadge = isKurye && p.musait
+        ? '<span class="t-badge t-musait">🟢 Müsait</span>'
+        : "";
+      const memberBadge = memberTxt ? `<span class="t-badge">🕐 ${memberTxt}</span>` : "";
+      // ilan sayısı: yüklü ilanlar üzerinden hızlı sayım
+      const ilanSayisi = ilanlar.filter(x => x.user_id === i.user_id).length;
+      const ilanBadge = ilanSayisi > 1 ? `<span class="t-badge">📋 ${ilanSayisi} aktif ilan</span>` : "";
+      const urgentBadge = isUrgent ? '<span class="t-badge t-urgent">🔥 Az Kaldı</span>' : "";
+      trustBadges = `<div class="trust-badges">${urgentBadge}${musaitBadge}${memberBadge}${ilanBadge}</div>`;
+    } else if (isUrgent) {
+      trustBadges = '<div class="trust-badges"><span class="t-badge t-urgent">🔥 Az Kaldı</span></div>';
+    }
+
     card.dataset.id = i.id;
     card.innerHTML = `
       <div class="card-top">
@@ -343,6 +423,7 @@ function renderListings() {
       </div>
       <div class="time-left ${isUrgent ? 'urgent' : ''}">⏳ ${remainingTxt.text}</div>
       <h3>${escapeHtml(i.baslik)}${mineTag}</h3>
+      ${trustBadges}
       <p>${escapeHtml(i.aciklama || "")}</p>
       <div class="card-meta">
         <span>⏱ ${i.saat} saat · ${i.bas_saat}–${i.bit_saat}</span>
@@ -362,6 +443,8 @@ function renderListings() {
 // Boş durum: bağlama göre yardımcı mesaj + öneri chip'leri
 function renderEmptyState() {
   const selectedIlce = districtSelect?.value || "all";
+  const filtersActive = currentFilters.saat !== "all" || currentFilters.fiyat !== "all" || currentFilters.urgentOnly;
+
   if (listingScope === "mine" && currentUser) {
     emptyEl.innerHTML = `
       <div class="empty-icon">📋</div>
@@ -370,6 +453,17 @@ function renderEmptyState() {
       <button class="btn btn-primary" id="emptyIlanVerBtn">+ İlk İlanımı Ver</button>
     `;
     document.getElementById("emptyIlanVerBtn")?.addEventListener("click", () => ilanVerBtn.click());
+  } else if (filtersActive && ilanlar.length > 0) {
+    // Filtreler eşleşme bulamadı (ama veri var)
+    emptyEl.innerHTML = `
+      <div class="empty-icon">🔍</div>
+      <h3>Bu filtrelerle eşleşen ilan yok</h3>
+      <p>Toplam ${ilanlar.length} aktif ilan var. Filtreleri gevşet veya sıfırla:</p>
+      <button class="btn btn-primary" id="emptyFilterReset">Filtreleri Sıfırla</button>
+    `;
+    document.getElementById("emptyFilterReset")?.addEventListener("click", () => {
+      document.getElementById("filterResetBtn")?.click();
+    });
   } else if (selectedIlce !== "all") {
     // Belirli ilçede ilan yok → diğer ilçelerde olanları öner
     emptyEl.innerHTML = `
@@ -448,17 +542,51 @@ listingsEl.addEventListener("click", async e => {
   }
 });
 
+let _adresCurrentIlan = null;
 function showAdres(i) {
+  _adresCurrentIlan = i;
   const tel = i.profile?.tel || "—";
   const ad = ((i.profile?.ad || "") + " " + (i.profile?.soyad || "")).trim() || "—";
+  const titleEl = document.getElementById("adresModalTitle");
+  if (titleEl) titleEl.textContent = i.baslik || "İlan Detayı";
+
+  const remainingTxt = formatRemaining(i.expires_at);
+  const remainingHtml = `<div class="row"><strong>Kalan süre:</strong><span class="${remainingTxt.urgent ? 'urgent-text' : ''}">⏳ ${remainingTxt.text}</span></div>`;
+
   document.getElementById("adresContent").innerHTML = `
+    <div class="row"><strong>İlçe:</strong><span>📍 ${escapeHtml(i.ilce)}</span></div>
+    <div class="row"><strong>Çalışma:</strong><span>${i.saat} saat · ${i.bas_saat}–${i.bit_saat}</span></div>
+    <div class="row"><strong>Ücret:</strong><span><strong>${i.fiyat} ₺</strong> · ${i.km} ₺/km</span></div>
+    ${remainingHtml}
     <div class="row"><strong>İşyeri:</strong><span>${escapeHtml(i.isyeri_ad || "—")}</span></div>
     <div class="row"><strong>İlgili kişi:</strong><span>${escapeHtml(ad)}</span></div>
     <div class="row"><strong>Adres:</strong><span>${escapeHtml(i.isyeri_adres || "—")}</span></div>
     <div class="row"><strong>Telefon:</strong><span>${escapeHtml(tel)}</span></div>
+    ${i.aciklama ? `<div class="row"><strong>Not:</strong><span>${escapeHtml(i.aciklama)}</span></div>` : ""}
   `;
+  // Sticky CTA göster (tel varsa)
+  const cta = document.getElementById("adresStickyCTA");
+  if (cta) cta.style.display = (i.profile?.tel) ? "" : "none";
   openModal("adresModal");
 }
+
+// Adres modal sticky CTA — call/wa
+document.getElementById("adresCallBtn")?.addEventListener("click", () => {
+  const i = _adresCurrentIlan;
+  const tel = (i?.profile?.tel || "").replace(/\s/g, "");
+  if (!tel) return toast("Telefon bilgisi bulunamadı.", "error");
+  window.location.href = "tel:" + tel;
+});
+document.getElementById("adresWaBtn")?.addEventListener("click", () => {
+  const i = _adresCurrentIlan;
+  const tel = (i?.profile?.tel || "").replace(/\s/g, "");
+  if (!tel) return toast("Telefon bilgisi bulunamadı.", "error");
+  let waNum = tel.replace(/\D/g, "");
+  if (waNum.startsWith("0")) waNum = "9" + waNum;
+  else if (!waNum.startsWith("90")) waNum = "90" + waNum;
+  const msg = `Merhaba, izincikurye.com'da "${i.baslik}" ilanını gördüm. Hâlâ müsait misin?`;
+  window.open("https://wa.me/" + waNum + "?text=" + encodeURIComponent(msg), "_blank");
+});
 
 // =============== MODALLAR ===============
 function openModal(id) {
@@ -806,6 +934,37 @@ function formatRemaining(expIso) {
 }
 
 districtSelect.addEventListener("change", loadIlanlar);
+
+// =============== FİLTRELER (client-side) ===============
+document.getElementById("saatFilter")?.addEventListener("change", e => {
+  currentFilters.saat = e.target.value;
+  renderListings();
+});
+document.getElementById("fiyatFilter")?.addEventListener("change", e => {
+  currentFilters.fiyat = e.target.value;
+  renderListings();
+});
+document.getElementById("sortFilter")?.addEventListener("change", e => {
+  currentFilters.sort = e.target.value;
+  renderListings();
+});
+document.getElementById("urgentOnly")?.addEventListener("change", e => {
+  currentFilters.urgentOnly = e.target.checked;
+  renderListings();
+});
+document.getElementById("filterResetBtn")?.addEventListener("click", () => {
+  currentFilters = { saat: "all", fiyat: "all", sort: "new", urgentOnly: false };
+  document.getElementById("saatFilter").value = "all";
+  document.getElementById("fiyatFilter").value = "all";
+  document.getElementById("sortFilter").value = "new";
+  document.getElementById("urgentOnly").checked = false;
+  if (districtSelect.value !== "all") {
+    districtSelect.value = "all";
+    loadIlanlar();
+  } else {
+    renderListings();
+  }
+});
 
 // =============== İLANLARIM TOGGLE ===============
 document.querySelectorAll("#myListingsPanel .seg-btn").forEach(btn => {
