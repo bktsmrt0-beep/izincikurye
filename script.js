@@ -621,20 +621,16 @@ let _reviewTab = "pending"; // pending | done
 
 async function refreshPendingReviewCount() {
   if (!currentUser || currentUser.kullaniciTipi !== "isletme") return;
-  const { data, error } = await sb.from("yorum_haklari")
-    .select("id", { count: "exact", head: true })
-    .eq("isletme_id", currentUser.id)
-    .eq("kullanildi", false);
+  const session = readStoredSession();
+  const { data } = await rawSelect(
+    `yorum_haklari?isletme_id=eq.${currentUser.id}&kullanildi=eq.false&select=id`,
+    session?.access_token, 6000
+  );
   const badge = document.getElementById("reviewPendingBadge");
   if (!badge) return;
-  const count = error ? 0 : (data?.length || 0);
-  // head:true ise count count param ile gelir; fallback olarak ayrı sayım yapalım
-  const { count: realCount } = await sb.from("yorum_haklari")
-    .select("id", { count: "exact", head: true })
-    .eq("isletme_id", currentUser.id)
-    .eq("kullanildi", false);
-  badge.textContent = realCount || 0;
-  badge.classList.toggle("hidden", !realCount);
+  const n = (data || []).length;
+  badge.textContent = n;
+  badge.classList.toggle("hidden", !n);
 }
 
 async function openReviewListModal() {
@@ -659,21 +655,22 @@ async function loadReviewList() {
   const listEl = document.getElementById("reviewList");
   listEl.innerHTML = `<p class="muted small">Yükleniyor...</p>`;
 
+  const session = readStoredSession();
   if (_reviewTab === "pending") {
-    const { data: haklar, error } = await sb.from("yorum_haklari")
-      .select("*")
-      .eq("isletme_id", currentUser.id)
-      .eq("kullanildi", false)
-      .order("created_at", { ascending: false });
+    const { data: haklar, error } = await rawSelect(
+      `yorum_haklari?isletme_id=eq.${currentUser.id}&kullanildi=eq.false&select=*&order=created_at.desc`,
+      session?.access_token, 6000
+    );
     if (error) { listEl.innerHTML = `<p class="muted">Hata: ${error.message}</p>`; return; }
     if (!haklar?.length) {
       listEl.innerHTML = `<div class="empty" style="padding:20px"><div class="empty-icon">✨</div><p>Bekleyen yorum yok. İlanını kaldırırken kurye telefonu girersen burada görünür.</p></div>`;
       return;
     }
     const kuryeIds = [...new Set(haklar.map(h => h.kurye_id))];
-    const { data: kuryeler } = await sb.from("profiles")
-      .select("id, ad, soyad, puan_ort, puan_sayisi")
-      .in("id", kuryeIds);
+    const { data: kuryeler } = await rawSelect(
+      `profiles?id=in.(${kuryeIds.join(",")})&select=id,ad,soyad,puan_ort,puan_sayisi`,
+      session?.access_token, 6000
+    );
     const kMap = Object.fromEntries((kuryeler || []).map(k => [k.id, k]));
     listEl.innerHTML = haklar.map(h => {
       const k = kMap[h.kurye_id] || {};
@@ -694,18 +691,20 @@ async function loadReviewList() {
     });
   } else {
     // Yorumladıklarım
-    const { data: yorums, error } = await sb.from("yorumlar")
-      .select("*")
-      .eq("isletme_id", currentUser.id)
-      .order("created_at", { ascending: false });
+    const { data: yorums, error } = await rawSelect(
+      `yorumlar?isletme_id=eq.${currentUser.id}&select=*&order=created_at.desc`,
+      session?.access_token, 6000
+    );
     if (error) { listEl.innerHTML = `<p class="muted">Hata: ${error.message}</p>`; return; }
     if (!yorums?.length) {
       listEl.innerHTML = `<p class="muted">Henüz yorum yazmadın.</p>`;
       return;
     }
     const kuryeIds = [...new Set(yorums.map(y => y.kurye_id))];
-    const { data: kuryeler } = await sb.from("profiles")
-      .select("id, ad, soyad").in("id", kuryeIds);
+    const { data: kuryeler } = await rawSelect(
+      `profiles?id=in.(${kuryeIds.join(",")})&select=id,ad,soyad`,
+      session?.access_token, 6000
+    );
     const kMap = Object.fromEntries((kuryeler || []).map(k => [k.id, k]));
     listEl.innerHTML = yorums.map(y => {
       const k = kMap[y.kurye_id] || {};
@@ -778,9 +777,13 @@ document.getElementById("reviewWriteForm")?.addEventListener("submit", async e =
   const btn = e.submitter;
   const orig = btn.textContent;
   btn.disabled = true; btn.textContent = "Gönderiliyor...";
-  const { error } = await sb.from("yorumlar").insert({
-    kurye_id, isletme_id: currentUser.id, ilan_id, puan, yorum
-  });
+  const session = readStoredSession();
+  const { error } = await rawInsert(
+    "yorumlar",
+    { kurye_id, isletme_id: currentUser.id, ilan_id, puan, yorum },
+    session?.access_token,
+    8000
+  );
   btn.disabled = false; btn.textContent = orig;
 
   if (error) {
@@ -800,8 +803,12 @@ async function openReviewViewModal(kuryeId, kuryeAd) {
   openModal("reviewViewModal");
 
   // Özet (profiles.puan_ort + sayisi)
-  const { data: prof } = await sb.from("profiles")
-    .select("puan_ort, puan_sayisi").eq("id", kuryeId).maybeSingle();
+  const session = readStoredSession();
+  const { data: profArr } = await rawSelect(
+    `profiles?id=eq.${kuryeId}&select=puan_ort,puan_sayisi`,
+    session?.access_token, 6000
+  );
+  const prof = (profArr || [])[0] || null;
   if (prof?.puan_sayisi) {
     const ort = Number(prof.puan_ort).toFixed(1);
     const fullStars = Math.round(prof.puan_ort);
@@ -817,11 +824,10 @@ async function openReviewViewModal(kuryeId, kuryeAd) {
   }
 
   // Yorum listesi
-  const { data: yorums } = await sb.from("yorumlar")
-    .select("puan, yorum, created_at, isletme_id")
-    .eq("kurye_id", kuryeId)
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const { data: yorums } = await rawSelect(
+    `yorumlar?kurye_id=eq.${kuryeId}&select=puan,yorum,created_at,isletme_id&order=created_at.desc&limit=50`,
+    session?.access_token, 6000
+  );
   const listEl = document.getElementById("reviewViewList");
   if (!yorums?.length) {
     listEl.innerHTML = "";
@@ -829,8 +835,10 @@ async function openReviewViewModal(kuryeId, kuryeAd) {
   }
   // İşletme adı join
   const isletmeIds = [...new Set(yorums.map(y => y.isletme_id))];
-  const { data: bizs } = await sb.from("profiles")
-    .select("id, ad, soyad, isletme_adi, kullanici_tipi").in("id", isletmeIds);
+  const { data: bizs } = await rawSelect(
+    `profiles?id=in.(${isletmeIds.join(",")})&select=id,ad,soyad,isletme_adi,kullanici_tipi`,
+    session?.access_token, 6000
+  );
   const bMap = Object.fromEntries((bizs || []).map(b => [b.id, b]));
   listEl.innerHTML = yorums.map(y => {
     const b = bMap[y.isletme_id] || {};
@@ -859,10 +867,13 @@ function openDeleteIlanModal(ilan) {
 }
 
 async function performDeleteWithReview(ilanId, kuryeTel) {
-  const { data, error } = await sb.rpc("grant_review_and_delete_ilan", {
-    p_ilan_id: ilanId,
-    p_kurye_tel: kuryeTel || ""
-  });
+  const session = readStoredSession();
+  const { data, error } = await rawRpc(
+    "grant_review_and_delete_ilan",
+    { p_ilan_id: ilanId, p_kurye_tel: kuryeTel || "" },
+    session?.access_token,
+    8000
+  );
   if (error) {
     toast("İlan silinemedi: " + error.message, "error");
     return null;

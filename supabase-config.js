@@ -57,6 +57,70 @@ async function rawSelect(path, accessToken, ms = 6000) {
 }
 window.rawSelect = rawSelect;
 
+// Ham RPC çağrısı — supabase-js bypass (sb.rpc() takılma sorununu önler)
+async function rawRpc(fnName, params, accessToken, ms = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/rpc/" + fnName, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + (accessToken || SUPABASE_KEY),
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify(params || {}),
+      signal: ctrl.signal
+    });
+    clearTimeout(t);
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+    if (!res.ok) {
+      const msg = (data && (data.message || data.error || data.details)) || ("HTTP " + res.status);
+      return { data: null, error: { message: msg, status: res.status } };
+    }
+    return { data, error: null };
+  } catch (e) {
+    clearTimeout(t);
+    return { data: null, error: { message: e.message || "rpc fetch error" } };
+  }
+}
+window.rawRpc = rawRpc;
+
+// Ham INSERT — supabase-js bypass
+async function rawInsert(table, row, accessToken, ms = 8000) {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const res = await fetch(SUPABASE_URL + "/rest/v1/" + table, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + (accessToken || SUPABASE_KEY),
+        "Content-Type": "application/json",
+        Prefer: "return=representation"
+      },
+      body: JSON.stringify(row),
+      signal: ctrl.signal
+    });
+    clearTimeout(t);
+    const text = await res.text();
+    let data = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = text; }
+    if (!res.ok) {
+      const msg = (data && (data.message || data.error || data.details)) || ("HTTP " + res.status);
+      return { data: null, error: { message: msg, status: res.status } };
+    }
+    return { data, error: null };
+  } catch (e) {
+    clearTimeout(t);
+    return { data: null, error: { message: e.message || "insert fetch error" } };
+  }
+}
+window.rawInsert = rawInsert;
+
 // Ham giriş — supabase-js'i bypass eder (init/lock hang sorunu)
 async function rawSignIn(email, password, ms = 8000) {
   const ctrl = new AbortController();
