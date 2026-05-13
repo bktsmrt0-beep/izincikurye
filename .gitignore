@@ -15,3 +15,4 @@ node_modules/
 # Yerel ortam dosyaları
 .env
 .env.local
+.claude/settings.local.json
