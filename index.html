@@ -50,6 +50,18 @@
     </button>
   </section>
 
+  <!-- ===== İŞLETME BEKLEYEN YORUM BANNER (sadece bekleyen varsa) ===== -->
+  <section id="isletmeYorumBanner" class="isletme-yorum-banner hidden" aria-live="polite">
+    <button type="button" class="iyb-btn" id="iybOpen">
+      <span class="iyb-icon">⭐</span>
+      <span class="iyb-text">
+        <strong><span id="iybCount">0</span> KURYE İÇİN YORUM BEKLİYOR</strong>
+        <small>Anlaştığın kuryelere puan ver — kötü kuryeleri ayırt etmemizi sağlarsın</small>
+      </span>
+      <span class="iyb-action">YORUM YAZ</span>
+    </button>
+  </section>
+
   <div class="container layout">
     <!-- SOL MENÜ -->
     <aside class="sidebar">
@@ -673,7 +685,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=46"></script>
-  <script src="script.js?v=46"></script>
+  <script src="supabase-config.js?v=47"></script>
+  <script src="script.js?v=47"></script>
 </body>
 </html>

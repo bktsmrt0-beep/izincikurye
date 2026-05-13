@@ -620,18 +620,39 @@ listingsEl.addEventListener("click", async e => {
 let _reviewTab = "pending"; // pending | done
 
 async function refreshPendingReviewCount() {
-  if (!currentUser || currentUser.kullaniciTipi !== "isletme") return;
+  const banner = document.getElementById("isletmeYorumBanner");
+  const badge = document.getElementById("reviewPendingBadge");
+
+  // İşletme değilse banner ve badge gizli
+  if (!currentUser || currentUser.kullaniciTipi !== "isletme") {
+    banner?.classList.add("hidden");
+    badge?.classList.add("hidden");
+    return;
+  }
+
   const session = readStoredSession();
   const { data } = await rawSelect(
     `yorum_haklari?isletme_id=eq.${currentUser.id}&kullanildi=eq.false&select=id`,
     session?.access_token, 6000
   );
-  const badge = document.getElementById("reviewPendingBadge");
-  if (!badge) return;
   const n = (data || []).length;
-  badge.textContent = n;
-  badge.classList.toggle("hidden", !n);
+
+  // Menü badge
+  if (badge) {
+    badge.textContent = n;
+    badge.classList.toggle("hidden", !n);
+  }
+
+  // Üst banner
+  if (banner) {
+    banner.classList.toggle("hidden", n === 0);
+    const cnt = document.getElementById("iybCount");
+    if (cnt) cnt.textContent = n;
+  }
 }
+
+// Banner tıklama → yorum listesi modalı aç
+document.getElementById("iybOpen")?.addEventListener("click", () => openReviewListModal());
 
 async function openReviewListModal() {
   _reviewTab = "pending";
@@ -954,6 +975,7 @@ document.getElementById("deleteIlanForm")?.addEventListener("submit", async e =>
   await loadIlanlar();
   if (result.matched) {
     toast("✅ İlan kaldırıldı. Bu kurye için yorum hakkın oluştu.", "ok", 5000);
+    refreshPendingReviewCount();
   } else {
     toast("İlan kaldırıldı. Telefon kayıtlı kurye değil — yorum hakkı verilmedi.", "ok", 5000);
   }
@@ -968,6 +990,7 @@ document.getElementById("deleteIlanSkip")?.addEventListener("click", async () =>
   await loadIlanlar();
   toast("İlan kaldırıldı.", "ok");
 });
+
 
 let _adresCurrentIlan = null;
 function showAdres(i) {
@@ -2461,6 +2484,7 @@ async function _enforceRememberMe() {
   try { renderTopNav(); console.log("[init] renderTopNav OK"); }
   catch (e) { console.error("init renderTopNav:", e); }
   try { await renderKuryeDashboard(); } catch (e) { console.error("init renderKuryeDashboard:", e); }
+  try { await refreshPendingReviewCount(); } catch (e) { console.error("init refreshPendingReviewCount:", e); }
 
   if (_isRecoveryUrl) {
     openModal("forgotResetModal");
