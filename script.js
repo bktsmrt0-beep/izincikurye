@@ -623,31 +623,39 @@ async function refreshPendingReviewCount() {
   const banner = document.getElementById("isletmeYorumBanner");
   const badge = document.getElementById("reviewPendingBadge");
 
-  // İşletme değilse banner ve badge gizli
+  console.log("[banner-check] currentUser:", currentUser ? {
+    id: currentUser.id, kullaniciTipi: currentUser.kullaniciTipi
+  } : null);
+  console.log("[banner-check] banner element:", !!banner);
+
   if (!currentUser || currentUser.kullaniciTipi !== "isletme") {
+    console.log("[banner-check] skip: not isletme");
     banner?.classList.add("hidden");
     badge?.classList.add("hidden");
     return;
   }
 
   const session = readStoredSession();
-  const { data } = await rawSelect(
+  console.log("[banner-check] session token present:", !!session?.access_token);
+  const { data, error } = await rawSelect(
     `yorum_haklari?isletme_id=eq.${currentUser.id}&kullanildi=eq.false&select=id`,
     session?.access_token, 6000
   );
-  const n = (data || []).length;
+  console.log("[banner-check] yorum_haklari result:", { data, error });
 
-  // Menü badge
+  const n = (data || []).length;
+  console.log("[banner-check] pending count:", n);
+
   if (badge) {
     badge.textContent = n;
     badge.classList.toggle("hidden", !n);
   }
 
-  // Üst banner
   if (banner) {
     banner.classList.toggle("hidden", n === 0);
     const cnt = document.getElementById("iybCount");
     if (cnt) cnt.textContent = n;
+    console.log("[banner-check] banner hidden class:", banner.classList.contains("hidden"));
   }
 }
 
