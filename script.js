@@ -444,44 +444,48 @@ function renderListings() {
     const remainingTxt = formatRemaining(i.expires_at);
     const isUrgent = remainingTxt.urgent;
 
-    // Güven rozetleri (sadece girişli kullanıcı görür, profile yüklendiyse)
-    let trustBadges = "";
-    if (currentUser && i.profile) {
+    // Sadece kurye paylaşan ilanlarda puan + müsait rozeti
+    let kuryeBadges = "";
+    if (currentUser && i.profile && i.profile.kullanici_tipi === "kurye") {
       const p = i.profile;
-      const isKurye = p.kullanici_tipi === "kurye";
-      const memberTxt = formatMembership(p.created_at);
-      const musaitBadge = isKurye && p.musait
-        ? '<span class="t-badge t-musait">🟢 Müsait</span>'
-        : "";
-      const memberBadge = memberTxt ? `<span class="t-badge">🕐 ${memberTxt}</span>` : "";
-      const ilanSayisi = ilanlar.filter(x => x.user_id === i.user_id).length;
-      const ilanBadge = ilanSayisi > 1 ? `<span class="t-badge">📋 ${ilanSayisi} aktif ilan</span>` : "";
-      const urgentBadge = isUrgent ? '<span class="t-badge t-urgent">🔥 Az Kaldı</span>' : "";
-      // Puan rozeti (sadece kurye, en az 1 yorum)
+      const musaitBadge = p.musait ? '<span class="t-badge t-musait">🟢 Müsait</span>' : "";
       let puanBadge = "";
-      if (isKurye && p.puan_sayisi > 0) {
+      if (p.puan_sayisi > 0) {
         const ort = Number(p.puan_ort).toFixed(1);
         puanBadge = `<button type="button" class="t-badge t-puan" data-act="show-reviews" data-kurye-id="${p.id}" data-kurye-ad="${escapeHtml(((p.ad||'')+' '+(p.soyad||'')).trim())}">⭐ ${ort} (${p.puan_sayisi})</button>`;
       }
-      trustBadges = `<div class="trust-badges">${urgentBadge}${puanBadge}${musaitBadge}${memberBadge}${ilanBadge}</div>`;
-    } else if (isUrgent) {
-      trustBadges = '<div class="trust-badges"><span class="t-badge t-urgent">🔥 Az Kaldı</span></div>';
+      if (puanBadge || musaitBadge) {
+        kuryeBadges = `<div class="trust-badges">${puanBadge}${musaitBadge}</div>`;
+      }
     }
+
+    const ertesiGun = i.bit_saat < i.bas_saat;
+    const urgentChip = isUrgent ? '<span class="ilan-urgent-chip">🔥 Acil</span>' : "";
 
     card.dataset.id = i.id;
     card.innerHTML = `
       <div class="card-top">
-        <span class="badge">📍 ${i.ilce}</span>
-        <span class="date">${formatDateTime(i.created_at)}</span>
+        <span class="badge badge-ilce">📍 ${escapeHtml(i.ilce)}</span>
+        <span class="ilan-aktif-sayac" data-created="${i.created_at}">başlatılıyor…</span>
+        ${urgentChip}
       </div>
-      <div class="time-left ${isUrgent ? 'urgent' : ''}">⏳ ${remainingTxt.text}</div>
       <h3>${escapeHtml(i.baslik)}${mineTag}</h3>
-      ${trustBadges}
-      <p>${escapeHtml(i.aciklama || "")}</p>
-      <div class="card-meta">
-        <span>⏱ ${i.saat} saat · ${i.bas_saat}–${i.bit_saat}${i.bit_saat < i.bas_saat ? " (ertesi gün)" : ""}</span>
-        <span class="price">${i.fiyat} ₺ · ${i.km} ₺/km</span>
+      ${kuryeBadges}
+
+      <div class="ilan-bilgi-box">
+        <div class="ilan-saat-row">
+          <span class="ilan-saat-ico">⏰</span>
+          <strong class="ilan-saat-aralik">${i.bas_saat} → ${i.bit_saat}</strong>
+          <span class="ilan-saat-detay">(${i.saat} saat${ertesiGun ? " · ertesi gün" : ""})</span>
+        </div>
+        <div class="ilan-ucret-row">
+          <span class="ilan-ucret"><span class="ilan-ucret-ico">💰</span><strong>${i.fiyat} ₺</strong>/saat</span>
+          <span class="ilan-km"><span class="ilan-km-ico">🚗</span>${i.km} ₺/km</span>
+        </div>
       </div>
+
+      ${i.aciklama ? `<p class="ilan-aciklama">${escapeHtml(i.aciklama)}</p>` : ""}
+
       <div class="actions">
         <button class="action-btn call ${lockedClass}" data-act="call" data-id="${i.id}" ${lockedTitle}>📞 Ara</button>
         <button class="action-btn wa ${lockedClass}" data-act="wa" data-id="${i.id}" ${lockedTitle}>💬 WhatsApp</button>
@@ -491,6 +495,9 @@ function renderListings() {
     `;
     listingsEl.appendChild(card);
   });
+
+  // Yeni eklenen sayaçları hemen güncelle (interval'i beklemeden)
+  _updateAktifSayaclar();
 
   // "Daha Fazla Yükle" butonu — sadece DB'de daha fazla varsa
   if (hasMoreIlanlar) {
@@ -1548,7 +1555,34 @@ function formatDateTime(iso) {
   return `${tarih} · ${saat}`;
 }
 
-// İlan kalan süre — 24 saatlik yayın
+// İlan "ne kadar süredir aktif" — ileri sayan canlı sayaç
+function formatAktifSure(createdIso) {
+  if (!createdIso) return "";
+  const elapsedMs = Date.now() - new Date(createdIso).getTime();
+  if (elapsedMs < 0) return "az önce eklendi";
+  const totalSec = Math.floor(elapsedMs / 1000);
+  const sn = totalSec % 60;
+  const totalMin = Math.floor(totalSec / 60);
+  const dk = totalMin % 60;
+  const saat = Math.floor(totalMin / 60);
+  if (saat > 0) return `${saat} saat ${dk} dakikadır aktif`;
+  if (totalMin > 0) return `${dk} dakika ${sn} saniyedir aktif`;
+  return `${sn} saniyedir aktif`;
+}
+
+// Tüm görünür sayaçları güncelle
+function _updateAktifSayaclar() {
+  document.querySelectorAll(".ilan-aktif-sayac").forEach(el => {
+    const c = el.dataset.created;
+    if (c) el.textContent = formatAktifSure(c);
+  });
+}
+// Saniyede bir tüm sayaçları yenile (visibility kontrolü ile pil tasarrufu)
+setInterval(() => {
+  if (document.visibilityState === "visible") _updateAktifSayaclar();
+}, 1000);
+
+// İlan kalan süre — 24 saatlik yayın (urgent flag için hâlâ kullanılıyor)
 function formatRemaining(expIso) {
   if (!expIso) return { text: "", urgent: false };
   const ms = new Date(expIso).getTime() - Date.now();

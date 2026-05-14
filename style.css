@@ -2118,3 +2118,122 @@ textarea#rwYorum:focus {
   color: #94a3b8;
   line-height: 1.5;
 }
+
+/* ============== İlan Kartı Yeni Yapı (v73) ============== */
+/* Üst satır: ilçe + canlı sayaç + acil */
+.card .card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.card .badge-ilce {
+  background: linear-gradient(135deg, #fff7ed, #fed7aa);
+  color: #9a3412;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid #fdba74;
+}
+.ilan-aktif-sayac {
+  font-size: 12px;
+  color: #64748b;
+  font-variant-numeric: tabular-nums;
+  flex: 1;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ilan-urgent-chip {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #991b1b;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  border: 1px solid #fca5a5;
+  animation: urgentPulse 2s ease-in-out infinite;
+}
+@keyframes urgentPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+/* Bilgi kutusu — vurgulu */
+.ilan-bilgi-box {
+  margin: 12px 0;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border: 1.5px solid #fdba74;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.ilan-saat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ilan-saat-ico { font-size: 18px; }
+.ilan-saat-aralik {
+  font-size: 18px;
+  font-weight: 800;
+  color: #7c2d12;
+  letter-spacing: 0.5px;
+}
+.ilan-saat-detay {
+  font-size: 12px;
+  color: #92400e;
+  font-weight: 500;
+}
+.ilan-ucret-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(154, 52, 18, 0.25);
+}
+.ilan-ucret {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: #422006;
+}
+.ilan-ucret strong {
+  font-size: 19px;
+  font-weight: 800;
+  color: #c2410c;
+}
+.ilan-ucret-ico { font-size: 16px; }
+.ilan-km {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: #78350f;
+  font-weight: 600;
+  margin-left: auto;
+}
+.ilan-km-ico { font-size: 14px; }
+
+.ilan-aciklama {
+  font-size: 13px;
+  color: #475569;
+  margin: 8px 0 6px;
+  line-height: 1.5;
+}
+
+/* Mobil */
+@media (max-width: 520px) {
+  .ilan-saat-aralik { font-size: 16px; }
+  .ilan-ucret strong { font-size: 17px; }
+  .ilan-aktif-sayac { font-size: 11px; }
+  .ilan-bilgi-box { padding: 12px 14px; }
+}
