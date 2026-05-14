@@ -2097,3 +2097,18 @@ textarea#rwYorum:focus {
   .peb-text small { font-size: 11px; }
   .peb-action { padding: 5px 12px; font-size: 11px; }
 }
+
+/* ===== Footer linkleri (yasal) ===== */
+.site-footer .footer-links {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #6b7280;
+}
+.site-footer .footer-links a {
+  color: #6b7280;
+  text-decoration: none;
+}
+.site-footer .footer-links a:hover {
+  color: #111;
+  text-decoration: underline;
+}

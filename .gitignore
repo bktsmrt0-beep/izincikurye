@@ -16,3 +16,6 @@ node_modules/
 .env
 .env.local
 .claude/settings.local.json
+
+# Sahibinden docx extract — kaynak referans, repo'ya dahil edilmez
+_sahibinden_extract/
