@@ -7,7 +7,7 @@ Ankara için basit, kullanışlı **izinci kurye** ilan platformu.
 - İzinci kurye ilanları (anasayfa)
 - İlçeye göre filtreleme + "Tümü" seçeneği
 - Üyelik (Supabase Auth — e-posta doğrulama, şifre sıfırlama)
-- Ölçek tabanlı ilan formu: çalışma saati (4–16), günlük ücret (200–300 ₺), KM ücreti (5–10 ₺)
+- Ölçek tabanlı ilan formu: çalışma saati (4–16), saatlik ücret (200–300 ₺), KM ücreti (5–10 ₺)
 - İletişim bilgileri sadece kayıtlı kullanıcılara açık
 - Ara / WhatsApp / Adres butonları
 - Sahibi ilanını admin onayı olmadan kaldırabilir

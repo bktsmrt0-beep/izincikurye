@@ -1035,7 +1035,8 @@ document.getElementById("deleteIlanSkip")?.addEventListener("click", async () =>
 let _adresCurrentIlan = null;
 function showAdres(i) {
   _adresCurrentIlan = i;
-  const tel = i.iletisim_tel || i.profile?.tel || "—";
+  const telRaw = i.iletisim_tel || i.profile?.tel || "";
+  const tel = telRaw ? _displayPhone(telRaw) : "—";
   const ad = ((i.profile?.ad || "") + " " + (i.profile?.soyad || "")).trim() || "—";
   const titleEl = document.getElementById("adresModalTitle");
   if (titleEl) titleEl.textContent = i.baslik || "İlan Detayı";
@@ -1076,17 +1077,17 @@ function showAdres(i) {
 // Adres modal sticky CTA — call/wa
 document.getElementById("adresCallBtn")?.addEventListener("click", () => {
   const i = _adresCurrentIlan;
-  const tel = (i?.iletisim_tel || i?.profile?.tel || "").replace(/\s/g, "");
-  if (!tel) return toast("Telefon bilgisi bulunamadı.", "error");
-  window.location.href = "tel:" + tel;
+  const telRaw = i?.iletisim_tel || i?.profile?.tel || "";
+  if (!telRaw) return toast("Telefon bilgisi bulunamadı.", "error");
+  window.location.href = "tel:" + _phoneToE164(telRaw);
 });
 document.getElementById("adresWaBtn")?.addEventListener("click", () => {
   const i = _adresCurrentIlan;
-  const tel = (i?.iletisim_tel || i?.profile?.tel || "").replace(/\s/g, "");
-  if (!tel) return toast("Telefon bilgisi bulunamadı.", "error");
-  let waNum = tel.replace(/\D/g, "");
-  if (waNum.startsWith("0")) waNum = "9" + waNum;
-  else if (!waNum.startsWith("90")) waNum = "90" + waNum;
+  const telRaw = i?.iletisim_tel || i?.profile?.tel || "";
+  if (!telRaw) return toast("Telefon bilgisi bulunamadı.", "error");
+  if (!_isMobileTr(telRaw)) return toast("Bu numara WhatsApp desteklemiyor (sabit hat).", "error", 4000);
+  // E.164'ten WA formatına: +905XXX → 905XXX
+  const waNum = _phoneToE164(telRaw).replace(/\D/g, "");
   const msg = `Merhaba, izincikurye.com'da "${i.baslik}" ilanını gördüm. Hâlâ müsait misin?`;
   window.open("https://wa.me/" + waNum + "?text=" + encodeURIComponent(msg), "_blank");
 });
@@ -1266,6 +1267,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   if (!ad || !soyad || !email || !tel || !sifre) {
     toast("Lütfen tüm zorunlu alanları doldurun.", "error"); return;
   }
+  if (!_isMobileTr(tel)) { toast("Cep telefonu numarası 5 ile başlamalı (örn. 0532...).", "error"); return; }
   if (kullanici_tipi === "isletme") {
     if (!isletme_adi) { toast("İşletme adı zorunludur.", "error"); return; }
     if (!is_adresi) { toast("İş adresi zorunludur.", "error"); return; }
@@ -1276,10 +1278,14 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   if (sifre !== sifre2) { toast("Şifreler eşleşmiyor.", "error"); return; }
   if (!sozlesme) { toast("Üyelik sözleşmesi ve KVKK onayı zorunludur.", "error"); return; }
 
+  // Tüm telefonları E.164 formatına (+90) çevir
+  const telE164 = _phoneToE164(tel);
+  const isTelE164 = is_telefonu ? _phoneToE164(is_telefonu) : "";
+
   const { error } = await rawSignUp(
     email,
     sifre,
-    { ad, soyad, tel, ticari, kullanici_tipi, isletme_adi, is_adresi, is_telefonu },
+    { ad, soyad, tel: telE164, ticari, kullanici_tipi, isletme_adi, is_adresi, is_telefonu: isTelE164 },
     window.location.origin + "/"
   );
   if (error) { toast("Kayıt hatası: " + error.message, "error"); return; }
@@ -1411,10 +1417,9 @@ ilanVerBtn.addEventListener("click", () => {
     adresHint?.classList.add("hidden");
   }
 
-  // Telefon: işletme için isTelefonu, kurye için tel
-  const kayitliTel = currentUser.kullaniciTipi === "isletme"
-    ? (currentUser.isTelefonu || currentUser.tel || "")
-    : (currentUser.tel || "");
+  // Telefon: HER ZAMAN cep telefonu (currentUser.tel) — WhatsApp için
+  // İşletmenin sabit hattı (is_telefonu) ilan iletişiminde kullanılmaz
+  const kayitliTel = currentUser.tel || "";
   if (kayitliTel && !iletisimTel.value) {
     iletisimTel.value = formatTel(kayitliTel);
     telHint?.classList.remove("hidden");
@@ -1473,6 +1478,10 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   if (iletisim_tel_digits.length < 10) {
     toast("İletişim telefonu en az 10 hane olmalı.", "error"); return;
   }
+  if (!_isMobileTr(iletisim_tel_raw)) {
+    toast("İletişim telefonu cep numarası olmalı (5 ile başlamalı). Sabit hat (312, 232, vb.) WhatsApp desteklemez.", "error", 6000); return;
+  }
+  const iletisim_tel_e164 = _phoneToE164(iletisim_tel_raw);
   if (bas_saat === bit_saat) {
     toast("Başlangıç ve bitiş saati aynı olamaz.", "error"); return;
   }
@@ -1490,7 +1499,7 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
     aciklama: (fd.get("aciklama") || "").trim() || null,
     isyeri_ad,
     isyeri_adres,
-    iletisim_tel: formatTel(iletisim_tel_raw)
+    iletisim_tel: iletisim_tel_e164
   });
   if (error) {
     // DB trigger rate limit hatası kullanıcı dostu mesaj
@@ -1620,6 +1629,38 @@ function formatTel(raw) {
 }
 
 function _telDigits(s) { return (s || "").replace(/\D/g, ""); }
+
+// Telefonu E.164 formatına çevir (+905XXXXXXXXX)
+// 10 hane "5321234567" → "+905321234567"
+// 11 hane "05321234567" → "+905321234567"
+// 12 hane "905321234567" → "+905321234567"
+// 13 hane "+905321234567" → "+905321234567"
+function _phoneToE164(raw) {
+  const d = (raw || "").replace(/\D/g, "");
+  if (!d) return "";
+  if (d.length === 10) return "+90" + d;
+  if (d.length === 11 && d.startsWith("0")) return "+90" + d.slice(1);
+  if (d.length === 12 && d.startsWith("90")) return "+" + d;
+  if (d.length === 13 && d.startsWith("90")) return "+" + d.slice(0, 12);
+  return "+" + d;
+}
+
+// Cep telefonu mu? (Türkiye: son 10 hanenin ilki 5)
+function _isMobileTr(raw) {
+  const d = (raw || "").replace(/\D/g, "");
+  const last10 = d.slice(-10);
+  return last10.length === 10 && last10.startsWith("5");
+}
+
+// Görsel format: "+905321234567" → "+90 532 123 45 67"
+function _displayPhone(raw) {
+  const e = _phoneToE164(raw);
+  if (!e || e.length < 13) {
+    // E.164'e çevrilemediyse eski formatlı göster
+    return formatTel(raw);
+  }
+  return e.slice(0, 3) + " " + e.slice(3, 6) + " " + e.slice(6, 9) + " " + e.slice(9, 11) + " " + e.slice(11);
+}
 
 function _readProfileForm() {
   const bildirimler = {
@@ -2266,6 +2307,13 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
     setStatus("profileStatus", "error", "Telefon numarası eksik görünüyor.");
     return;
   }
+  if (!_isMobileTr(f.tel)) {
+    setStatus("profileStatus", "error", "Cep telefonu 5 ile başlamalı (örn. 0532...).");
+    return;
+  }
+  // Telefonları E.164 formatına normalize et (+90...)
+  f.tel = _phoneToE164(f.tel);
+  if (f.is_telefonu) f.is_telefonu = _phoneToE164(f.is_telefonu);
   const emailChanged = f.email !== normalizeEmail(currentUser.email);
 
   setBusy("profileSaveBtn", true, "Kaydediliyor...");
