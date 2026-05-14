@@ -130,6 +130,7 @@ async function syncSession() {
         bildirimler: profile?.bildirimler || { yeni_ilan: true, ilanim_goruldu: true, kampanya: false },
         kullaniciTipi: profile?.kullanici_tipi || "",
         isletmeAdi: profile?.isletme_adi || "",
+        isletmeTipi: profile?.isletme_tipi || "",
         isAdresi: profile?.is_adresi || "",
         isTelefonu: profile?.is_telefonu || "",
         musait: !!profile?.musait,
@@ -1548,7 +1549,11 @@ function _readProfileForm() {
     min_ucret: minU === "" ? null : parseInt(minU, 10),
     max_ucret: maxU === "" ? null : parseInt(maxU, 10),
     ticari: !!document.getElementById("bildirKampanya")?.checked,
-    bildirimler
+    bildirimler,
+    isletme_adi: document.getElementById("profileIsletmeAdi")?.value.trim() || "",
+    isletme_tipi: document.getElementById("profileIsletmeTipi")?.value || "",
+    is_telefonu: document.getElementById("profileIsTelefonu")?.value.trim() || "",
+    is_adresi: document.getElementById("profileIsAdresi")?.value.trim() || ""
   };
 }
 
@@ -1567,6 +1572,10 @@ function profileHasChanges() {
   if (f.min_ucret !== (currentUser.minUcret ?? null)) return true;
   if (f.max_ucret !== (currentUser.maxUcret ?? null)) return true;
   if (JSON.stringify(f.bildirimler) !== JSON.stringify(currentUser.bildirimler || {})) return true;
+  if (f.isletme_adi !== (currentUser.isletmeAdi || "")) return true;
+  if (f.isletme_tipi !== (currentUser.isletmeTipi || "")) return true;
+  if (_telDigits(f.is_telefonu) !== _telDigits(currentUser.isTelefonu || "")) return true;
+  if (f.is_adresi !== (currentUser.isAdresi || "")) return true;
   return false;
 }
 
@@ -1645,8 +1654,8 @@ function switchProfileTab(name) {
   document.querySelectorAll("#profileModal [data-tab-panel]").forEach(p => {
     p.classList.toggle("hidden", p.dataset.tabPanel !== name);
   });
-  // Form içi bölümler (profil, bildirim)
-  const showForm = (name === "profil" || name === "bildirim");
+  // Form içi bölümler (profil, isletme, bildirim)
+  const showForm = (name === "profil" || name === "isletme" || name === "bildirim");
   document.querySelectorAll("#profileModal [data-tab-section]").forEach(s => {
     s.classList.toggle("hidden", s.dataset.tabSection !== name);
   });
@@ -1656,20 +1665,33 @@ function switchProfileTab(name) {
 
 function computeProfileCompletion() {
   if (!currentUser) return 0;
-  const fields = [
+  const base = [
     !!(currentUser.ad && currentUser.ad.trim()),
     !!(currentUser.soyad && currentUser.soyad.trim()),
     !!(currentUser.email && currentUser.email.trim()),
     !!(_telDigits(currentUser.tel).length >= 10),
     !!currentUser.avatarUrl,
-    !!(currentUser.bio && currentUser.bio.trim()),
-    !!(currentUser.tercihIlceler && currentUser.tercihIlceler.length > 0),
-    !!(currentUser.calismaBaslangic != null && currentUser.calismaBitis != null),
-    !!(currentUser.calismaGunleri && currentUser.calismaGunleri.length > 0),
-    !!(currentUser.minUcret != null && currentUser.maxUcret != null)
+    !!(currentUser.bio && currentUser.bio.trim())
   ];
-  const filled = fields.filter(Boolean).length;
-  return Math.round((filled / fields.length) * 100);
+  let extra;
+  if (currentUser.kullaniciTipi === "isletme") {
+    extra = [
+      !!(currentUser.isletmeAdi && currentUser.isletmeAdi.trim()),
+      !!(currentUser.isletmeTipi && currentUser.isletmeTipi.trim()),
+      !!(_telDigits(currentUser.isTelefonu).length >= 10),
+      !!(currentUser.isAdresi && currentUser.isAdresi.trim())
+    ];
+  } else {
+    extra = [
+      !!(currentUser.tercihIlceler && currentUser.tercihIlceler.length > 0),
+      !!(currentUser.calismaBaslangic != null && currentUser.calismaBitis != null),
+      !!(currentUser.calismaGunleri && currentUser.calismaGunleri.length > 0),
+      !!(currentUser.minUcret != null && currentUser.maxUcret != null)
+    ];
+  }
+  const all = base.concat(extra);
+  const filled = all.filter(Boolean).length;
+  return Math.round((filled / all.length) * 100);
 }
 
 function refreshCompletion() {
@@ -1900,6 +1922,20 @@ function openProfileModal() {
     document.getElementById("musaitCard")?.classList.toggle("active", mt.checked);
   }
 
+  // İşletme sekmesi sadece kullanici_tipi='isletme' ise görünür
+  const isIsletme = currentUser.kullaniciTipi === "isletme";
+  document.getElementById("profileTabIsletme")?.classList.toggle("hidden", !isIsletme);
+
+  // İşletme alanlarını doldur
+  const isletmeAdiEl = document.getElementById("profileIsletmeAdi");
+  const isletmeTipiEl = document.getElementById("profileIsletmeTipi");
+  const isTelEl = document.getElementById("profileIsTelefonu");
+  const isAdresEl = document.getElementById("profileIsAdresi");
+  if (isletmeAdiEl) isletmeAdiEl.value = currentUser.isletmeAdi || "";
+  if (isletmeTipiEl) isletmeTipiEl.value = currentUser.isletmeTipi || "";
+  if (isTelEl) isTelEl.value = formatTel(currentUser.isTelefonu || "");
+  if (isAdresEl) isAdresEl.value = currentUser.isAdresi || "";
+
   // Kullanıcı tipi rozeti
   const tb = document.getElementById("profileTypeBadge");
   if (tb) {
@@ -1934,14 +1970,18 @@ function openProfileModal() {
 }
 
 // Her input değişiminde Kaydet butonunu güncelle ve statüsü temizle
-["profileAd","profileSoyad","profileEmail","profileTel"].forEach(id => {
+["profileAd","profileSoyad","profileEmail","profileTel","profileIsletmeAdi","profileIsTelefonu","profileIsAdresi"].forEach(id => {
   const el = document.getElementById(id);
   if (!el) return;
   el.addEventListener("input", () => {
-    if (id === "profileTel") el.value = formatTel(el.value);
+    if (id === "profileTel" || id === "profileIsTelefonu") el.value = formatTel(el.value);
     refreshProfileSaveBtn();
     clearStatus("profileStatus");
   });
+});
+document.getElementById("profileIsletmeTipi")?.addEventListener("change", () => {
+  refreshProfileSaveBtn();
+  clearStatus("profileStatus");
 });
 document.getElementById("profileTicari").addEventListener("change", () => {
   refreshProfileSaveBtn();
@@ -1996,6 +2036,20 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
 
   setBusy("profileSaveBtn", true, "Kaydediliyor...");
 
+  // İşletme alanları — yalnız isletme tipi için doğrulama
+  const isIsletmeUser = currentUser.kullaniciTipi === "isletme";
+  if (isIsletmeUser) {
+    if (f.isletme_adi && f.isletme_adi.length < 3) {
+      setStatus("profileStatus", "error", "İşletme adı en az 3 karakter olmalı.");
+      return;
+    }
+    const isTelDigits = _telDigits(f.is_telefonu);
+    if (f.is_telefonu && isTelDigits.length < 10) {
+      setStatus("profileStatus", "error", "İş telefonu eksik görünüyor (en az 10 hane).");
+      return;
+    }
+  }
+
   // 1) profiles tablosu — tüm değişebilen alanlar
   const updateObj = {
     ad: f.ad, soyad: f.soyad, tel: f.tel, ticari: f.ticari,
@@ -2008,6 +2062,12 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
     max_ucret: f.max_ucret,
     bildirimler: f.bildirimler
   };
+  if (isIsletmeUser) {
+    updateObj.isletme_adi = f.isletme_adi || null;
+    updateObj.isletme_tipi = f.isletme_tipi || null;
+    updateObj.is_telefonu = f.is_telefonu || null;
+    updateObj.is_adresi = f.is_adresi || null;
+  }
   const { error: profErr } = await sb.from("profiles").update(updateObj).eq("id", currentUser.id);
   if (profErr) {
     setBusy("profileSaveBtn", false);
@@ -2026,6 +2086,14 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
     maxUcret: f.max_ucret,
     bildirimler: f.bildirimler
   });
+  if (isIsletmeUser) {
+    Object.assign(currentUser, {
+      isletmeAdi: f.isletme_adi,
+      isletmeTipi: f.isletme_tipi,
+      isTelefonu: f.is_telefonu,
+      isAdresi: f.is_adresi
+    });
+  }
 
   // E-posta değiştiyse Supabase auth update
   const email = f.email;

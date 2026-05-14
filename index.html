@@ -528,6 +528,7 @@
       <div class="tabs" role="tablist">
         <button type="button" class="tab-btn active" data-tab="genel" role="tab">Genel</button>
         <button type="button" class="tab-btn" data-tab="profil" role="tab">Profil</button>
+        <button type="button" class="tab-btn hidden" data-tab="isletme" role="tab" id="profileTabIsletme">🏪 İşletme</button>
         <button type="button" class="tab-btn" data-tab="bildirim" role="tab">Bildirimler</button>
         <button type="button" class="tab-btn" data-tab="guvenlik" role="tab">Güvenlik</button>
       </div>
@@ -583,21 +584,6 @@
           </label>
           <p class="muted small" id="profileTelHint" style="display:none;color:#92400e">⚠ Telefon doğrulama (SMS) yakında. Şimdilik değişiklik anında kaydedilir.</p>
 
-          <!-- İşletme bilgileri (sadece işletme tipi için) -->
-          <div id="profileBusinessSection" class="hidden">
-            <hr style="margin:14px 0;border:0;border-top:1px solid #e5e7eb" />
-            <p class="muted small" style="margin-bottom:6px;font-weight:600;color:#166534">🏪 İşletme Bilgileri</p>
-            <label>İşletme Adı <span class="req">*</span>
-              <input type="text" id="profileIsletmeAdi" maxlength="100" placeholder="Örn: Kızılay Lokantası" />
-            </label>
-            <label>İş Adresi <span class="req">*</span>
-              <input type="text" id="profileIsAdresi" maxlength="200" placeholder="Mahalle, cadde/sokak, no" />
-            </label>
-            <label>İş Telefonu
-              <input type="tel" id="profileIsTelefonu" placeholder="0312 123 45 67 (opsiyonel)" />
-            </label>
-          </div>
-
           <hr style="margin:14px 0;border:0;border-top:1px solid #e5e7eb" />
 
           <label>Hakkımda
@@ -643,6 +629,32 @@
               <input type="number" name="max_ucret" id="profileMaxUcret" min="0" max="10000" step="10" placeholder="300" />
             </label>
           </div>
+        </div>
+
+        <!-- İşletme alanları (sadece kullanici_tipi='isletme' için görünür) -->
+        <div data-tab-section="isletme" class="hidden">
+          <p class="muted small" style="margin-bottom:10px">Bu bilgiler ilanlarına otomatik eklenir ve müşteriler tarafından görünür.</p>
+          <label>İşletme Adı <span class="req">*</span>
+            <input type="text" id="profileIsletmeAdi" maxlength="100" placeholder="Örn: Kızılay Lokantası" />
+          </label>
+          <label>İşletme Tipi
+            <select id="profileIsletmeTipi">
+              <option value="">— Seçiniz —</option>
+              <option value="restoran">🍽 Restoran</option>
+              <option value="market">🛒 Market / Bakkal</option>
+              <option value="eczane">💊 Eczane</option>
+              <option value="cafe">☕ Kafe / Pastane</option>
+              <option value="diger">🏬 Diğer</option>
+            </select>
+          </label>
+          <label>İş Telefonu <span class="req">*</span>
+            <input type="tel" id="profileIsTelefonu" placeholder="0312 123 45 67" maxlength="20" />
+          </label>
+          <p class="muted small" id="profileIsTelefonuHint" style="display:none;color:#92400e">⚠ Sabit hat veya cep telefonu — müşterilerle iletişim için.</p>
+          <label>İş Adresi <span class="req">*</span>
+            <input type="text" id="profileIsAdresi" maxlength="200" placeholder="Mahalle, cadde/sokak, no" />
+          </label>
+          <p class="muted small">İlçeyi adres içinde belirtmen gerekmiyor — ilan oluştururken ilçe ayrıca seçiliyor.</p>
         </div>
 
         <!-- Bildirim alanları -->
@@ -701,7 +713,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=52"></script>
-  <script src="script.js?v=52"></script>
+  <script src="supabase-config.js?v=53"></script>
+  <script src="script.js?v=53"></script>
 </body>
 </html>
