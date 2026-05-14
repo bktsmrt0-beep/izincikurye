@@ -1058,9 +1058,15 @@ function showAdres(i) {
   const cta = document.getElementById("adresStickyCTA");
   if (cta) cta.style.display = (i.profile?.tel) ? "" : "none";
 
-  // URL'i güncelle: clean URL `/ilan/<id>` (eski ?ilan=<id> formatı da destekleniyor)
+  // URL'i güncelle: clean URL `/ilan/<id>` — pushState ile history girişi ekle
+  // (geri tuşu modalı kapatsın, siteden çıkmasın)
   try {
-    history.replaceState(null, "", "/ilan/" + i.id);
+    const onIlanPath = /^\/ilan\/[^/]+/.test(window.location.pathname);
+    if (onIlanPath) {
+      history.replaceState({ modal: "adres", id: i.id }, "", "/ilan/" + i.id);
+    } else {
+      history.pushState({ modal: "adres", id: i.id }, "", "/ilan/" + i.id);
+    }
     document.title = `${i.baslik} · ${i.ilce} · ${i.fiyat}₺ — izincikurye`;
   } catch {}
 
@@ -1101,6 +1107,7 @@ function openModal(id) {
     if (first) first.focus();
   }, 50);
 }
+let _closingFromPopstate = false;
 function closeModals() {
   const adresWasOpen = !document.getElementById("adresModal")?.classList.contains("hidden");
   document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
@@ -1110,13 +1117,27 @@ function closeModals() {
     const url = new URL(window.location.href);
     const pathnameMatchesIlan = /^\/ilan\/[^/]+/.test(url.pathname);
     if (url.searchParams.has("ilan") || pathnameMatchesIlan) {
-      url.searchParams.delete("ilan");
-      // Anasayfaya dön
-      history.replaceState(null, "", "/" + (url.search || ""));
+      // popstate'ten geldiyse history zaten geri gitti, dokunma.
+      // Aksi halde history.back() ile geri git (modal-açma push'unu geri al)
+      if (!_closingFromPopstate && history.state && history.state.modal === "adres") {
+        history.back();
+      } else if (!_closingFromPopstate) {
+        history.replaceState(null, "", "/" + (url.search || ""));
+      }
     }
     document.title = "İzinci Kurye — Ankara";
   }
 }
+
+// Geri tuşu: ilan modalı açıksa kapat, siteden çıkma
+window.addEventListener("popstate", () => {
+  const adresOpen = !document.getElementById("adresModal")?.classList.contains("hidden");
+  if (adresOpen) {
+    _closingFromPopstate = true;
+    closeModals();
+    _closingFromPopstate = false;
+  }
+});
 
 // Esc tuşu açık modalı kapatır + kullanıcı menüsünü kapatır
 document.addEventListener("keydown", e => {
