@@ -1202,8 +1202,11 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   if (!ad || !soyad || !email || !tel || !sifre) {
     toast("Lütfen tüm zorunlu alanları doldurun.", "error"); return;
   }
-  if (kullanici_tipi === "isletme" && (!isletme_adi || !is_adresi)) {
-    toast("İşletme için işletme adı ve iş adresi zorunludur.", "error"); return;
+  if (kullanici_tipi === "isletme") {
+    if (!isletme_adi) { toast("İşletme adı zorunludur.", "error"); return; }
+    if (!is_adresi) { toast("İş adresi zorunludur.", "error"); return; }
+    if (!is_telefonu) { toast("İş telefonu zorunludur.", "error"); return; }
+    if (_telDigits(is_telefonu).length < 10) { toast("İş telefonu en az 10 hane olmalı.", "error"); return; }
   }
   if (sifre.length < 6) { toast("Şifre en az 6 karakter olmalı.", "error"); return; }
   if (sifre !== sifre2) { toast("Şifreler eşleşmiyor.", "error"); return; }
@@ -2173,13 +2176,19 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   // İşletme alanları — yalnız isletme tipi için doğrulama
   const isIsletmeUser = currentUser.kullaniciTipi === "isletme";
   if (isIsletmeUser) {
-    if (f.isletme_adi && f.isletme_adi.length < 3) {
-      setStatus("profileStatus", "error", "İşletme adı en az 3 karakter olmalı.");
+    if (!f.isletme_adi || f.isletme_adi.length < 3) {
+      setStatus("profileStatus", "error", "İşletme adı zorunlu (en az 3 karakter).");
+      switchProfileTab("isletme");
       return;
     }
-    const isTelDigits = _telDigits(f.is_telefonu);
-    if (f.is_telefonu && isTelDigits.length < 10) {
-      setStatus("profileStatus", "error", "İş telefonu eksik görünüyor (en az 10 hane).");
+    if (!f.is_adresi) {
+      setStatus("profileStatus", "error", "İş adresi zorunlu — Profil sekmesinden gir.");
+      switchProfileTab("profil");
+      return;
+    }
+    if (!f.is_telefonu || _telDigits(f.is_telefonu).length < 10) {
+      setStatus("profileStatus", "error", "İş telefonu zorunlu (en az 10 hane).");
+      switchProfileTab("isletme");
       return;
     }
   }
