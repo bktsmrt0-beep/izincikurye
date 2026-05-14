@@ -567,6 +567,7 @@
       <form id="profileForm" class="form">
         <!-- Profil alanları -->
         <div data-tab-section="profil" class="hidden">
+          <p class="muted small" id="profileIsletmeHeader" style="margin-bottom:10px;display:none">👤 <strong>İletişim Kişisi</strong> — işletmeyi temsil eden kişi. Bu bilgiler müşterilere gösterilmez; sadece sistem içi iletişim için.</p>
           <div class="row-2">
             <label>Ad <span class="req">*</span>
               <input type="text" name="ad" id="profileAd" required maxlength="40" autocomplete="given-name" />
@@ -591,49 +592,52 @@
           </label>
           <p class="char-counter"><span id="bioCount">0</span>/300</p>
 
-          <label>Tercih edilen ilçeler
-            <select name="tercih_ilceler" id="profileTercihIlceler" multiple size="5"></select>
-          </label>
-          <p class="muted small">Ctrl/Cmd ile çoklu seçim — bölgendeki ilanlar için tercih</p>
+          <!-- Kurye-only alanları (işletme görmez) -->
+          <div id="profileKuryeOnly">
+            <label>Tercih edilen ilçeler
+              <select name="tercih_ilceler" id="profileTercihIlceler" multiple size="5"></select>
+            </label>
+            <p class="muted small">Ctrl/Cmd ile çoklu seçim — bölgendeki ilanlar için tercih</p>
 
-          <label>Çalışma günleri
-            <div class="day-picker" id="profileGunler">
-              <button type="button" class="day-chip" data-gun="1">Pzt</button>
-              <button type="button" class="day-chip" data-gun="2">Sal</button>
-              <button type="button" class="day-chip" data-gun="3">Çar</button>
-              <button type="button" class="day-chip" data-gun="4">Per</button>
-              <button type="button" class="day-chip" data-gun="5">Cum</button>
-              <button type="button" class="day-chip" data-gun="6">Cmt</button>
-              <button type="button" class="day-chip" data-gun="7">Paz</button>
+            <label>Çalışma günleri
+              <div class="day-picker" id="profileGunler">
+                <button type="button" class="day-chip" data-gun="1">Pzt</button>
+                <button type="button" class="day-chip" data-gun="2">Sal</button>
+                <button type="button" class="day-chip" data-gun="3">Çar</button>
+                <button type="button" class="day-chip" data-gun="4">Per</button>
+                <button type="button" class="day-chip" data-gun="5">Cum</button>
+                <button type="button" class="day-chip" data-gun="6">Cmt</button>
+                <button type="button" class="day-chip" data-gun="7">Paz</button>
+              </div>
+            </label>
+
+            <div class="row-2">
+              <label>Çalışma başlangıç
+                <select name="calisma_baslangic" id="profileCalismaBaslangic">
+                  <option value="">—</option>
+                </select>
+              </label>
+              <label>Çalışma bitiş
+                <select name="calisma_bitis" id="profileCalismaBitis">
+                  <option value="">—</option>
+                </select>
+              </label>
             </div>
-          </label>
 
-          <div class="row-2">
-            <label>Çalışma başlangıç
-              <select name="calisma_baslangic" id="profileCalismaBaslangic">
-                <option value="">—</option>
-              </select>
-            </label>
-            <label>Çalışma bitiş
-              <select name="calisma_bitis" id="profileCalismaBitis">
-                <option value="">—</option>
-              </select>
-            </label>
-          </div>
-
-          <div class="row-2">
-            <label>Min. saatlik ücret (₺)
-              <input type="number" name="min_ucret" id="profileMinUcret" min="0" max="10000" step="10" placeholder="200" />
-            </label>
-            <label>Max. saatlik ücret (₺)
-              <input type="number" name="max_ucret" id="profileMaxUcret" min="0" max="10000" step="10" placeholder="300" />
-            </label>
+            <div class="row-2">
+              <label>Min. saatlik ücret (₺)
+                <input type="number" name="min_ucret" id="profileMinUcret" min="0" max="10000" step="10" placeholder="200" />
+              </label>
+              <label>Max. saatlik ücret (₺)
+                <input type="number" name="max_ucret" id="profileMaxUcret" min="0" max="10000" step="10" placeholder="300" />
+              </label>
+            </div>
           </div>
         </div>
 
         <!-- İşletme alanları (sadece kullanici_tipi='isletme' için görünür) -->
         <div data-tab-section="isletme" class="hidden">
-          <p class="muted small" style="margin-bottom:10px">Bu bilgiler ilanlarına otomatik eklenir ve müşteriler tarafından görünür.</p>
+          <p class="muted small" style="margin-bottom:10px">🏪 <strong>Müşterilerin gördüğü işletme bilgileri.</strong> İlanlarına otomatik eklenir.</p>
           <label>İşletme Adı <span class="req">*</span>
             <input type="text" id="profileIsletmeAdi" maxlength="100" placeholder="Örn: Kızılay Lokantası" />
           </label>
@@ -713,7 +717,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=53"></script>
-  <script src="script.js?v=53"></script>
+  <script src="supabase-config.js?v=54"></script>
+  <script src="script.js?v=54"></script>
 </body>
 </html>

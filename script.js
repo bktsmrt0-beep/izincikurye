@@ -1926,6 +1926,12 @@ function openProfileModal() {
   const isIsletme = currentUser.kullaniciTipi === "isletme";
   document.getElementById("profileTabIsletme")?.classList.toggle("hidden", !isIsletme);
 
+  // Profil sekmesinde kurye-only alanları gizle, işletme için "İletişim Kişisi" başlığını göster
+  const kuryeOnly = document.getElementById("profileKuryeOnly");
+  if (kuryeOnly) kuryeOnly.style.display = isIsletme ? "none" : "";
+  const isletmeHeader = document.getElementById("profileIsletmeHeader");
+  if (isletmeHeader) isletmeHeader.style.display = isIsletme ? "block" : "none";
+
   // İşletme alanlarını doldur
   const isletmeAdiEl = document.getElementById("profileIsletmeAdi");
   const isletmeTipiEl = document.getElementById("profileIsletmeTipi");
