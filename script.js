@@ -1295,6 +1295,20 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   toast("Üyelik oluşturuldu. E-postanı kontrol et ve doğrulama linkine tıkla.", "ok", 6000);
 });
 
+// Kayıt + profil + ilan telefon input'larına canlı +90 format
+function _bindPhoneInput(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener("input", e => { e.target.value = formatTel(e.target.value); });
+  el.addEventListener("focus", e => {
+    if (!e.target.value || e.target.value === "") e.target.value = "+90 ";
+  });
+  el.addEventListener("blur", e => {
+    if (e.target.value === "+90 " || e.target.value === "+90") e.target.value = "";
+  });
+}
+["regTel", "regIsTel", "profileTel", "profileIsTelefonu", "ilanIletisimTel"].forEach(_bindPhoneInput);
+
 // =============== GİRİŞ ===============
 document.getElementById("loginForm").addEventListener("submit", async e => {
   e.preventDefault();
@@ -1453,10 +1467,7 @@ document.getElementById("telEditBtn")?.addEventListener("click", e => {
   document.getElementById("telEditHint").classList.add("hidden");
 });
 
-// Telefonu canlı formatla (5XX XXX XX XX)
-document.getElementById("ilanIletisimTel")?.addEventListener("input", e => {
-  e.target.value = formatTel(e.target.value);
-});
+// (ilanIletisimTel live format _bindPhoneInput içinde)
 
 document.getElementById("ilanForm").addEventListener("submit", async e => {
   e.preventDefault();
@@ -1620,12 +1631,19 @@ function setBusy(btnId, busy, busyText) {
 }
 
 // Telefon otomatik formatla: 05XX XXX XX XX
+// Telefon canlı format: çıktı her zaman "+90 XXX XXX XX XX"
+// Girişte 0 veya 90 prefix'i kırpılır, son 10 hane formatlanır.
 function formatTel(raw) {
-  const d = (raw || "").replace(/\D/g, "").slice(0, 11);
-  if (d.length <= 4) return d;
-  if (d.length <= 7) return d.slice(0, 4) + " " + d.slice(4);
-  if (d.length <= 9) return d.slice(0, 4) + " " + d.slice(4, 7) + " " + d.slice(7);
-  return d.slice(0, 4) + " " + d.slice(4, 7) + " " + d.slice(7, 9) + " " + d.slice(9);
+  if (!raw) return "";
+  let d = (raw || "").replace(/\D/g, "");
+  if (d.startsWith("90") && d.length >= 12) d = d.slice(2);
+  else if (d.startsWith("0")) d = d.slice(1);
+  d = d.slice(0, 10);
+  if (!d) return "+90 ";
+  if (d.length <= 3) return "+90 " + d;
+  if (d.length <= 6) return "+90 " + d.slice(0, 3) + " " + d.slice(3);
+  if (d.length <= 8) return "+90 " + d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6);
+  return "+90 " + d.slice(0, 3) + " " + d.slice(3, 6) + " " + d.slice(6, 8) + " " + d.slice(8);
 }
 
 function _telDigits(s) { return (s || "").replace(/\D/g, ""); }

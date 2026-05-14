@@ -251,7 +251,7 @@
         </label>
 
         <label>Cep Telefonu <span class="req">*</span>
-          <input type="tel" name="tel" required pattern="0?5[0-9]{2}[ ]?[0-9]{3}[ ]?[0-9]{2}[ ]?[0-9]{2}" placeholder="0532 123 45 67" autocomplete="tel" />
+          <input type="tel" name="tel" id="regTel" required inputmode="numeric" maxlength="20" placeholder="+90 532 123 45 67" autocomplete="tel" />
           <small class="muted">Cep numarası olmalı (5 ile başlamalı) — WhatsApp ve aramalar bu numara üzerinden yapılır.</small>
         </label>
 
@@ -264,8 +264,8 @@
             <input type="text" name="is_adresi" maxlength="200" placeholder="Mahalle, cadde/sokak, no" />
           </label>
           <label>İş Telefonu <span class="req">*</span>
-            <input type="tel" name="is_telefonu" required placeholder="0312 123 45 67" />
-            <small class="muted">Sabit hat (0312...) veya iş numarası. Whatsapp için cep telefonu kullanılır.</small>
+            <input type="tel" name="is_telefonu" id="regIsTel" required inputmode="numeric" maxlength="20" placeholder="+90 312 123 45 67" />
+            <small class="muted">Sabit hat (312...) veya iş numarası. Whatsapp için cep telefonu kullanılır.</small>
           </label>
         </div>
 
@@ -394,7 +394,7 @@
         <p class="muted small ilan-edit-hint hidden" id="adresEditHint">Kayıtlı iş adresinden otomatik dolduruldu. <a href="#" id="adresEditBtn" class="link-orange">Düzenle</a></p>
 
         <label>İletişim Cep Telefonu <span class="req">*</span>
-          <input type="tel" name="iletisimTel" id="ilanIletisimTel" required inputmode="numeric" maxlength="20" placeholder="0532 123 45 67" />
+          <input type="tel" name="iletisimTel" id="ilanIletisimTel" required inputmode="numeric" maxlength="20" placeholder="+90 532 123 45 67" />
         </label>
         <p class="muted small">Cep numarası olmalı (5 ile başlar) — kuryelerin WhatsApp ile ulaşabilmesi için. Sabit hat (312, 232, vb.) kabul edilmez.</p>
         <p class="muted small ilan-edit-hint hidden" id="telEditHint">Kayıtlı cep numarandan otomatik dolduruldu. Başkası aransın istiyorsan <a href="#" id="telEditBtn" class="link-orange">Düzenle</a>.</p>
@@ -673,7 +673,7 @@
           </label>
           <p class="muted small" id="profileEmailHint" style="display:none;color:#92400e">⚠ E-postanı değiştirdiğinde her iki adrese de onay maili gönderilir; her ikisini de onaylayana kadar yeni adres aktif olmaz.</p>
           <label>Cep Telefonu <span class="req">*</span>
-            <input type="tel" name="tel" id="profileTel" required pattern="0?5[0-9]{2}[ ]?[0-9]{3}[ ]?[0-9]{2}[ ]?[0-9]{2}" autocomplete="tel" placeholder="0532 123 45 67" />
+            <input type="tel" name="tel" id="profileTel" required inputmode="numeric" maxlength="20" autocomplete="tel" placeholder="+90 532 123 45 67" />
           </label>
           <p class="muted small" id="profileTelHint" style="display:none;color:#92400e">⚠ Telefon doğrulama (SMS) yakında. Şimdilik değişiklik anında kaydedilir.</p>
 
@@ -714,7 +714,7 @@
             </select>
           </label>
           <label>İş Telefonu <span class="req">*</span>
-            <input type="tel" id="profileIsTelefonu" placeholder="0312 123 45 67" maxlength="20" />
+            <input type="tel" id="profileIsTelefonu" inputmode="numeric" placeholder="+90 312 123 45 67" maxlength="20" />
           </label>
           <p class="muted small" id="profileIsTelefonuHint" style="display:none;color:#92400e">⚠ Sabit hat veya cep telefonu — müşterilerle iletişim için.</p>
           <p class="muted small" style="margin-top:10px">📍 İş adresini <strong>Profil</strong> sekmesinden düzenleyebilirsin.</p>
@@ -776,7 +776,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=71"></script>
-  <script src="script.js?v=71"></script>
+  <script src="supabase-config.js?v=72"></script>
+  <script src="script.js?v=72"></script>
 </body>
 </html>
