@@ -1880,6 +1880,10 @@ function openProfileModal() {
   const isletmeHeader = document.getElementById("profileIsletmeHeader");
   if (isletmeHeader) isletmeHeader.style.display = isIsletme ? "block" : "none";
 
+  // İşletme için Hakkımda gizle, İş Adresi göster (kurye için tersi)
+  document.getElementById("profileBioWrap")?.classList.toggle("hidden", isIsletme);
+  document.getElementById("profileIsletmeAdresWrap")?.classList.toggle("hidden", !isIsletme);
+
   // İşletme alanlarını doldur
   const isletmeAdiEl = document.getElementById("profileIsletmeAdi");
   const isletmeTipiEl = document.getElementById("profileIsletmeTipi");

@@ -587,10 +587,21 @@
 
           <hr style="margin:14px 0;border:0;border-top:1px solid #e5e7eb" />
 
-          <label>Hakkımda
-            <textarea name="bio" id="profileBio" rows="3" maxlength="300" placeholder="Kendinden kısaca bahset (tecrübe, çalışma tarzı vb.)"></textarea>
-          </label>
-          <p class="char-counter"><span id="bioCount">0</span>/300</p>
+          <!-- Hakkımda (sadece kurye için görünür) -->
+          <div id="profileBioWrap">
+            <label>Hakkımda
+              <textarea name="bio" id="profileBio" rows="3" maxlength="300" placeholder="Kendinden kısaca bahset (tecrübe, çalışma tarzı vb.)"></textarea>
+            </label>
+            <p class="char-counter"><span id="bioCount">0</span>/300</p>
+          </div>
+
+          <!-- İş Adresi (sadece işletme için görünür) — ilan formuna otomatik dolar -->
+          <div id="profileIsletmeAdresWrap" class="hidden">
+            <label>İş Adresi <span class="req">*</span>
+              <input type="text" id="profileIsAdresi" maxlength="200" placeholder="Mahalle, cadde/sokak, no" />
+            </label>
+            <p class="muted small">✨ Bu adres ilan verirken otomatik doldurulur — her seferinde yazmana gerek kalmaz. İlçe ayrıca seçilir.</p>
+          </div>
 
         </div>
 
@@ -614,10 +625,7 @@
             <input type="tel" id="profileIsTelefonu" placeholder="0312 123 45 67" maxlength="20" />
           </label>
           <p class="muted small" id="profileIsTelefonuHint" style="display:none;color:#92400e">⚠ Sabit hat veya cep telefonu — müşterilerle iletişim için.</p>
-          <label>İş Adresi <span class="req">*</span>
-            <input type="text" id="profileIsAdresi" maxlength="200" placeholder="Mahalle, cadde/sokak, no" />
-          </label>
-          <p class="muted small">İlçeyi adres içinde belirtmen gerekmiyor — ilan oluştururken ilçe ayrıca seçiliyor.</p>
+          <p class="muted small" style="margin-top:10px">📍 İş adresini <strong>Profil</strong> sekmesinden düzenleyebilirsin.</p>
         </div>
 
         <!-- Bildirim alanları -->
@@ -676,7 +684,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=55"></script>
-  <script src="script.js?v=55"></script>
+  <script src="supabase-config.js?v=56"></script>
+  <script src="script.js?v=56"></script>
 </body>
 </html>
