@@ -151,6 +151,8 @@ sb.auth.onAuthStateChange(async (event) => {
     openModal("forgotResetModal");
     return;
   }
+  // INITIAL_SESSION init IIFE'de zaten syncSession() çağırıyor — duplicate olmasın
+  if (event === "INITIAL_SESSION" || event === "TOKEN_REFRESHED") return;
   await syncSession();
   await loadIlanlar();
   renderTopNav();
