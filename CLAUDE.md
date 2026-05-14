@@ -7,7 +7,7 @@
 - **Hosting:** Vercel (auto-deploy from `main`), domain: https://izincikurye.vercel.app
 - **Repo:** https://github.com/bktsmrt0-beep/izincikurye
 
-> **Not:** Her HTML/JS/CSS değişiminde `index.html` ve `admin.html`'de `?v=N` query parametresi artırılır. Commit + push → Vercel otomatik deploy ~30-60sn. Şu an `?v=59`.
+> **Not:** Her HTML/JS/CSS değişiminde `index.html` ve `admin.html`'de `?v=N` query parametresi artırılır. Commit + push → Vercel otomatik deploy ~30-60sn. Şu an `?v=74`.
 
 > **Önemli:** Satır numaraları büyüktür kayar; Grep ile fonksiyon/marker adı arayarak gel. Aşağıdaki tablolar yaklaşık yer gösterir.
 
@@ -128,6 +128,14 @@ Cache-bust scriptleri en altta:
 | `performDeleteWithReview(id, tel)` | script.js | `grant_review_and_delete_ilan` RPC çağrısı |
 | `_phoneRaw10(input)` | script.js | Telefon → son 10 rakam (0/90 prefix kırpar) |
 | `_formatPhone10(d)` | script.js | "5XX XXX XX XX" canlı format |
+| `formatTel(raw)` | script.js | Her zaman "+90 XXX XXX XX XX" formatında döner (input live format için) |
+| `_phoneToE164(raw)` | script.js | "+905XXXXXXXXX" formatına normalize eder (DB storage) |
+| `_isMobileTr(raw)` | script.js | Son 10 hanenin ilki 5 mi? (cep telefonu kontrolü, WhatsApp için) |
+| `_displayPhone(raw)` | script.js | "+90 532 123 45 67" görsel format (render) |
+| `_bindPhoneInput(id)` | script.js | Telefon input'una canlı format + focus/blur "+90 " prefix bağlar |
+| `calcSureSaat(bas, bit)` | script.js | İlan saat aralığından toplam süreyi hesaplar (gece geçişi destekli) |
+| `formatAktifSure(createdIso)` | script.js | "21 dakika 14 saniyedir aktif" canlı sayaç metni |
+| `_updateAktifSayaclar()` | script.js | Tüm `.ilan-aktif-sayac` elemanlarını günceller (setInterval 1sn ile) |
 | `refreshPendingReviewCount()` | script.js | İşletme yorum banner + menü badge günceller |
 | `openReviewListModal()` | script.js | Bekleyen / yorumladıklarım modal |
 | `openReviewWriteModal(d)` | script.js | Yıldız + metin yorum yazma |
@@ -209,12 +217,13 @@ id           uuid PK
 user_id      uuid FK auth.users(id) ON DELETE CASCADE
 baslik       text (3-80)
 ilce         text
-saat         int (4-16)
-fiyat        int (200-300)
-km           int (5-10)
-bas_saat, bit_saat   text (HH:00)
+saat         int (otomatik hesap: bas/bit'ten gece geçişi destekli; 1-23)
+fiyat        int (200-300)  -- SAATLİK ücret
+km           int (5-10)     -- motosiklet KM ücreti
+bas_saat, bit_saat   text (HH:00) -- gece geçişi: bit < bas
 aciklama     text
 isyeri_ad, isyeri_adres   text
+iletisim_tel text  -- E.164 formatında (+90...), boşsa profiles.tel fallback
 created_at   timestamptz
 expires_at   timestamptz DEFAULT now() + 24h
 ```
@@ -241,6 +250,8 @@ expires_at   timestamptz DEFAULT now() + 24h
 | `05_yorum_puan_sistemi.sql` | yorumlar + yorum_haklari + RPC + RLS + trigger |
 | `06_phone_match_fix.sql` | grant_review_and_delete_ilan son-10-hane karşılaştırma |
 | `07_isletme_alanlari.sql` | profiles.isletme_tipi sütunu + CHECK constraint |
+| `08_iletisim_tel.sql` | ilanlar.iletisim_tel sütunu (ilana özel cep telefonu) |
+| `09_phone_e164.sql` | Tüm telefonları E.164 (+90...) formatına çevirir + `_phone_to_e164()` SQL helper |
 
 ### Storage
 
@@ -363,6 +374,14 @@ refreshProfileSaveBtn() // değişiklik yoksa Kaydet pasif
 14. **İşletme alanları zorunluluğu (v58+):** Kayıtta + profil kaydetmede `isletme_adi`, `is_adresi`, `is_telefonu` (>= 10 hane) hepsi zorunlu. Eksik ise toast hatası + ilgili sekmeye otomatik geçiş.
 15. **Profil eksik uyarı banner (v59+):** İşletme için `checkProfilEksikBanner()` sayfa init'inde + her profil kaydından sonra çağrılır. Dismiss `sessionStorage.izk_dismiss_pebanner_<id>`.
 16. **3 sticky banner z-index sırası:** header(60) > kurye müsait(40) > işletme yorum(40) > profil eksik(35).
+17. **Telefon E.164 formatı (v71+):** Tüm `tel`/`is_telefonu`/`iletisim_tel` alanları `+905XXXXXXXXX` formatında saklanır. UI giriş `formatTel()`, DB yazım `_phoneToE164()`, render `_displayPhone()`. WhatsApp + tel: linkleri E.164 ile çalışır. Eski kayıtlar `sql/09_phone_e164.sql` migration ile dönüştürüldü.
+18. **Cep zorunluluğu (v71+):** Kayıtta `tel` 5XX ile başlamalı (mobile); ilan `iletisim_tel` de mobile zorunlu (WhatsApp için). İşletme `is_telefonu` sabit hat olabilir (312...).
+19. **İlan saati otomatik (v74+):** Form'da slider yok; `saat` alanı `calcSureSaat(bas, bit)` ile otomatik hesaplanır (gece geçişi: `(bit - bas + 24) % 24`). Hidden input `#saatRange` ile gönderilir.
+20. **İlan kartı yeni hiyerarşi (v74+):** `.card-top` (ilçe + canlı sayaç + 🔥 acil chip) → başlık → kurye rozetleri → `.ilan-hero` (büyük saat aralığı + süre) → `.ilan-chips` (fiyat/km/tahmini kazanç) → açıklama → aksiyonlar. Eski `time-left`, `card-meta`, "kalan süre" kaldırıldı.
+21. **Canlı aktif sayaç:** `setInterval(1000ms)` ile `_updateAktifSayaclar()` tüm `.ilan-aktif-sayac` elemanlarını günceller. `document.visibilityState === "visible"` kontrolü ile sekme arkaplanda dururken pil tasarrufu.
+22. **Yasal metinler (v65+):** `/sozlesmeler.html` standalone sayfa, 4 anchor bölüm: `#uyelik`, `#kvkk`, `#cerez`, `#ticari-ileti`. Şirket: Carga Kurye Ltd. Şti. · Mithatpaşa V.D. 2030889421. İletişim: info@cargakurye.com. Kayıt modal'daki link'ler ve footer link'leri buraya gider.
+23. **Mobil geri tuşu (v63+):** İlan detay modal'ı `pushState({modal:'adres'})` ile history girişi ekler; `popstate` listener geri tuşunda modalı kapatır. `closeModals()` `history.back()` ile push'u geri alır.
+24. **Duplicate syncSession bug fix (v62+):** `onAuthStateChange` listener'ı `INITIAL_SESSION` ve `TOKEN_REFRESHED` event'lerinde early return — init IIFE zaten syncSession çağırıyor, duplicate önlenir.
 
 ---
 
