@@ -535,32 +535,92 @@
 
       <div class="form-status hidden" id="profileStatus"></div>
 
-      <!-- GENEL sekmesi -->
+      <!-- GENEL sekmesi (Smart Profile) -->
       <div class="tab-panel" data-tab-panel="genel">
-        <!-- Müsaitlik (sadece kurye) -->
-        <div id="musaitToggleSection" class="hidden">
+
+        <!-- HERO -->
+        <div class="pf-hero">
+          <div class="pf-hero-avatar-wrap">
+            <div class="avatar-preview pf-hero-avatar" id="avatarPreview" data-fallback="👤"></div>
+            <label class="pf-avatar-cam" for="avatarFileInput" title="Fotoğrafı değiştir">📷</label>
+            <input type="file" id="avatarFileInput" accept="image/*" hidden />
+            <button type="button" class="hidden" id="avatarRemoveBtn"></button>
+          </div>
+          <div class="pf-hero-info">
+            <div class="pf-hero-name" id="pfName">—</div>
+            <div class="pf-hero-rating hidden" id="pfRating">★ — · — yorum</div>
+            <div class="pf-hero-meta" id="pfMeta">—</div>
+            <div class="pf-verified-row" id="pfVerified"></div>
+          </div>
+        </div>
+
+        <!-- KPI -->
+        <div class="pf-kpi-row">
+          <div class="pf-kpi">
+            <span class="pf-kpi-num" id="pfKpi1Num">0</span>
+            <span class="pf-kpi-label" id="pfKpi1Lbl">Aktif İlan</span>
+          </div>
+          <div class="pf-kpi pf-kpi-mid">
+            <span class="pf-kpi-num" id="pfKpi2Num">0</span>
+            <span class="pf-kpi-label" id="pfKpi2Lbl">Bekleyen</span>
+          </div>
+          <div class="pf-kpi">
+            <span class="pf-kpi-num" id="pfKpi3Num">0%</span>
+            <span class="pf-kpi-label">Profil</span>
+          </div>
+        </div>
+
+        <!-- SMART NEXT-ACTION CARD -->
+        <div class="pf-smart-card" id="pfSmartCard">
+          <div class="pf-smart-icon" id="pfSmartIcon">✨</div>
+          <p class="pf-smart-title" id="pfSmartTitle">Hoş geldin</p>
+          <p class="pf-smart-text" id="pfSmartText">Profilin yükleniyor…</p>
+          <button type="button" class="btn btn-primary pf-smart-cta hidden" id="pfSmartCta">—</button>
+        </div>
+
+        <!-- MÜSAITLIK (kurye-only) -->
+        <div id="musaitToggleSection" class="hidden" style="margin-top:12px">
           <label class="musait-card" id="musaitCard">
             <input type="checkbox" id="musaitToggle" />
             <span class="musait-text">
               <strong id="musaitTitle">🔴 Müsait değilim</strong>
-              <small>Açtığında işletmeler seni "Müsait Kuryeler" listesinde görür ve doğrudan iletişim kurabilir.</small>
+              <small>Açtığında işletmeler seni "Müsait Kuryeler" listesinde görür.</small>
             </span>
           </label>
         </div>
-        <div class="profile-stats">
-          <div class="stat-item"><span class="stat-num" id="statMyIlan">0</span><span class="stat-lbl">İlanım</span></div>
-          <div class="stat-item"><span class="stat-num" id="statMemberDays">0</span><span class="stat-lbl">Gündür Üye</span></div>
+
+        <!-- QUICK ACTIONS 2x2 -->
+        <div class="pf-actions-grid">
+          <button type="button" class="pf-tile" id="pfTileYeniIlan">
+            <span class="pf-tile-icon">＋</span>
+            <span class="pf-tile-label">Yeni İlan</span>
+          </button>
+          <button type="button" class="pf-tile" id="pfTileIlanlarim">
+            <span class="pf-tile-icon">📋</span>
+            <span class="pf-tile-label">İlanlarım</span>
+            <span class="pf-tile-badge hidden" id="pfTileIlanlarimBadge">0</span>
+          </button>
+          <button type="button" class="pf-tile" id="pfTileYorum">
+            <span class="pf-tile-icon">⭐</span>
+            <span class="pf-tile-label">Yorumlar</span>
+            <span class="pf-tile-badge hidden" id="pfTileYorumBadge">0</span>
+          </button>
+          <button type="button" class="pf-tile" id="pfTileDuzen">
+            <span class="pf-tile-icon">⚙</span>
+            <span class="pf-tile-label">Profili Düzenle</span>
+          </button>
         </div>
-        <div class="avatar-row">
-          <div class="avatar-preview" id="avatarPreview" data-fallback="👤"></div>
-          <div class="avatar-actions">
-            <label class="btn btn-ghost btn-sm" for="avatarFileInput">📷 Fotoğrafı Değiştir</label>
-            <input type="file" id="avatarFileInput" accept="image/*" hidden />
-            <button type="button" class="btn btn-ghost btn-sm hidden" id="avatarRemoveBtn">Kaldır</button>
-            <p class="muted small" style="margin-top:4px">Max 2 MB · JPG/PNG/WebP</p>
-          </div>
+
+        <!-- PROGRESS CHIP -->
+        <div class="pf-progress-chip" id="pfProgressChip">
+          <div class="pf-progress-bar"><div class="pf-progress-fill" id="pfProgressFill"></div></div>
+          <p class="pf-progress-text" id="pfProgressText">Profil tamamlanma: 0%</p>
         </div>
-        <button type="button" class="btn btn-ghost btn-block" id="goToMyListingsBtn" style="margin-top:8px">📋 İlanlarımı Görüntüle</button>
+
+        <!-- Eski IDs (uyumluluk için gizli, JS bunları okumuyor ama olası eski referansları korur) -->
+        <span class="hidden" id="statMyIlan">0</span>
+        <span class="hidden" id="statMemberDays">0</span>
+        <button type="button" class="hidden" id="goToMyListingsBtn"></button>
       </div>
 
       <!-- PROFİL + BİLDİRİM ortak form -->
@@ -684,7 +744,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=56"></script>
-  <script src="script.js?v=56"></script>
+  <script src="supabase-config.js?v=57"></script>
+  <script src="script.js?v=57"></script>
 </body>
 </html>

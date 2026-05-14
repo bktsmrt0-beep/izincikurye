@@ -1720,24 +1720,195 @@ document.getElementById("downloadDataBtn")?.addEventListener("click", async () =
 
 async function loadProfileStats() {
   if (!currentUser) return;
-  // Üyelik gün sayısı
-  const dayEl = document.getElementById("statMemberDays");
-  if (dayEl && currentUser.createdAt) {
-    const days = Math.max(0, Math.floor((Date.now() - new Date(currentUser.createdAt).getTime()) / 86400000));
-    dayEl.textContent = days;
-  } else if (dayEl) {
-    dayEl.textContent = "—";
+  const isIsletme = currentUser.kullaniciTipi === "isletme";
+  const isKurye = currentUser.kullaniciTipi === "kurye";
+  const session = readStoredSession();
+
+  // ============ HERO ============
+  const nameEl = document.getElementById("pfName");
+  const ratingEl = document.getElementById("pfRating");
+  const metaEl = document.getElementById("pfMeta");
+  const verifiedEl = document.getElementById("pfVerified");
+
+  // Ad — işletme için işletme adı (varsa), yoksa kişi adı
+  const fullName = isIsletme && currentUser.isletmeAdi
+    ? currentUser.isletmeAdi
+    : ((currentUser.ad || "") + " " + (currentUser.soyad || "")).trim() || "Kullanıcı";
+  if (nameEl) nameEl.textContent = fullName;
+
+  // Puan rozeti — sadece kuryede ve yorumu varsa
+  if (ratingEl) {
+    // currentUser'da puan_ort yok — rawSelect ile çek (sadece kurye için)
+    ratingEl.classList.add("hidden");
+    if (isKurye) {
+      const { data: pArr } = await rawSelect(
+        `profiles?id=eq.${currentUser.id}&select=puan_ort,puan_sayisi`,
+        session?.access_token, 5000
+      );
+      const p = (pArr || [])[0];
+      if (p?.puan_sayisi > 0) {
+        ratingEl.textContent = `★ ${Number(p.puan_ort).toFixed(1)} · ${p.puan_sayisi} yorum`;
+        ratingEl.classList.remove("hidden");
+      }
+    }
   }
 
-  // Kendi ilan sayısı (count head sorgusu)
-  const ilanEl = document.getElementById("statMyIlan");
-  if (ilanEl) {
-    const { count, error } = await sb.from("ilanlar")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", currentUser.id);
-    if (error) console.warn("[stats]", error.message);
-    ilanEl.textContent = (count ?? 0);
+  // Üyelik + tip
+  if (metaEl) {
+    const days = currentUser.createdAt
+      ? Math.max(0, Math.floor((Date.now() - new Date(currentUser.createdAt).getTime()) / 86400000))
+      : 0;
+    let membership = "Yeni üye";
+    if (days >= 365) membership = `Üye ${Math.floor(days/365)} yıl`;
+    else if (days >= 30) membership = `Üye ${Math.floor(days/30)} ay`;
+    else if (days > 0) membership = `Üye ${days} gün`;
+    metaEl.textContent = membership;
   }
+
+  // Doğrulama rozetleri
+  if (verifiedEl) {
+    const pills = [];
+    if (isIsletme) pills.push(`<span class="pf-verified-pill pill-type">🏪 İşletme</span>`);
+    else if (isKurye) pills.push(`<span class="pf-verified-pill pill-type">🏍 Kurye</span>`);
+    pills.push(`<span class="pf-verified-pill">✓ E-posta</span>`);
+    if (_telDigits(currentUser.tel).length >= 10) pills.push(`<span class="pf-verified-pill">✓ Telefon</span>`);
+    else pills.push(`<span class="pf-verified-pill pill-warn">! Telefon</span>`);
+    verifiedEl.innerHTML = pills.join("");
+  }
+
+  // ============ KPI ============
+  // KPI 1 — Aktif İlan sayısı (expires_at > now)
+  let aktifIlan = 0;
+  try {
+    const { count } = await sb.from("ilanlar")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", currentUser.id)
+      .gt("expires_at", new Date().toISOString());
+    aktifIlan = count ?? 0;
+  } catch (e) { console.warn("[kpi aktif ilan]", e); }
+
+  // KPI 2 — bekleyen yorum (işletme) veya aldığım yorum (kurye)
+  let bekleyen = 0;
+  let bekleyenLbl = "Bekleyen ⭐";
+  if (isIsletme) {
+    const { data } = await rawSelect(
+      `yorum_haklari?isletme_id=eq.${currentUser.id}&kullanildi=eq.false&select=id`,
+      session?.access_token, 5000
+    );
+    bekleyen = (data || []).length;
+  } else if (isKurye) {
+    const { data: pArr } = await rawSelect(
+      `profiles?id=eq.${currentUser.id}&select=puan_sayisi`,
+      session?.access_token, 5000
+    );
+    bekleyen = (pArr || [])[0]?.puan_sayisi || 0;
+    bekleyenLbl = "Aldığım Yorum";
+  } else {
+    bekleyenLbl = "—";
+  }
+
+  const k1n = document.getElementById("pfKpi1Num");
+  const k2n = document.getElementById("pfKpi2Num");
+  const k3n = document.getElementById("pfKpi3Num");
+  const k2l = document.getElementById("pfKpi2Lbl");
+  if (k1n) { k1n.textContent = aktifIlan; k1n.classList.toggle("num-zero", aktifIlan === 0); }
+  if (k2n) { k2n.textContent = bekleyen; k2n.classList.toggle("num-highlight", bekleyen > 0 && isIsletme); k2n.classList.toggle("num-zero", bekleyen === 0); }
+  if (k2l) k2l.textContent = bekleyenLbl;
+  const pct = computeProfileCompletion();
+  if (k3n) { k3n.textContent = pct + "%"; k3n.classList.toggle("num-zero", pct === 0); }
+
+  // ============ SMART CARD ============
+  renderSmartCard({ isIsletme, isKurye, aktifIlan, bekleyen, pct });
+
+  // ============ TILE BADGES ============
+  const ilanBadge = document.getElementById("pfTileIlanlarimBadge");
+  if (ilanBadge) {
+    ilanBadge.textContent = aktifIlan;
+    ilanBadge.classList.toggle("hidden", aktifIlan === 0);
+  }
+  const yorumBadge = document.getElementById("pfTileYorumBadge");
+  if (yorumBadge) {
+    if (isIsletme) {
+      yorumBadge.textContent = bekleyen;
+      yorumBadge.classList.toggle("hidden", bekleyen === 0);
+    } else {
+      yorumBadge.classList.add("hidden");
+    }
+  }
+
+  // ============ PROGRESS CHIP ============
+  const fill = document.getElementById("pfProgressFill");
+  const txt = document.getElementById("pfProgressText");
+  if (fill) fill.style.width = pct + "%";
+  if (txt) {
+    if (pct >= 100) txt.textContent = "🎉 Profilin tam dolu — harika iş!";
+    else txt.textContent = `Profil tamamlanma: %${pct} — daha iyi görünürlük için tamamla.`;
+  }
+}
+
+// Smart card — duruma göre içerik üret
+function renderSmartCard({ isIsletme, isKurye, aktifIlan, bekleyen, pct }) {
+  const card = document.getElementById("pfSmartCard");
+  const icon = document.getElementById("pfSmartIcon");
+  const title = document.getElementById("pfSmartTitle");
+  const text = document.getElementById("pfSmartText");
+  const cta = document.getElementById("pfSmartCta");
+  if (!card) return;
+
+  card.classList.remove("tone-success", "tone-info");
+  cta.classList.remove("hidden");
+  cta.onclick = null;
+
+  // Öncelik sırası: işletmenin bekleyen yorumu > eksik profil > aktif ilan yok > müsait değil (kurye) > her şey tamam
+  if (isIsletme && bekleyen > 0) {
+    icon.textContent = "⭐";
+    title.textContent = `${bekleyen} kurye için yorum bekliyor`;
+    text.textContent = "Anlaştığın kuryelere puan ver — itibarlarını sen inşa edeceksin.";
+    cta.textContent = "Yorum Yaz →";
+    cta.onclick = () => { closeModals(); openReviewListModal(); };
+    return;
+  }
+
+  if (isIsletme && aktifIlan === 0) {
+    icon.textContent = "✨";
+    title.textContent = "İlk ilanını ver";
+    text.textContent = "Kuryeler bekliyor — birkaç saniyede bir ilan yayınla, bölgendeki kuryelere bildirim git­sin.";
+    cta.textContent = "+ İlan Ver";
+    cta.onclick = () => { closeModals(); document.getElementById("ilanVerBtn")?.click(); };
+    return;
+  }
+
+  if (isKurye && !currentUser.musait) {
+    icon.textContent = "🟢";
+    title.textContent = "Müsaitliğini aç";
+    text.textContent = "Aşağıdaki anahtarı aç → işletmeler seni 'Müsait Kuryeler' listesinde görsün.";
+    cta.classList.add("hidden");
+    card.classList.add("tone-info");
+    return;
+  }
+
+  if (pct < 80) {
+    icon.textContent = "📝";
+    title.textContent = "Profilin daha iyi olabilir";
+    text.textContent = `%${pct} tamam. Birkaç alan daha doldurursan görünürlüğün artar.`;
+    cta.textContent = "Profili Tamamla →";
+    cta.onclick = () => switchProfileTab(isIsletme ? "isletme" : "profil");
+    return;
+  }
+
+  // Her şey iyi
+  icon.textContent = "🎉";
+  title.textContent = "Her şey hazır";
+  if (isIsletme) {
+    text.textContent = `${aktifIlan} aktif ilanın var. Yeni ihtiyaç olunca tek tıkla yayınla.`;
+  } else if (isKurye) {
+    text.textContent = "Müsaitliğin aktif, profilin tam. İşletmeler seninle iletişime geçebilir.";
+  } else {
+    text.textContent = "Profilin tamamlanmış görünüyor.";
+  }
+  cta.textContent = "Yeni İlan Ver";
+  cta.onclick = () => { closeModals(); document.getElementById("ilanVerBtn")?.click(); };
+  card.classList.add("tone-success");
 }
 
 // =============== AVATAR ===============
@@ -1946,17 +2117,31 @@ document.getElementById("profileTicari").addEventListener("change", () => {
   clearStatus("profileStatus");
 });
 
-// İlanlarımı Görüntüle — modalı kapat, sidebar toggle'ı "İlanlarım"a geçir
-document.getElementById("goToMyListingsBtn").addEventListener("click", async () => {
-  if (!currentUser) return;
+// Smart Profile tile click handlers
+function _goToMyListings() {
   closeModals();
   const mineBtn = document.querySelector('#myListingsPanel .seg-btn[data-scope="mine"]');
-  if (mineBtn && !mineBtn.classList.contains("active")) {
-    mineBtn.click();
-  }
-  // Sayfayı listings'e kaydır
+  if (mineBtn && !mineBtn.classList.contains("active")) mineBtn.click();
   document.getElementById("listings")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+document.getElementById("pfTileYeniIlan")?.addEventListener("click", () => {
+  closeModals();
+  document.getElementById("ilanVerBtn")?.click();
 });
+document.getElementById("pfTileIlanlarim")?.addEventListener("click", _goToMyListings);
+document.getElementById("pfTileYorum")?.addEventListener("click", () => {
+  closeModals();
+  if (currentUser?.kullaniciTipi === "kurye") {
+    openReviewViewModal(currentUser.id, ((currentUser.ad || "") + " " + (currentUser.soyad || "")).trim() || "Profilim");
+  } else {
+    openReviewListModal();
+  }
+});
+document.getElementById("pfTileDuzen")?.addEventListener("click", () => {
+  switchProfileTab(currentUser?.kullaniciTipi === "isletme" ? "isletme" : "profil");
+});
+// Eski uyumluluk (admin/diğer kodlardan referans varsa)
+document.getElementById("goToMyListingsBtn")?.addEventListener("click", _goToMyListings);
 
 // E-posta/telefon değiştirildiğinde uyarıyı göster
 document.getElementById("profileEmail").addEventListener("input", e => {
