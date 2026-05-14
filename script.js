@@ -2743,22 +2743,28 @@ async function _enforceRememberMe() {
     ["izk_user","izk_users","izk_session","izk_ilanlar"].forEach(k => localStorage.removeItem(k));
   } catch {}
   await _enforceRememberMe();
-  try { await syncSession(); console.log("[init] syncSession OK, currentUser:", currentUser); }
+
+  // 1) Session önce (geri kalan her şey currentUser'a bağlı)
+  try { await syncSession(); console.log("[init] syncSession OK"); }
   catch (e) { console.error("init syncSession:", e); }
-  try { await loadIlanlar(); console.log("[init] loadIlanlar OK, ilanlar:", ilanlar.length); }
-  catch (e) { console.error("init loadIlanlar:", e); }
-  try { renderTopNav(); console.log("[init] renderTopNav OK"); }
-  catch (e) { console.error("init renderTopNav:", e); }
-  try { await renderKuryeDashboard(); } catch (e) { console.error("init renderKuryeDashboard:", e); }
-  try { await refreshPendingReviewCount(); } catch (e) { console.error("init refreshPendingReviewCount:", e); }
+
+  // 2) Top nav — DB sorgu yok, anında render
+  try { renderTopNav(); } catch (e) { console.error("init renderTopNav:", e); }
+
+  // 3) Kalan tüm init işlerini PARALEL kullanılır (her biri bağımsız)
+  await Promise.allSettled([
+    (async () => { try { await loadIlanlar(); } catch (e) { console.error("init loadIlanlar:", e); } })(),
+    (async () => { try { await renderKuryeDashboard(); } catch (e) { console.error("init renderKuryeDashboard:", e); } })(),
+    (async () => { try { await refreshPendingReviewCount(); } catch (e) { console.error("init refreshPendingReviewCount:", e); } })(),
+    (async () => { try { await openIlanFromUrl(); } catch (e) { console.error("init openIlanFromUrl:", e); } })()
+  ]);
+
+  // 4) Senkron son rötuşlar
   try { checkProfilEksikBanner(); } catch (e) { console.error("init checkProfilEksikBanner:", e); }
 
   if (_isRecoveryUrl) {
     openModal("forgotResetModal");
   }
-
-  // URL'de ?ilan=<id> varsa o ilanın detayını aç
-  try { await openIlanFromUrl(); } catch (e) { console.error("init openIlanFromUrl:", e); }
 })();
 
 // ===== Paylaşılabilir ilan detay (/ilan/<id> veya ?ilan=<id>) =====
