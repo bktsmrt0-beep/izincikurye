@@ -2321,6 +2321,8 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   checkProfilEksikBanner();
   setStatus("profileStatus", "ok", "Profilin güncellendi.");
   toast("Profil güncellendi", "ok");
+  // Modalı otomatik kapat (kullanıcı hâlâ form karşısında kalmasın)
+  setTimeout(() => closeModals(), 600);
 });
 
 // =============== MÜSAİTLİK TOGGLE ===============
