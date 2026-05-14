@@ -1035,7 +1035,7 @@ document.getElementById("deleteIlanSkip")?.addEventListener("click", async () =>
 let _adresCurrentIlan = null;
 function showAdres(i) {
   _adresCurrentIlan = i;
-  const tel = i.profile?.tel || "—";
+  const tel = i.iletisim_tel || i.profile?.tel || "—";
   const ad = ((i.profile?.ad || "") + " " + (i.profile?.soyad || "")).trim() || "—";
   const titleEl = document.getElementById("adresModalTitle");
   if (titleEl) titleEl.textContent = i.baslik || "İlan Detayı";
@@ -1056,7 +1056,7 @@ function showAdres(i) {
   `;
   // Sticky CTA göster (tel varsa)
   const cta = document.getElementById("adresStickyCTA");
-  if (cta) cta.style.display = (i.profile?.tel) ? "" : "none";
+  if (cta) cta.style.display = (i.iletisim_tel || i.profile?.tel) ? "" : "none";
 
   // URL'i güncelle: clean URL `/ilan/<id>` — pushState ile history girişi ekle
   // (geri tuşu modalı kapatsın, siteden çıkmasın)
@@ -1076,13 +1076,13 @@ function showAdres(i) {
 // Adres modal sticky CTA — call/wa
 document.getElementById("adresCallBtn")?.addEventListener("click", () => {
   const i = _adresCurrentIlan;
-  const tel = (i?.profile?.tel || "").replace(/\s/g, "");
+  const tel = (i?.iletisim_tel || i?.profile?.tel || "").replace(/\s/g, "");
   if (!tel) return toast("Telefon bilgisi bulunamadı.", "error");
   window.location.href = "tel:" + tel;
 });
 document.getElementById("adresWaBtn")?.addEventListener("click", () => {
   const i = _adresCurrentIlan;
-  const tel = (i?.profile?.tel || "").replace(/\s/g, "");
+  const tel = (i?.iletisim_tel || i?.profile?.tel || "").replace(/\s/g, "");
   if (!tel) return toast("Telefon bilgisi bulunamadı.", "error");
   let waNum = tel.replace(/\D/g, "");
   if (waNum.startsWith("0")) waNum = "9" + waNum;
@@ -1392,11 +1392,12 @@ ilanVerBtn.addEventListener("click", () => {
   // İşletme için kayıtlı bilgileri otomatik doldur
   const isyeriAd = document.getElementById("ilanIsyeriAd");
   const isyeriAdres = document.getElementById("ilanIsyeriAdres");
+  const iletisimTel = document.getElementById("ilanIletisimTel");
   const adHint = document.getElementById("adEditHint");
   const adresHint = document.getElementById("adresEditHint");
+  const telHint = document.getElementById("telEditHint");
 
   if (currentUser.kullaniciTipi === "isletme") {
-    // İşyeri adı için kayıtlı işletme adını kullan
     if (currentUser.isletmeAdi && !isyeriAd.value) {
       isyeriAd.value = currentUser.isletmeAdi;
       adHint?.classList.remove("hidden");
@@ -1408,6 +1409,17 @@ ilanVerBtn.addEventListener("click", () => {
   } else {
     adHint?.classList.add("hidden");
     adresHint?.classList.add("hidden");
+  }
+
+  // Telefon: işletme için isTelefonu, kurye için tel
+  const kayitliTel = currentUser.kullaniciTipi === "isletme"
+    ? (currentUser.isTelefonu || currentUser.tel || "")
+    : (currentUser.tel || "");
+  if (kayitliTel && !iletisimTel.value) {
+    iletisimTel.value = formatTel(kayitliTel);
+    telHint?.classList.remove("hidden");
+  } else {
+    telHint?.classList.add("hidden");
   }
 
   openModal("ilanModal");
@@ -1428,6 +1440,18 @@ document.getElementById("adresEditBtn")?.addEventListener("click", e => {
   inp.focus();
   document.getElementById("adresEditHint").classList.add("hidden");
 });
+document.getElementById("telEditBtn")?.addEventListener("click", e => {
+  e.preventDefault();
+  const inp = document.getElementById("ilanIletisimTel");
+  inp.value = "";
+  inp.focus();
+  document.getElementById("telEditHint").classList.add("hidden");
+});
+
+// Telefonu canlı formatla (5XX XXX XX XX)
+document.getElementById("ilanIletisimTel")?.addEventListener("input", e => {
+  e.target.value = formatTel(e.target.value);
+});
 
 document.getElementById("ilanForm").addEventListener("submit", async e => {
   e.preventDefault();
@@ -1438,11 +1462,16 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   const ilce = fd.get("ilce");
   const isyeri_ad = (fd.get("isyeriAd") || "").trim();
   const isyeri_adres = (fd.get("isyeriAdres") || "").trim();
+  const iletisim_tel_raw = (fd.get("iletisimTel") || "").trim();
+  const iletisim_tel_digits = _telDigits(iletisim_tel_raw);
   const bas_saat = fd.get("basSaat");
   const bit_saat = fd.get("bitSaat");
 
-  if (!baslik || !ilce || !isyeri_ad || !isyeri_adres) {
+  if (!baslik || !ilce || !isyeri_ad || !isyeri_adres || !iletisim_tel_raw) {
     toast("Lütfen tüm zorunlu alanları doldurun.", "error"); return;
+  }
+  if (iletisim_tel_digits.length < 10) {
+    toast("İletişim telefonu en az 10 hane olmalı.", "error"); return;
   }
   if (bas_saat === bit_saat) {
     toast("Başlangıç ve bitiş saati aynı olamaz.", "error"); return;
@@ -1460,7 +1489,8 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
     bit_saat,
     aciklama: (fd.get("aciklama") || "").trim() || null,
     isyeri_ad,
-    isyeri_adres
+    isyeri_adres,
+    iletisim_tel: formatTel(iletisim_tel_raw)
   });
   if (error) {
     // DB trigger rate limit hatası kullanıcı dostu mesaj
@@ -1478,6 +1508,8 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   fiyatRange.value = 200; fiyatVal.textContent = "200";
   kmRange.value = 5; kmVal.textContent = "5";
   basSaat.value = "09:00"; bitSaat.value = "18:00";
+  document.getElementById("ilanIletisimTel").value = "";
+  document.getElementById("telEditHint")?.classList.add("hidden");
   await loadIlanlar();
   toast("İlanın yayınlandı", "ok");
 });

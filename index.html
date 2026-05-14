@@ -391,6 +391,11 @@
         </label>
         <p class="muted small ilan-edit-hint hidden" id="adresEditHint">Kayıtlı iş adresinden otomatik dolduruldu. <a href="#" id="adresEditBtn" class="link-orange">Düzenle</a></p>
 
+        <label>İletişim Telefonu <span class="req">*</span>
+          <input type="tel" name="iletisimTel" id="ilanIletisimTel" required inputmode="numeric" maxlength="20" placeholder="0532 123 45 67" />
+        </label>
+        <p class="muted small ilan-edit-hint hidden" id="telEditHint">Kayıtlı numaradan otomatik dolduruldu. Başkası aransın istiyorsan <a href="#" id="telEditBtn" class="link-orange">Düzenle</a>.</p>
+
         <label>Açıklama
           <textarea name="aciklama" rows="3" maxlength="300" placeholder="Bölge, araç durumu, ek notlar..."></textarea>
         </label>
@@ -768,7 +773,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=69"></script>
-  <script src="script.js?v=69"></script>
+  <script src="supabase-config.js?v=70"></script>
+  <script src="script.js?v=70"></script>
 </body>
 </html>
