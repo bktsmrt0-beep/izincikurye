@@ -2237,3 +2237,102 @@ textarea#rwYorum:focus {
   .ilan-aktif-sayac { font-size: 11px; }
   .ilan-bilgi-box { padding: 12px 14px; }
 }
+
+/* ============== İlan Kartı v74 — Modern Temiz Hiyerarşi ============== */
+/* Eski .ilan-bilgi-box stillerini override et (artık kullanılmıyor) */
+.ilan-bilgi-box { display: none; }
+
+/* Hero saat aralığı — kartın en gözalıcı parçası */
+.ilan-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0 10px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 2px solid #fed7aa;
+  border-left: 5px solid #ea580c;
+  border-radius: 14px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 6px 14px -8px rgba(234, 88, 12, 0.18);
+}
+.ilan-hero-saat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-variant-numeric: tabular-nums;
+}
+.ilan-hero-bas, .ilan-hero-bit {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.ilan-hero-arrow {
+  color: #ea580c;
+  font-size: 22px;
+  font-weight: 700;
+}
+.ilan-hero-sure {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ea580c;
+  background: #fff7ed;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #fed7aa;
+  white-space: nowrap;
+}
+
+/* Chip satırı — fiyat / km / tahmini kazanç */
+.ilan-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.ilan-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #475569;
+}
+.ilan-chip .chip-ico {
+  font-size: 14px;
+  position: relative;
+  top: 1px;
+}
+.ilan-chip strong {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.2px;
+}
+.ilan-chip small {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+.ilan-chip-fiyat strong { color: #1e293b; }
+.ilan-chip-kazanc {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+}
+.ilan-chip-kazanc strong { color: #047857; }
+.ilan-chip-kazanc small { color: #059669; }
+
+/* Mobil ayarlamalar */
+@media (max-width: 520px) {
+  .ilan-hero { padding: 12px 14px; flex-wrap: wrap; }
+  .ilan-hero-bas, .ilan-hero-bit { font-size: 22px; }
+  .ilan-hero-arrow { font-size: 18px; }
+  .ilan-hero-sure { font-size: 12px; padding: 4px 10px; }
+  .ilan-chip { padding: 7px 10px; font-size: 12px; }
+  .ilan-chip strong { font-size: 14px; }
+}

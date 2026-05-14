@@ -342,15 +342,9 @@
           <select name="ilce" id="ilanIlceSelect" required></select>
         </label>
 
-        <!-- Saat ölçeği: 4-16 step 1 -->
-        <div class="scale">
-          <div class="scale-head">
-            <span>Çalışılacak Saat</span>
-            <strong><span id="saatVal">4</span> saat</strong>
-          </div>
-          <input type="range" name="saat" id="saatRange" min="4" max="16" step="1" value="4" />
-          <div class="scale-foot"><span>4</span><span>16</span></div>
-        </div>
+        <!-- Toplam çalışılacak saat — bas/bit saatten otomatik hesaplanır -->
+        <input type="hidden" name="saat" id="saatRange" value="4" />
+        <p class="muted small" id="sureOzeti" style="margin:4px 0 8px;"></p>
 
         <!-- Fiyat ölçeği: 200-300 step 10 -->
         <div class="scale">
@@ -381,7 +375,7 @@
             <select name="bitSaat" id="bitSaat" required></select>
           </label>
         </div>
-        <p class="muted small">💡 Gece vardiyası için bitiş saati başlangıçtan küçük olabilir (örn. 21:00 → 05:00 ertesi gün).</p>
+        <p class="muted small">💡 Gece vardiyası için bitiş saati başlangıçtan küçük olabilir (örn. 21:00 → 05:00).</p>
 
         <label>İşyeri Adı <span class="req">*</span>
           <input type="text" name="isyeriAd" id="ilanIsyeriAd" required maxlength="80" placeholder="Örn: Kızılay Lokantası" />
@@ -776,7 +770,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=73"></script>
-  <script src="script.js?v=73"></script>
+  <script src="supabase-config.js?v=74"></script>
+  <script src="script.js?v=74"></script>
 </body>
 </html>

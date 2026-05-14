@@ -459,8 +459,8 @@ function renderListings() {
       }
     }
 
-    const ertesiGun = i.bit_saat < i.bas_saat;
     const urgentChip = isUrgent ? '<span class="ilan-urgent-chip">🔥 Acil</span>' : "";
+    const tahminiKazanc = (i.saat * i.fiyat).toLocaleString("tr-TR");
 
     card.dataset.id = i.id;
     card.innerHTML = `
@@ -472,16 +472,19 @@ function renderListings() {
       <h3>${escapeHtml(i.baslik)}${mineTag}</h3>
       ${kuryeBadges}
 
-      <div class="ilan-bilgi-box">
-        <div class="ilan-saat-row">
-          <span class="ilan-saat-ico">⏰</span>
-          <strong class="ilan-saat-aralik">${i.bas_saat} → ${i.bit_saat}</strong>
-          <span class="ilan-saat-detay">(${i.saat} saat${ertesiGun ? " · ertesi gün" : ""})</span>
+      <div class="ilan-hero">
+        <div class="ilan-hero-saat">
+          <span class="ilan-hero-bas">${i.bas_saat}</span>
+          <span class="ilan-hero-arrow">→</span>
+          <span class="ilan-hero-bit">${i.bit_saat}</span>
         </div>
-        <div class="ilan-ucret-row">
-          <span class="ilan-ucret"><span class="ilan-ucret-ico">💰</span><strong>${i.fiyat} ₺</strong>/saat</span>
-          <span class="ilan-km"><span class="ilan-km-ico">🚗</span>${i.km} ₺/km</span>
-        </div>
+        <div class="ilan-hero-sure">${i.saat} saat</div>
+      </div>
+
+      <div class="ilan-chips">
+        <span class="ilan-chip ilan-chip-fiyat"><span class="chip-ico">💰</span><strong>${i.fiyat} ₺</strong><small>/saat</small></span>
+        <span class="ilan-chip ilan-chip-km"><span class="chip-ico">🏍</span><strong>${i.km} ₺</strong><small>/km</small></span>
+        <span class="ilan-chip ilan-chip-kazanc"><span class="chip-ico">💵</span><strong>${tahminiKazanc} ₺</strong><small>tahmini</small></span>
       </div>
 
       ${i.aciklama ? `<p class="ilan-aciklama">${escapeHtml(i.aciklama)}</p>` : ""}
@@ -1053,7 +1056,7 @@ function showAdres(i) {
 
   document.getElementById("adresContent").innerHTML = `
     <div class="row"><strong>İlçe:</strong><span>📍 ${escapeHtml(i.ilce)}</span></div>
-    <div class="row"><strong>Çalışma:</strong><span>${i.saat} saat · ${i.bas_saat}–${i.bit_saat}${i.bit_saat < i.bas_saat ? " (ertesi gün)" : ""}</span></div>
+    <div class="row"><strong>Çalışma:</strong><span>${i.bas_saat} → ${i.bit_saat} · ${i.saat} saat</span></div>
     <div class="row"><strong>Ücret:</strong><span><strong>${i.fiyat} ₺</strong> · ${i.km} ₺/km</span></div>
     ${remainingHtml}
     <div class="row"><strong>İşyeri:</strong><span>${escapeHtml(i.isyeri_ad || "—")}</span></div>
@@ -1401,13 +1404,35 @@ const ilanVerBtn = document.getElementById("ilanVerBtn");
 const saatRange = document.getElementById("saatRange");
 const fiyatRange = document.getElementById("fiyatRange");
 const kmRange = document.getElementById("kmRange");
-const saatVal = document.getElementById("saatVal");
+const saatVal = document.getElementById("saatVal"); // mevcut değilse null
 const fiyatVal = document.getElementById("fiyatVal");
 const kmVal = document.getElementById("kmVal");
+const sureOzetiEl = document.getElementById("sureOzeti");
 
-saatRange.addEventListener("input", () => saatVal.textContent = saatRange.value);
 fiyatRange.addEventListener("input", () => fiyatVal.textContent = fiyatRange.value);
 kmRange.addEventListener("input", () => kmVal.textContent = kmRange.value);
+
+// bas/bit saatten toplam saati hesapla (gece geçişi destekli)
+function calcSureSaat(bas, bit) {
+  const bh = parseInt((bas || "0").split(":")[0], 10);
+  const eh = parseInt((bit || "0").split(":")[0], 10);
+  if (isNaN(bh) || isNaN(eh) || bh === eh) return 0;
+  return (eh - bh + 24) % 24;
+}
+function _updateSureOzeti() {
+  const sure = calcSureSaat(basSaat.value, bitSaat.value);
+  saatRange.value = sure;
+  const fiyat = parseInt(fiyatRange.value, 10) || 0;
+  const tahmini = sure * fiyat;
+  if (sureOzetiEl) {
+    sureOzetiEl.innerHTML = sure > 0
+      ? `⏱ <strong>${sure} saat</strong> · Tahmini kazanç: <strong>${tahmini.toLocaleString("tr-TR")} ₺</strong> (KM ücreti hariç)`
+      : `⚠ Başlangıç ve bitiş saati aynı olamaz.`;
+  }
+}
+[basSaat, bitSaat, fiyatRange].forEach(el => el?.addEventListener("input", _updateSureOzeti));
+// İlk yüklemede de güncelle
+setTimeout(_updateSureOzeti, 0);
 
 ilanVerBtn.addEventListener("click", () => {
   if (!currentUser) {
@@ -1503,7 +1528,12 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   if (bas_saat === bit_saat) {
     toast("Başlangıç ve bitiş saati aynı olamaz.", "error"); return;
   }
-  // Not: bit_saat < bas_saat ise gece geçişi (örn. 21:00 → 05:00 ertesi gün) — bu geçerli
+  // Toplam saati otomatik hesapla (gece geçişi destekli)
+  const calcSaat = calcSureSaat(bas_saat, bit_saat);
+  if (calcSaat <= 0) {
+    toast("Geçersiz saat aralığı.", "error"); return;
+  }
+  saatRange.value = calcSaat;
 
   const { error } = await sb.from("ilanlar").insert({
     user_id: currentUser.id,
@@ -1531,10 +1561,11 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
 
   closeModals();
   e.target.reset();
-  saatRange.value = 4; saatVal.textContent = "4";
+  saatRange.value = 4;
   fiyatRange.value = 200; fiyatVal.textContent = "200";
   kmRange.value = 5; kmVal.textContent = "5";
   basSaat.value = "09:00"; bitSaat.value = "18:00";
+  _updateSureOzeti();
   document.getElementById("ilanIletisimTel").value = "";
   document.getElementById("telEditHint")?.classList.add("hidden");
   await loadIlanlar();
