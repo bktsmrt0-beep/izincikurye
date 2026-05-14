@@ -2032,3 +2032,68 @@ textarea#rwYorum:focus {
   .pf-kpi-num { font-size: 20px; }
   .pf-tile-icon { font-size: 22px; }
 }
+
+/* =============== PROFİL EKSİK BANNER (kapatılabilir) =============== */
+.profil-eksik-banner {
+  position: sticky;
+  top: 96px; /* header + kurye/yorum banner altı */
+  z-index: 35;
+  background: linear-gradient(135deg, #fef9c3 0%, #fde68a 100%);
+  border-bottom: 1px solid #f59e0b;
+  color: #78350f;
+}
+.peb-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 12px 20px 12px 24px;
+}
+.peb-icon { font-size: 22px; flex-shrink: 0; }
+.peb-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+.peb-text strong { font-size: 14px; font-weight: 700; }
+.peb-text small { font-size: 12px; opacity: 0.85; }
+.peb-action {
+  flex-shrink: 0;
+  background: #fff;
+  border: 1.5px solid #d97706;
+  color: #92400e;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: background 0.15s;
+}
+.peb-action:hover { background: #fef3c7; }
+.peb-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  width: 24px; height: 24px;
+  border: 0;
+  background: transparent;
+  color: #92400e;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 0;
+}
+.peb-close:hover { opacity: 1; }
+
+@media (max-width: 520px) {
+  .peb-inner { padding: 10px 30px 10px 16px; gap: 10px; }
+  .peb-icon { font-size: 18px; }
+  .peb-text strong { font-size: 13px; }
+  .peb-text small { font-size: 11px; }
+  .peb-action { padding: 5px 12px; font-size: 11px; }
+}

@@ -74,6 +74,19 @@
     </button>
   </section>
 
+  <!-- ===== PROFİL EKSİK UYARI BANNER (kapatılabilir, oturum başına 1 kez) ===== -->
+  <section id="profilEksikBanner" class="profil-eksik-banner hidden" aria-live="polite">
+    <button type="button" class="peb-close" id="pebClose" aria-label="Kapat">×</button>
+    <div class="peb-inner">
+      <span class="peb-icon">📋</span>
+      <span class="peb-text">
+        <strong>İşletme bilgilerin eksik</strong>
+        <small id="pebDetail">Müşterilerin sana ulaşabilmesi için iş telefonu ve adresi gerekli.</small>
+      </span>
+      <button type="button" class="peb-action" id="pebOpen">TAMAMLA</button>
+    </div>
+  </section>
+
   <div class="container layout">
     <!-- SOL MENÜ (drawer — hamburger ile açılır) -->
     <aside class="sidebar" id="sidebarDrawer" aria-label="Filtreler ve menü">
@@ -744,7 +757,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=58"></script>
-  <script src="script.js?v=58"></script>
+  <script src="supabase-config.js?v=59"></script>
+  <script src="script.js?v=59"></script>
 </body>
 </html>

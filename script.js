@@ -651,6 +651,47 @@ async function refreshPendingReviewCount() {
 // Banner tıklama → yorum listesi modalı aç
 document.getElementById("iybOpen")?.addEventListener("click", () => openReviewListModal());
 
+// =============== PROFİL EKSİK BANNER ===============
+function checkProfilEksikBanner() {
+  const banner = document.getElementById("profilEksikBanner");
+  const detailEl = document.getElementById("pebDetail");
+  if (!banner) return;
+  if (!currentUser || currentUser.kullaniciTipi !== "isletme") {
+    banner.classList.add("hidden");
+    return;
+  }
+  // Oturumda dismiss edildiyse gösterme
+  if (sessionStorage.getItem("izk_dismiss_pebanner_" + currentUser.id)) {
+    banner.classList.add("hidden");
+    return;
+  }
+  // Eksik alan kontrolü
+  const missing = [];
+  if (!currentUser.isletmeAdi) missing.push("işletme adı");
+  if (!currentUser.isAdresi) missing.push("iş adresi");
+  if (_telDigits(currentUser.isTelefonu).length < 10) missing.push("iş telefonu");
+  if (missing.length === 0) {
+    banner.classList.add("hidden");
+    return;
+  }
+  if (detailEl) {
+    detailEl.textContent = "Eksik: " + missing.join(", ") + ". Müşterilerin sana ulaşabilmesi için tamamla.";
+  }
+  banner.classList.remove("hidden");
+}
+
+document.getElementById("pebClose")?.addEventListener("click", () => {
+  document.getElementById("profilEksikBanner")?.classList.add("hidden");
+  if (currentUser?.id) {
+    try { sessionStorage.setItem("izk_dismiss_pebanner_" + currentUser.id, "1"); } catch {}
+  }
+});
+document.getElementById("pebOpen")?.addEventListener("click", () => {
+  openProfileModal();
+  // İşletme sekmesine geç — eksik alan büyük ihtimal orada
+  setTimeout(() => switchProfileTab("isletme"), 50);
+});
+
 async function openReviewListModal() {
   _reviewTab = "pending";
   document.querySelectorAll("#reviewListModal .seg-btn").forEach(b => {
@@ -2254,6 +2295,7 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   renderTopNav();
   refreshProfileSaveBtn();
   refreshCompletion();
+  checkProfilEksikBanner();
   setStatus("profileStatus", "ok", "Profilin güncellendi.");
   toast("Profil güncellendi", "ok");
 });
@@ -2709,6 +2751,7 @@ async function _enforceRememberMe() {
   catch (e) { console.error("init renderTopNav:", e); }
   try { await renderKuryeDashboard(); } catch (e) { console.error("init renderKuryeDashboard:", e); }
   try { await refreshPendingReviewCount(); } catch (e) { console.error("init refreshPendingReviewCount:", e); }
+  try { checkProfilEksikBanner(); } catch (e) { console.error("init checkProfilEksikBanner:", e); }
 
   if (_isRecoveryUrl) {
     openModal("forgotResetModal");
