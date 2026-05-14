@@ -479,7 +479,7 @@ function renderListings() {
       ${trustBadges}
       <p>${escapeHtml(i.aciklama || "")}</p>
       <div class="card-meta">
-        <span>⏱ ${i.saat} saat · ${i.bas_saat}–${i.bit_saat}</span>
+        <span>⏱ ${i.saat} saat · ${i.bas_saat}–${i.bit_saat}${i.bit_saat < i.bas_saat ? " (ertesi gün)" : ""}</span>
         <span class="price">${i.fiyat} ₺ · ${i.km} ₺/km</span>
       </div>
       <div class="actions">
@@ -1045,7 +1045,7 @@ function showAdres(i) {
 
   document.getElementById("adresContent").innerHTML = `
     <div class="row"><strong>İlçe:</strong><span>📍 ${escapeHtml(i.ilce)}</span></div>
-    <div class="row"><strong>Çalışma:</strong><span>${i.saat} saat · ${i.bas_saat}–${i.bit_saat}</span></div>
+    <div class="row"><strong>Çalışma:</strong><span>${i.saat} saat · ${i.bas_saat}–${i.bit_saat}${i.bit_saat < i.bas_saat ? " (ertesi gün)" : ""}</span></div>
     <div class="row"><strong>Ücret:</strong><span><strong>${i.fiyat} ₺</strong> · ${i.km} ₺/km</span></div>
     ${remainingHtml}
     <div class="row"><strong>İşyeri:</strong><span>${escapeHtml(i.isyeri_ad || "—")}</span></div>
@@ -1444,9 +1444,10 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   if (!baslik || !ilce || !isyeri_ad || !isyeri_adres) {
     toast("Lütfen tüm zorunlu alanları doldurun.", "error"); return;
   }
-  if (bas_saat >= bit_saat) {
-    toast("Bitiş saati başlangıçtan büyük olmalı.", "error"); return;
+  if (bas_saat === bit_saat) {
+    toast("Başlangıç ve bitiş saati aynı olamaz.", "error"); return;
   }
+  // Not: bit_saat < bas_saat ise gece geçişi (örn. 21:00 → 05:00 ertesi gün) — bu geçerli
 
   const { error } = await sb.from("ilanlar").insert({
     user_id: currentUser.id,
