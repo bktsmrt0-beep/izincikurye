@@ -2112,3 +2112,9 @@ textarea#rwYorum:focus {
   color: #111;
   text-decoration: underline;
 }
+.site-footer .footer-company {
+  margin-top: 6px;
+  font-size: 11px;
+  color: #94a3b8;
+  line-height: 1.5;
+}
