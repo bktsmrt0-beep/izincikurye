@@ -1056,11 +1056,9 @@ function showAdres(i) {
   const cta = document.getElementById("adresStickyCTA");
   if (cta) cta.style.display = (i.profile?.tel) ? "" : "none";
 
-  // URL'i güncelle (paylaşılabilir link) + browser title
+  // URL'i güncelle: clean URL `/ilan/<id>` (eski ?ilan=<id> formatı da destekleniyor)
   try {
-    const url = new URL(window.location.href);
-    url.searchParams.set("ilan", i.id);
-    history.replaceState(null, "", url.pathname + url.search);
+    history.replaceState(null, "", "/ilan/" + i.id);
     document.title = `${i.baslik} · ${i.ilce} · ${i.fiyat}₺ — izincikurye`;
   } catch {}
 
@@ -1108,9 +1106,11 @@ function closeModals() {
   // İlan detayı kapanırken URL'i temizle ve title'ı geri al
   if (adresWasOpen) {
     const url = new URL(window.location.href);
-    if (url.searchParams.has("ilan")) {
+    const pathnameMatchesIlan = /^\/ilan\/[^/]+/.test(url.pathname);
+    if (url.searchParams.has("ilan") || pathnameMatchesIlan) {
       url.searchParams.delete("ilan");
-      history.replaceState(null, "", url.pathname + (url.search || ""));
+      // Anasayfaya dön
+      history.replaceState(null, "", "/" + (url.search || ""));
     }
     document.title = "İzinci Kurye — Ankara";
   }
@@ -2761,10 +2761,16 @@ async function _enforceRememberMe() {
   try { await openIlanFromUrl(); } catch (e) { console.error("init openIlanFromUrl:", e); }
 })();
 
-// ===== Paylaşılabilir ilan detay (?ilan=<id>) =====
+// ===== Paylaşılabilir ilan detay (/ilan/<id> veya ?ilan=<id>) =====
 async function openIlanFromUrl() {
-  const params = new URLSearchParams(window.location.search);
-  const id = params.get("ilan");
+  // Önce clean URL: /ilan/<id>
+  const pathMatch = window.location.pathname.match(/^\/ilan\/([^/?#]+)/);
+  let id = pathMatch ? pathMatch[1] : null;
+  // Yedek olarak query string
+  if (!id) {
+    const params = new URLSearchParams(window.location.search);
+    id = params.get("ilan");
+  }
   if (!id) return;
 
   // Önce yüklü listede ara
@@ -2797,14 +2803,13 @@ async function openIlanFromUrl() {
   showAdres(ilan);
 }
 
-// Paylaşım: URL kopyala
+// Paylaşım: clean URL kopyala
 async function copyIlanLink(ilanId) {
-  const url = window.location.origin + "/?ilan=" + ilanId;
+  const url = window.location.origin + "/ilan/" + ilanId;
   try {
     await navigator.clipboard.writeText(url);
     toast("Bağlantı kopyalandı 📋", "ok");
   } catch {
-    // Fallback: prompt göster
     prompt("Bağlantıyı kopyala:", url);
   }
 }
