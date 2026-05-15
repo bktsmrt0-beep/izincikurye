@@ -301,11 +301,11 @@ async function loadIlanlar({ append = false } = {}) {
   try {
     const filter = districtSelect.value;
     const tableOrView = currentUser ? "ilanlar" : "ilanlar_public";
-    // Sıralama: ücret odaklı — saatlik fiyat DESC, eşitlikte km DESC, eşitlikte yeniden eskiye
-    // İşletme yüksek ücret verirse listede üstte; düşük tutarsa aşağı iner
+    // Sıralama: sort_score DESC (DB generated column — sql/13)
+    // Formul: fiyat*2 + km*10 + begen*3 - begenmeme*3
+    // İşletme yüksek ücret verir → üstte; çok beğenmeme alırsa → aşağı iner
     let q = sb.from(tableOrView).select("*")
-      .order("fiyat", { ascending: false })
-      .order("km", { ascending: false })
+      .order("sort_score", { ascending: false })
       .order("created_at", { ascending: false });
     if (filter !== "all") q = q.eq("ilce", filter);
     if (listingScope === "mine" && currentUser) q = q.eq("user_id", currentUser.id);
