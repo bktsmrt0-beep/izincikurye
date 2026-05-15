@@ -453,43 +453,56 @@ body.sidebar-open { overflow: hidden; }
 
 @media (max-width: 600px) {
   .kurye-row {
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
     grid-template-areas:
-      "ad    ad   puan  musait"
-      "bolge bolge bolge ucret";
-    gap: 3px 6px;
-    padding: 7px 10px;
+      "ad    puan  musait"
+      "bolge bolge bolge";
+    gap: 4px 6px;
+    padding: 8px 10px;
   }
   .cell-ad { grid-area: ad; min-width: 0; }
   .cell-musait { grid-area: musait; justify-content: flex-end; }
   .cell-puan { grid-area: puan; justify-content: flex-end; }
-  .cell-bolge { grid-area: bolge; min-width: 0; }
-  .cell-ucret { grid-area: ucret; justify-content: flex-end; }
+  .cell-bolge { grid-area: bolge; min-width: 0; align-items: flex-start; }
+  .cell-ucret { display: none; }  /* mobilde ücret listede yok, detay modal'da var */
 
-  /* Ad + puan + ücret: SÖNÜK (önemli değil) */
+  /* Ad + puan: SÖNÜK (önemli değil) */
   .cell-ad .cell-text {
     font-size: 12.5px;
     color: #475569;
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   .kurye-puan-inline {
     font-size: 11px;
     color: #ca8a04;
   }
   .kurye-puan-inline strong { font-weight: 700; }
-  .cell-ucret strong {
-    font-size: 11.5px;
-    color: #64748b;
-    font-weight: 600;
-  }
-  .cell-ucret strong small { font-size: 9px; }
 
-  /* Bölge: VURGULU (en önemli) */
-  .cell-bolge .cell-text {
-    font-size: 14.5px;
+  /* Bölge: VURGULU + tam liste (alt satıra geçer, "+N" kullanmaz) */
+  .cell-bolge {
+    display: block;  /* flex'i bozmadan, label + text alt alta */
+  }
+  .cell-bolge .cell-label {
+    display: inline !important;
+    font-size: 12.5px;
     color: #c2410c;
     font-weight: 800;
+    margin-right: 4px;
+  }
+  .cell-bolge .cell-label::after { content: ":"; }
+  .cell-bolge .cell-text {
+    display: inline;  /* prefix ile aynı satırda başlasın */
+    font-size: 13.5px;
+    color: #1e293b;
+    font-weight: 600;
     letter-spacing: -0.2px;
+    white-space: normal;
+    word-break: break-word;
+    overflow: visible;
+    text-overflow: clip;
   }
 
   /* Müsait süresi: VURGULU yeşil */
@@ -504,7 +517,9 @@ body.sidebar-open { overflow: hidden; }
     box-shadow: 0 0 0 3px rgba(34,197,94,0.22);
   }
 
-  .kurye-row-cell .cell-label { display: none; }
+  .cell-ad .cell-label,
+  .cell-puan .cell-label,
+  .cell-musait .cell-label { display: none; }
   .kurye-row-avatar { width: 24px; height: 24px; font-size: 13px; }
 }
 

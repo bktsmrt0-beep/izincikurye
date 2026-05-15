@@ -3508,9 +3508,8 @@ function renderMusaitKuryeler() {
     const adSoyad = ((k.ad || "") + " " + (k.soyad || "")).trim() || "Kurye";
     const ilceArrRow = Array.isArray(k.tercih_ilceler) ? k.tercih_ilceler : null;
     const ilceText = ilceArrRow === null ? "Belirtilmemiş"
-      : ilceArrRow.length === 0 ? "🌍 Her bölge"
-      : ilceArrRow.length === 1 ? ilceArrRow[0]
-      : `${ilceArrRow[0]} +${ilceArrRow.length - 1}`;
+      : ilceArrRow.length === 0 ? "🌍 Her bölgede çalışıyor"
+      : ilceArrRow.join(", ");
     const ucretText = (k.min_ucret && k.max_ucret)
       ? `${k.min_ucret}-${k.max_ucret}<small>₺</small>`
       : (k.min_ucret ? `${k.min_ucret}+ <small>₺</small>`
@@ -3545,7 +3544,7 @@ function renderMusaitKuryeler() {
         <span class="kurye-puan-inline">⭐ ${puanText}</span>
       </div>
       <div class="kurye-row-cell cell-bolge">
-        <span class="cell-label">Bölge</span>
+        <span class="cell-label">Hakim Bölge</span>
         <span class="cell-text">📍 ${escapeHtml(ilceText)}</span>
       </div>
       <div class="kurye-row-cell cell-ucret">
