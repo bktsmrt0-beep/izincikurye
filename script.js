@@ -3475,7 +3475,7 @@ async function loadMusaitKuryeler() {
     // Sıralama: puan_ort DESC (NULL'lar sonda) → puan_sayisi DESC → musait_at DESC
     let q = `profiles?kullanici_tipi=eq.kurye&musait=eq.true&id=neq.${currentUser.id}`
       + `&select=id,ad,soyad,tel,avatar_url,tercih_ilceler,calisma_baslangic,calisma_bitis,calisma_gunleri,musait_at,bio,puan_ort,puan_sayisi,min_ucret,max_ucret,arac_tipi,arac_marka_model,created_at`
-      + `&order=puan_ort.desc.nullslast,puan_sayisi.desc,musait_at.desc`;
+      + `&order=puan_sayisi.desc,puan_ort.desc.nullslast,musait_at.desc`;
     const { data, error } = await rawSelect(q, session?.access_token, 6000);
     if (error) {
       console.error("[loadMusaitKuryeler]", error);
@@ -3488,7 +3488,40 @@ async function loadMusaitKuryeler() {
     console.error("[loadMusaitKuryeler throw]", e);
     kuryeler = [];
   }
+  // Yeni üye serpiştirme — adil görünürlük (3. ve 7. sıralara yeni üye)
+  kuryeler = _serpistirYeniUyeler(kuryeler);
   renderMusaitKuryeler();
+}
+
+// Yeni üye (puan_sayisi=0) kuryeleri 3. ve 7. sıralara serpiştir.
+// SQL zaten yorumlu kuryeleri üstte verir (puan_sayisi DESC). Yeni üyeler sondadır.
+// Bu fonksiyon, görünürlük şansı için bazı yeni üyeleri öne çeker.
+function _serpistirYeniUyeler(liste) {
+  if (!Array.isArray(liste) || liste.length < 5) return liste; // çok az kişi varsa serpiştirmeye gerek yok
+  const yorumlular = liste.filter(k => (k.puan_sayisi || 0) > 0);
+  const yeniler = liste.filter(k => (k.puan_sayisi || 0) === 0);
+  if (yeniler.length === 0) return liste;
+
+  // Yeniler arasında "en yeni müsait olan" üstte
+  yeniler.sort((a, b) => {
+    const ta = a.musait_at ? new Date(a.musait_at).getTime() : 0;
+    const tb = b.musait_at ? new Date(b.musait_at).getTime() : 0;
+    return tb - ta;
+  });
+
+  // Hedef pozisyonlar: 3. (index 2) ve 7. (index 6)
+  const sonuc = [...yorumlular];
+  const slots = [2, 6];
+  let yeniIdx = 0;
+  for (const slot of slots) {
+    if (yeniler[yeniIdx] && sonuc.length >= slot) {
+      sonuc.splice(slot, 0, yeniler[yeniIdx]);
+      yeniIdx++;
+    }
+  }
+  // Kalan yeni üyeler sona eklenir (mevcut kuryelerden farkı olmayacak şekilde)
+  for (let i = yeniIdx; i < yeniler.length; i++) sonuc.push(yeniler[i]);
+  return sonuc;
 }
 
 function renderMusaitKuryeler() {
@@ -3522,9 +3555,10 @@ function renderMusaitKuryeler() {
       ? `${k.min_ucret}-${k.max_ucret}<small>₺</small>`
       : (k.min_ucret ? `${k.min_ucret}+ <small>₺</small>`
       : (k.max_ucret ? `≤${k.max_ucret}<small>₺</small>` : "—"));
-    const puanText = k.puan_sayisi > 0
+    const isYeniUye = !k.puan_sayisi || k.puan_sayisi === 0;
+    const puanText = !isYeniUye
       ? `<strong>${Number(k.puan_ort).toFixed(1)}</strong> <small>(${k.puan_sayisi})</small>`
-      : `<small class="muted">yok</small>`;
+      : "";  // yeni üye için ayrı badge kullanılıyor
     const musaitDakika = k.musait_at
       ? Math.max(0, Math.floor((Date.now() - new Date(k.musait_at).getTime()) / 60000))
       : 0;
@@ -3548,8 +3582,10 @@ function renderMusaitKuryeler() {
         <span class="cell-text">${escapeHtml(adSoyad)}</span>
       </div>
       <div class="kurye-row-cell cell-puan">
-        <span class="cell-label">Puan</span>
-        <span class="kurye-puan-inline">⭐ ${puanText}</span>
+        <span class="cell-label">${isYeniUye ? "Durum" : "Puan"}</span>
+        ${isYeniUye
+          ? `<span class="yeni-uye-badge">🆕 Yeni Üye</span>`
+          : `<span class="kurye-puan-inline">⭐ ${puanText}</span>`}
       </div>
       <div class="kurye-row-cell cell-bolge">
         <span class="cell-label">Hakim Bölge</span>
@@ -3616,7 +3652,7 @@ function buildKuryeDetailHTML(k) {
       <small>(${k.puan_sayisi} yorum)</small>
     </button>`;
   } else {
-    puanHtml = `<span class="kd-puan kd-puan-empty">Henüz yorum yok</span>`;
+    puanHtml = `<span class="yeni-uye-badge yeni-uye-badge-lg">🆕 Yeni Üye</span>`;
   }
 
   const musaitDakika = k.musait_at
