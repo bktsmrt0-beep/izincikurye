@@ -440,45 +440,91 @@ function renderListings() {
   emptyEl.classList.add("hidden");
 
   filtered.forEach(i => {
-    const card = document.createElement("article");
-    card.className = "ilan-card-v75";
-    const lockedClass = currentUser ? "" : "locked";
-    const lockedTitle = currentUser ? "" : 'title="Önce kayıt olun"';
-    const isMine = currentUser && i.user_id === currentUser.id;
-    const isFav = currentUser && favoriler.has(i.id);
-    const hemenBasla = _isHemenBasla(i.bas_saat);
-    // Tahmini kazanç: (saat × saatlik ücret) + (saat × 10 km/saat × km ücreti)
     const tahminiKazanc = (i.saat * i.fiyat + i.saat * 10 * i.km).toLocaleString("tr-TR");
-    const kisaId = i.kisa_id || ("#" + String(i.id).slice(0, 8));
+    const row = document.createElement("article");
+    row.className = "ilan-row" + (currentUser && i.user_id === currentUser.id ? " ilan-row-mine" : "");
+    row.dataset.id = i.id;
+    row.dataset.act = "open-detail";
+    row.innerHTML = `
+      <div class="ilan-row-cell cell-bolge">
+        <span class="cell-ico">📍</span>
+        <span class="cell-text">${escapeHtml(i.ilce)}, Ankara</span>
+      </div>
+      <div class="ilan-row-cell cell-saatlik">
+        <span class="cell-label">Saatlik</span>
+        <strong>${i.fiyat} <small>₺/sa</small></strong>
+      </div>
+      <div class="ilan-row-cell cell-km">
+        <span class="cell-label">KM</span>
+        <strong>${i.km} <small>₺/km</small></strong>
+      </div>
+      <div class="ilan-row-cell cell-kazanc">
+        <span class="cell-label">Tahmini</span>
+        <strong>${tahminiKazanc} <small>₺</small></strong>
+      </div>
+      <div class="ilan-row-cell cell-aktif">
+        <span class="cell-dot"></span>
+        <span class="ilan-aktif-sayac" data-created="${i.created_at}">…</span>
+      </div>
+    `;
+    listingsEl.appendChild(row);
+  });
 
-    // Kurye rozetleri
-    let kuryeBadges = "";
-    if (currentUser && i.profile && i.profile.kullanici_tipi === "kurye") {
-      const p = i.profile;
-      const musaitBadge = p.musait ? '<span class="t-badge t-musait">🟢 Müsait</span>' : "";
-      let puanBadge = "";
-      if (p.puan_sayisi > 0) {
-        const ort = Number(p.puan_ort).toFixed(1);
-        puanBadge = `<button type="button" class="t-badge t-puan" data-act="show-reviews" data-kurye-id="${p.id}" data-kurye-ad="${escapeHtml(((p.ad||'')+' '+(p.soyad||'')).trim())}">⭐ ${ort} (${p.puan_sayisi})</button>`;
-      }
-      if (puanBadge || musaitBadge) {
-        kuryeBadges = `<div class="trust-badges">${puanBadge}${musaitBadge}</div>`;
-      }
+  // Yeni eklenen sayaçları hemen güncelle
+  _updateAktifSayaclar();
+
+  // "Daha Fazla Yükle" butonu
+  if (hasMoreIlanlar) {
+    const moreWrap = document.createElement("div");
+    moreWrap.className = "load-more-wrap";
+    moreWrap.innerHTML = `<button class="btn btn-ghost" id="loadMoreBtn">Daha Fazla Yükle</button>`;
+    listingsEl.appendChild(moreWrap);
+    document.getElementById("loadMoreBtn")?.addEventListener("click", async (ev) => {
+      const btn = ev.currentTarget;
+      btn.disabled = true;
+      btn.textContent = "Yükleniyor...";
+      await loadIlanlar({ append: true });
+    });
+  }
+}
+
+// =============== DETAY KARTI (modal) ===============
+
+function buildIlanCardHTML(i) {
+  const lockedClass = currentUser ? "" : "locked";
+  const lockedTitle = currentUser ? "" : 'title="Önce kayıt olun"';
+  const isMine = currentUser && i.user_id === currentUser.id;
+  const hemenBasla = _isHemenBasla(i.bas_saat);
+  const tahminiKazanc = (i.saat * i.fiyat + i.saat * 10 * i.km).toLocaleString("tr-TR");
+  const kisaId = i.kisa_id || ("#" + String(i.id).slice(0, 8));
+
+  let kuryeBadges = "";
+  if (currentUser && i.profile && i.profile.kullanici_tipi === "kurye") {
+    const p = i.profile;
+    const musaitBadge = p.musait ? '<span class="t-badge t-musait">🟢 Müsait</span>' : "";
+    let puanBadge = "";
+    if (p.puan_sayisi > 0) {
+      const ort = Number(p.puan_ort).toFixed(1);
+      puanBadge = `<button type="button" class="t-badge t-puan" data-act="show-reviews" data-kurye-id="${p.id}" data-kurye-ad="${escapeHtml(((p.ad||'')+' '+(p.soyad||'')).trim())}">⭐ ${ort} (${p.puan_sayisi})</button>`;
     }
-
-    // Etiketler
-    let etiketHtml = "";
-    const etArr = Array.isArray(i.etiketler) ? i.etiketler : [];
-    if (etArr.length) {
-      etiketHtml = `<div class="card-etiketler">${etArr.map(k => {
-        const meta = ETIKET_LABELS[k];
-        if (!meta) return "";
-        return `<span class="etiket-chip"><span class="etiket-chip-ico">${meta.ico}</span>${meta.label}</span>`;
-      }).join("")}</div>`;
+    if (puanBadge || musaitBadge) {
+      kuryeBadges = `<div class="trust-badges">${puanBadge}${musaitBadge}</div>`;
     }
+  }
 
-    card.dataset.id = i.id;
-    card.innerHTML = `
+  let etiketHtml = "";
+  const etArr = Array.isArray(i.etiketler) ? i.etiketler : [];
+  if (etArr.length) {
+    etiketHtml = `<div class="card-etiketler">${etArr.map(k => {
+      const meta = ETIKET_LABELS[k];
+      if (!meta) return "";
+      return `<span class="etiket-chip"><span class="etiket-chip-ico">${meta.ico}</span>${meta.label}</span>`;
+    }).join("")}</div>`;
+  }
+
+  return `
+    <article class="ilan-card-v75" data-id="${i.id}">
+
       <div class="card-main">
         <div class="card-top-row">
           <span class="card-pill pill-ilce">📍 ${escapeHtml(i.ilce)}, Ankara</span>
@@ -592,26 +638,25 @@ function renderListings() {
           <span class="mi-ico">🚩</span><span class="mi-label">Sorun Bildir</span>
         </button>` : ""}
       </aside>
-    `;
-    listingsEl.appendChild(card);
-  });
+    </article>
+  `;
+}
 
-  // Yeni eklenen sayaçları hemen güncelle (interval'i beklemeden)
+function openIlanDetail(ilan) {
+  const body = document.getElementById("ilanDetailBody");
+  if (!body) return;
+  body.innerHTML = buildIlanCardHTML(ilan);
+  openModal("ilanDetailModal");
+  // URL'i güncelle (derin link)
+  try {
+    const url = "/ilan/" + ilan.id;
+    if (history.state?.modal === "ilanDetail" && history.state?.id === ilan.id) {
+      // zaten aynı, no-op
+    } else {
+      history.pushState({ modal: "ilanDetail", id: ilan.id }, "", url);
+    }
+  } catch {}
   _updateAktifSayaclar();
-
-  // "Daha Fazla Yükle" butonu — sadece DB'de daha fazla varsa
-  if (hasMoreIlanlar) {
-    const moreWrap = document.createElement("div");
-    moreWrap.className = "load-more-wrap";
-    moreWrap.innerHTML = `<button class="btn btn-ghost" id="loadMoreBtn">Daha Fazla Yükle</button>`;
-    listingsEl.appendChild(moreWrap);
-    document.getElementById("loadMoreBtn")?.addEventListener("click", async (ev) => {
-      const btn = ev.currentTarget;
-      btn.disabled = true;
-      btn.textContent = "Yükleniyor...";
-      await loadIlanlar({ append: true });
-    });
-  }
 }
 
 // Boş durum: bağlama göre yardımcı mesaj + öneri chip'leri
@@ -939,19 +984,27 @@ function _isHemenBasla(basSaat) {
 }
 
 // =============== KART AKSİYONLARI ===============
-listingsEl.addEventListener("click", async e => {
-  const btn = e.target.closest("[data-act]");
-
-  // Kart tıklaması (buton dışında bir yere) → detay (adres modalı) aç
-  if (!btn) {
-    const cardEl = e.target.closest(".card.clickable");
-    if (!cardEl || !currentUser) return;
-    const ilan = ilanlar.find(x => x.id === cardEl.dataset.id);
-    if (ilan) showAdres(ilan);
+// Liste row click & detay modal içindeki aksiyonlar — tek event delegasyonu
+document.addEventListener("click", async e => {
+  // Liste satırı (compact row) tıklandı → detay modalı aç
+  const rowEl = e.target.closest(".ilan-row");
+  if (rowEl && !e.target.closest("[data-act]") && rowEl.dataset.act === "open-detail") {
+    const ilan = ilanlar.find(x => x.id === rowEl.dataset.id);
+    if (ilan) openIlanDetail(ilan);
     return;
   }
+
+  const btn = e.target.closest("[data-act]");
+  if (!btn) return;
+  // Sadece kart/detay/list aksiyonları (kebab/share/edit/delete/call/wa/addr/rxn/show-reviews/open-detail)
   const act = btn.dataset.act;
   const id = btn.dataset.id;
+
+  if (act === "open-detail") {
+    const ilan = ilanlar.find(x => x.id === id);
+    if (ilan) openIlanDetail(ilan);
+    return;
+  }
 
   if (act === "show-reviews") {
     const kuryeId = btn.dataset.kuryeId;
@@ -1538,16 +1591,16 @@ function openModal(id) {
 let _closingFromPopstate = false;
 function closeModals() {
   const adresWasOpen = !document.getElementById("adresModal")?.classList.contains("hidden");
+  const detailWasOpen = !document.getElementById("ilanDetailModal")?.classList.contains("hidden");
   document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
   document.body.classList.remove("modal-open");
-  // İlan detayı kapanırken URL'i temizle ve title'ı geri al
-  if (adresWasOpen) {
+  // İlan detayı (eski adres veya yeni full card) kapanırken URL'i temizle
+  if (adresWasOpen || detailWasOpen) {
     const url = new URL(window.location.href);
     const pathnameMatchesIlan = /^\/ilan\/[^/]+/.test(url.pathname);
     if (url.searchParams.has("ilan") || pathnameMatchesIlan) {
-      // popstate'ten geldiyse history zaten geri gitti, dokunma.
-      // Aksi halde history.back() ile geri git (modal-açma push'unu geri al)
-      if (!_closingFromPopstate && history.state && history.state.modal === "adres") {
+      const st = history.state?.modal;
+      if (!_closingFromPopstate && (st === "adres" || st === "ilanDetail")) {
         history.back();
       } else if (!_closingFromPopstate) {
         history.replaceState(null, "", "/" + (url.search || ""));
@@ -1560,7 +1613,8 @@ function closeModals() {
 // Geri tuşu: ilan modalı açıksa kapat, siteden çıkma
 window.addEventListener("popstate", () => {
   const adresOpen = !document.getElementById("adresModal")?.classList.contains("hidden");
-  if (adresOpen) {
+  const detailOpen = !document.getElementById("ilanDetailModal")?.classList.contains("hidden");
+  if (adresOpen || detailOpen) {
     _closingFromPopstate = true;
     closeModals();
     _closingFromPopstate = false;
@@ -3452,7 +3506,7 @@ async function openIlanFromUrl() {
     openModal("registerModal");
     return;
   }
-  showAdres(ilan);
+  openIlanDetail(ilan);
 }
 
 // Paylaşım: clean URL kopyala
