@@ -2718,12 +2718,53 @@ textarea#rwYorum:focus {
 .contact-addr:hover { background: #e2e8f0; }
 .contact-btn.locked { opacity: 0.55; cursor: not-allowed; }
 
-/* Hızlı İletişim panel — alt bölüm: ayraç + Paylaş + reaksiyon satırı */
+/* Hızlı İletişim panel — alt bölüm: ayraç + inline menü öğeleri */
 .contact-divider {
   height: 1px;
   background: #e5e7eb;
   margin: 6px 0 4px;
 }
+
+/* Inline menü öğesi (Paylaş, Düzenle, Beğen, Beğenmeme, Sorun Bildir) */
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 8px 4px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #334155;
+  cursor: pointer;
+  text-align: left;
+  border-radius: 8px;
+  transition: background .12s, color .12s;
+}
+.menu-item:hover { background: #f1f5f9; color: #0f172a; }
+.menu-item:active { transform: scale(0.98); }
+.mi-ico { font-size: 16px; line-height: 1; width: 22px; text-align: center; flex-shrink: 0; }
+.mi-label { flex: 1; min-width: 0; }
+.mi-count {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 700;
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+  text-align: center;
+}
+.mi-count:empty { display: none; }
+
+/* Aktif (kullanıcı reaksiyon vermiş) durumu */
+.rxn-item.rxn-begen.active { background: #eff6ff; color: #1d4ed8; }
+.rxn-item.rxn-begen.active .mi-count { background: #dbeafe; color: #1e40af; }
+.rxn-item.rxn-dis.active { background: #fef2f2; color: #b91c1c; }
+.rxn-item.rxn-dis.active .mi-count { background: #fee2e2; color: #991b1b; }
+.rxn-item.rxn-rep:hover { background: #fef2f2; color: #b91c1c; }
 
 .contact-share {
   width: 100%;
@@ -2866,6 +2907,7 @@ textarea#rwYorum:focus {
   .contact-divider { flex: 1 1 100%; margin: 4px 0 0; }
   .contact-share { flex: 1 1 100%; }
   .reaction-row { flex: 1 1 100%; margin-top: 0; }
+  .menu-item { flex: 1 1 100%; }
 }
 @media (max-width: 520px) {
   .card-title { font-size: 22px; }

@@ -476,11 +476,6 @@ function renderListings() {
       }).join("")}</div>`;
     }
 
-    // Kebab dropdown sadece girişli kullanıcılar için
-    const kebabHtml = currentUser
-      ? `<div class="kebab-wrap"><button type="button" class="kebab-btn" data-act="kebab" data-id="${i.id}" aria-label="Daha fazla">⋮</button></div>`
-      : "";
-
     card.dataset.id = i.id;
     card.innerHTML = `
       <div class="card-main">
@@ -489,7 +484,6 @@ function renderListings() {
           ${isMine ? '<span class="card-pill pill-mine">⚡ Senin İlanın</span>' : ""}
           <div class="card-top-right">
             <span class="card-aktif"><span class="aktif-dot"></span><span class="ilan-aktif-sayac" data-created="${i.created_at}">başlatılıyor…</span></span>
-            ${kebabHtml}
           </div>
         </div>
 
@@ -536,6 +530,13 @@ function renderListings() {
 
         ${i.aciklama ? `<div class="card-aciklama"><span class="aciklama-ico">ℹ</span><span class="aciklama-text">${escapeHtml(i.aciklama)}</span></div>` : ""}
         ${etiketHtml}
+
+        <div class="card-bottom">
+          ${isMine
+            ? `<button type="button" class="card-delete-btn" data-act="delete" data-id="${i.id}">🗑 İlanı Kaldır</button>`
+            : '<span></span>'}
+          <span class="card-kisaid">İlan No: <strong>${escapeHtml(kisaId)}</strong></span>
+        </div>
       </div>
 
       <aside class="card-contact">
@@ -552,28 +553,28 @@ function renderListings() {
 
         <div class="contact-divider"></div>
 
-        <button type="button" class="contact-share" data-act="share-main" data-id="${i.id}">
-          <span class="share-ico">🔗</span> Paylaş
+        <button type="button" class="menu-item" data-act="share-main" data-id="${i.id}">
+          <span class="mi-ico">🔗</span><span class="mi-label">Paylaş</span>
         </button>
+        ${isMine ? `<button type="button" class="menu-item" data-act="edit" data-id="${i.id}">
+          <span class="mi-ico">✏️</span><span class="mi-label">Düzenle</span>
+        </button>` : ""}
 
         ${currentUser ? `
-        <div class="reaction-row">
-          <button type="button" class="rxn-btn rxn-kalp ${isFav ? 'active' : ''}" data-act="rxn" data-rxn-tip="kalp" data-rxn-id="${i.id}" data-id="${i.id}" title="Beğen (Kalp)">
-            <span class="rxn-emoji">❤️</span>
-            <span class="rxn-count">${(i.kalp_sayisi || 0) > 0 ? i.kalp_sayisi : ""}</span>
-          </button>
-          <button type="button" class="rxn-btn rxn-begen ${userReaksiyonlar.get(i.id) === 'begen' ? 'active' : ''}" data-act="rxn" data-rxn-tip="begen" data-rxn-id="${i.id}" data-id="${i.id}" title="Beğen">
-            <span class="rxn-emoji">👍</span>
-            <span class="rxn-count">${(i.begen_sayisi || 0) > 0 ? i.begen_sayisi : ""}</span>
-          </button>
-          <button type="button" class="rxn-btn rxn-dis ${userReaksiyonlar.get(i.id) === 'begenmeme' ? 'active' : ''}" data-act="rxn" data-rxn-tip="begenmeme" data-rxn-id="${i.id}" data-id="${i.id}" title="Beğenmeme">
-            <span class="rxn-emoji">👎</span>
-            <span class="rxn-count">${(i.begenmeme_sayisi || 0) > 0 ? i.begenmeme_sayisi : ""}</span>
-          </button>
-          <button type="button" class="rxn-btn rxn-rep" data-act="rxn" data-rxn-tip="report" data-rxn-id="${i.id}" data-id="${i.id}" title="Sorun Bildir">
-            <span class="rxn-emoji">🚩</span>
-          </button>
-        </div>` : ""}
+        <div class="contact-divider"></div>
+
+        <button type="button" class="menu-item rxn-item rxn-begen ${userReaksiyonlar.get(i.id) === 'begen' ? 'active' : ''}" data-act="rxn" data-rxn-tip="begen" data-rxn-id="${i.id}" data-id="${i.id}">
+          <span class="mi-ico">👍</span><span class="mi-label">Beğen</span>
+          <span class="mi-count">${(i.begen_sayisi || 0) > 0 ? i.begen_sayisi : ""}</span>
+        </button>
+        <button type="button" class="menu-item rxn-item rxn-dis ${userReaksiyonlar.get(i.id) === 'begenmeme' ? 'active' : ''}" data-act="rxn" data-rxn-tip="begenmeme" data-rxn-id="${i.id}" data-id="${i.id}">
+          <span class="mi-ico">👎</span><span class="mi-label">Beğenmeme</span>
+          <span class="mi-count">${(i.begenmeme_sayisi || 0) > 0 ? i.begenmeme_sayisi : ""}</span>
+        </button>
+        <button type="button" class="menu-item rxn-item rxn-rep" data-act="rxn" data-rxn-tip="report" data-rxn-id="${i.id}">
+          <span class="mi-ico">🚩</span><span class="mi-label">Sorun Bildir</span>
+        </button>
+        ` : ""}
       </aside>
     `;
     listingsEl.appendChild(card);
@@ -741,15 +742,13 @@ function _refreshRxnBtns(ilanId) {
   const ilan = ilanlar.find(x => x.id === ilanId);
   if (!ilan) return;
   const cur = userReaksiyonlar.get(ilanId);
-  const isFav = favoriler.has(ilanId);
 
   document.querySelectorAll(`[data-rxn-id="${ilanId}"]`).forEach(btn => {
     const tip = btn.dataset.rxnTip;
-    const countEl = btn.querySelector(".rxn-count");
+    const countEl = btn.querySelector(".mi-count") || btn.querySelector(".rxn-count");
     let active = false;
     let count = 0;
-    if (tip === "kalp") { active = isFav; count = ilan.kalp_sayisi || 0; }
-    else if (tip === "begen") { active = cur === "begen"; count = ilan.begen_sayisi || 0; }
+    if (tip === "begen") { active = cur === "begen"; count = ilan.begen_sayisi || 0; }
     else if (tip === "begenmeme") { active = cur === "begenmeme"; count = ilan.begenmeme_sayisi || 0; }
     btn.classList.toggle("active", active);
     if (countEl) countEl.textContent = count > 0 ? count : "";
