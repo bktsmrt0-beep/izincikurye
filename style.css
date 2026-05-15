@@ -362,20 +362,46 @@ body.sidebar-open { overflow: hidden; }
   .cell-aktif { font-size: 10.5px; }
 }
 
-/* Detay modalı için stil — modal-wide içinde tam kart */
-.ilan-detail-card { padding: 0; max-width: 880px; }
-.ilan-detail-card .modal-close {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 10;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-}
-.ilan-detail-card .ilan-card-v75 {
-  border: 0;
+/* Detay modalı için stil — modal-wide ile birlikte ID specificity ile override */
+#ilanDetailModal .modal-card {
+  padding: 0;
+  max-width: 880px;
+  width: calc(100vw - 24px);
+  overflow: visible;
+  background: transparent;
   box-shadow: none;
+}
+#ilanDetailModal .modal-close {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  z-index: 10;
+  background: #fff;
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 20px;
+  color: #475569;
+}
+#ilanDetailModal .ilan-card-v75 {
   margin: 0;
+  width: 100%;
+  max-height: calc(90vh - 32px);
+  overflow-y: auto;
+}
+@media (max-width: 980px) {
+  #ilanDetailModal .modal-card {
+    width: 100vw;
+    max-width: 100vw;
+  }
+  #ilanDetailModal .ilan-card-v75 {
+    border-radius: 12px 12px 0 0;
+    max-height: calc(95vh - 32px);
+  }
 }
 
 .card {
