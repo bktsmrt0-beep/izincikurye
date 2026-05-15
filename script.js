@@ -131,6 +131,14 @@ const ETIKET_LABELS = {
   anlik_ihtiyac:   { ico: "⏱", label: "Anlık İhtiyaç" }
 };
 
+// Araç tipi→ikon+etiket eşleştirme (kurye profili)
+const ARAC_INFO = {
+  motosiklet: { ico: "🏍", label: "Motosiklet" },
+  bisiklet:   { ico: "🚲", label: "Bisiklet" },
+  scooter:    { ico: "🛴", label: "Scooter" },
+  araba:      { ico: "🚗", label: "Araba" }
+};
+
 // =============== DOM REF ===============
 const districtSelect = document.getElementById("districtSelect");
 const listingsEl = document.getElementById("listings");
@@ -3466,7 +3474,7 @@ async function loadMusaitKuryeler() {
     const session = readStoredSession();
     // Sıralama: puan_ort DESC (NULL'lar sonda) → puan_sayisi DESC → musait_at DESC
     let q = `profiles?kullanici_tipi=eq.kurye&musait=eq.true&id=neq.${currentUser.id}`
-      + `&select=id,ad,soyad,tel,avatar_url,tercih_ilceler,calisma_baslangic,calisma_bitis,calisma_gunleri,musait_at,bio,puan_ort,puan_sayisi,min_ucret,max_ucret,created_at`
+      + `&select=id,ad,soyad,tel,avatar_url,tercih_ilceler,calisma_baslangic,calisma_bitis,calisma_gunleri,musait_at,bio,puan_ort,puan_sayisi,min_ucret,max_ucret,arac_tipi,arac_marka_model,created_at`
       + `&order=puan_ort.desc.nullslast,puan_sayisi.desc,musait_at.desc`;
     const { data, error } = await rawSelect(q, session?.access_token, 6000);
     if (error) {
@@ -3587,10 +3595,11 @@ function buildKuryeDetailHTML(k) {
     ? `${String(k.calisma_baslangic).padStart(2, "0")}:00 → ${String(k.calisma_bitis).padStart(2, "0")}:00`
     : "—";
 
-  const gunAdlari = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
-  const gunler = (k.calisma_gunleri || []).length
-    ? k.calisma_gunleri.map(g => gunAdlari[g - 1]).join(", ")
-    : "—";
+  // Araç bilgisi (eski "günler" yerine — işletme için araç tipi daha kritik)
+  const aracInfo = ARAC_INFO[k.arac_tipi] || null;
+  const aracIco = aracInfo ? aracInfo.ico : "🛵";
+  const aracLabel = aracInfo ? aracInfo.label : "Belirtilmemiş";
+  const aracMarka = (k.arac_marka_model || "").trim();
 
   const ucretText = (k.min_ucret && k.max_ucret)
     ? `${k.min_ucret} - ${k.max_ucret} ₺/saat`
@@ -3638,8 +3647,8 @@ function buildKuryeDetailHTML(k) {
           <strong>${saatText}</strong>
         </div>
         <div class="kd-cell">
-          <span class="kd-cell-label">📅 Günler</span>
-          <strong>${escapeHtml(gunler)}</strong>
+          <span class="kd-cell-label">${aracIco} Araç</span>
+          <strong>${escapeHtml(aracLabel)}${aracMarka ? `<small style="display:block;font-weight:500;color:#64748b;margin-top:2px;font-size:11.5px">${escapeHtml(aracMarka)}</small>` : ""}</strong>
         </div>
         <div class="kd-cell">
           <span class="kd-cell-label">💰 Beklenen Ücret</span>
