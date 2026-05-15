@@ -2700,31 +2700,91 @@ textarea#rwYorum:focus {
 .contact-addr:hover { background: #e2e8f0; }
 .contact-btn.locked { opacity: 0.55; cursor: not-allowed; }
 
-.contact-fav {
-  background: none;
-  border: 1px dashed #cbd5e1;
+/* Hızlı İletişim panel — alt bölüm: ayraç + Paylaş + reaksiyon satırı */
+.contact-divider {
+  height: 1px;
+  background: #e5e7eb;
+  margin: 6px 0 4px;
+}
+
+.contact-share {
+  width: 100%;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
   border-radius: 12px;
-  padding: 10px 12px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #475569;
+  padding: 11px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.contact-share:hover {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+}
+.share-ico { font-size: 16px; line-height: 1; }
+
+.reaction-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
   gap: 6px;
-  margin-top: 4px;
-  transition: background .15s, color .15s, border-color .15s;
+  margin-top: 6px;
 }
-.contact-fav:hover { background: #fff1f2; color: #be185d; border-color: #fbcfe8; }
-.contact-fav.active {
+.rxn-btn {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+  transition: background .15s, border-color .15s, transform .12s;
+}
+.rxn-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+.rxn-btn:active { transform: scale(0.94); }
+.rxn-emoji { font-size: 18px; line-height: 1.1; filter: saturate(0.85); transition: filter .15s, transform .12s; }
+.rxn-btn:hover .rxn-emoji { filter: saturate(1.15); transform: scale(1.1); }
+.rxn-count { font-size: 11.5px; line-height: 1; min-height: 11px; }
+
+/* Aktif renkler */
+.rxn-kalp.active {
   background: #fff1f2;
-  color: #be123c;
   border-color: #fbcfe8;
-  border-style: solid;
+  color: #be123c;
 }
-.fav-ico { font-size: 16px; line-height: 1; }
-.contact-fav.active .fav-ico { color: #e11d48; }
+.rxn-kalp.active .rxn-emoji { filter: saturate(1.3); }
+
+.rxn-begen.active {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+.rxn-begen.active .rxn-emoji { filter: saturate(1.3); }
+
+.rxn-dis.active {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
+.rxn-dis.active .rxn-emoji { filter: saturate(1.3); }
+
+.rxn-rep:hover {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: #b91c1c;
+}
 
 /* Form içi etiket fieldset (ilan ver modalı) */
 .etiket-fieldset {
@@ -2785,7 +2845,9 @@ textarea#rwYorum:focus {
   .contact-title { display: none; }
   .contact-btn { flex: 1 1 calc(50% - 4px); padding: 11px 8px; font-size: 13.5px; min-width: 0; }
   .contact-addr { flex: 1 1 100%; }
-  .contact-fav { flex: 1 1 100%; margin-top: 0; }
+  .contact-divider { flex: 1 1 100%; margin: 4px 0 0; }
+  .contact-share { flex: 1 1 100%; }
+  .reaction-row { flex: 1 1 100%; margin-top: 0; }
 }
 @media (max-width: 520px) {
   .card-title { font-size: 22px; }

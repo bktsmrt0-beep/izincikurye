@@ -32,7 +32,8 @@ const PAGE_SIZE = 20;
 let pageOffset = 0;
 let hasMoreIlanlar = true;
 let kuryeler = [];
-let favoriler = new Set(); // ilan_id Set — kullanıcının favorileri
+let favoriler = new Set(); // ilan_id Set — kullanıcının kalpleri (favoriler)
+let userReaksiyonlar = new Map(); // ilan_id -> "begen" | "begenmeme"
 let _editingIlanId = null; // ilan formu düzenleme modunda mı?
 
 // Etiket etiket→görsel eşleştirme
@@ -555,9 +556,31 @@ function renderListings() {
         <button type="button" class="contact-btn contact-addr ${lockedClass}" data-act="addr" data-id="${i.id}" ${lockedTitle}>
           <span class="contact-ico">📍</span><span>Adresi Gör</span>
         </button>
-        ${currentUser ? `<button type="button" class="contact-fav ${isFav ? 'active' : ''}" data-act="favori" data-id="${i.id}">
-          <span class="fav-ico">${isFav ? '♥' : '♡'}</span> ${isFav ? 'Favoriden Çıkar' : 'Favorilere Ekle'}
-        </button>` : ""}
+
+        <div class="contact-divider"></div>
+
+        <button type="button" class="contact-share" data-act="share-main" data-id="${i.id}">
+          <span class="share-ico">🔗</span> Paylaş
+        </button>
+
+        ${currentUser ? `
+        <div class="reaction-row">
+          <button type="button" class="rxn-btn rxn-kalp ${isFav ? 'active' : ''}" data-act="rxn" data-rxn-tip="kalp" data-rxn-id="${i.id}" data-id="${i.id}" title="Beğen (Kalp)">
+            <span class="rxn-emoji">❤️</span>
+            <span class="rxn-count">${(i.kalp_sayisi || 0) > 0 ? i.kalp_sayisi : ""}</span>
+          </button>
+          <button type="button" class="rxn-btn rxn-begen ${userReaksiyonlar.get(i.id) === 'begen' ? 'active' : ''}" data-act="rxn" data-rxn-tip="begen" data-rxn-id="${i.id}" data-id="${i.id}" title="Beğen">
+            <span class="rxn-emoji">👍</span>
+            <span class="rxn-count">${(i.begen_sayisi || 0) > 0 ? i.begen_sayisi : ""}</span>
+          </button>
+          <button type="button" class="rxn-btn rxn-dis ${userReaksiyonlar.get(i.id) === 'begenmeme' ? 'active' : ''}" data-act="rxn" data-rxn-tip="begenmeme" data-rxn-id="${i.id}" data-id="${i.id}" title="Beğenmeme">
+            <span class="rxn-emoji">👎</span>
+            <span class="rxn-count">${(i.begenmeme_sayisi || 0) > 0 ? i.begenmeme_sayisi : ""}</span>
+          </button>
+          <button type="button" class="rxn-btn rxn-rep" data-act="rxn" data-rxn-tip="report" data-rxn-id="${i.id}" data-id="${i.id}" title="Sorun Bildir">
+            <span class="rxn-emoji">🚩</span>
+          </button>
+        </div>` : ""}
       </aside>
     `;
     listingsEl.appendChild(card);
@@ -638,48 +661,137 @@ function renderEmptyState() {
 
 async function loadFavoriler() {
   favoriler = new Set();
+  userReaksiyonlar = new Map();
   if (!currentUser) return;
   try {
     const session = readStoredSession();
     if (!session?.access_token) return;
-    const { data, error } = await rawSelect(
-      `favoriler?user_id=eq.${currentUser.id}&select=ilan_id`,
-      session.access_token,
-      5000
-    );
-    if (error) { console.warn("[loadFavoriler]", error); return; }
-    (data || []).forEach(r => favoriler.add(r.ilan_id));
+    // Favoriler (kalp) + reaksiyonlar (begen/begenmeme) paralel
+    const [favRes, rxnRes] = await Promise.all([
+      rawSelect(`favoriler?user_id=eq.${currentUser.id}&select=ilan_id`, session.access_token, 5000),
+      rawSelect(`reaksiyonlar?user_id=eq.${currentUser.id}&select=ilan_id,tip`, session.access_token, 5000)
+    ]);
+    if (favRes?.error) console.warn("[loadFavoriler]", favRes.error);
+    else (favRes.data || []).forEach(r => favoriler.add(r.ilan_id));
+    if (rxnRes?.error) console.warn("[loadReaksiyonlar]", rxnRes.error);
+    else (rxnRes.data || []).forEach(r => userReaksiyonlar.set(r.ilan_id, r.tip));
   } catch (e) { console.warn("[loadFavoriler throw]", e); }
+}
+
+// Reaksiyon (begen/begenmeme) — Reddit/YT tarzı: birbirini iter
+async function toggleReaksiyon(ilanId, tip) {
+  if (!currentUser) { openModal("registerModal"); return; }
+  const session = readStoredSession();
+  if (!session?.access_token) return;
+  const ilan = ilanlar.find(x => x.id === ilanId);
+  if (!ilan) return;
+
+  const current = userReaksiyonlar.get(ilanId); // "begen" | "begenmeme" | undefined
+  // Optimistic UI değişiklikleri
+  const prev = { current, begen: ilan.begen_sayisi || 0, begenmeme: ilan.begenmeme_sayisi || 0 };
+
+  if (current === tip) {
+    // Toggle off: bu reaksiyonu sil
+    userReaksiyonlar.delete(ilanId);
+    if (tip === "begen") ilan.begen_sayisi = Math.max(0, (ilan.begen_sayisi || 0) - 1);
+    else ilan.begenmeme_sayisi = Math.max(0, (ilan.begenmeme_sayisi || 0) - 1);
+  } else if (current) {
+    // Swap: diğerinden bu tarafa al
+    userReaksiyonlar.set(ilanId, tip);
+    if (current === "begen") {
+      ilan.begen_sayisi = Math.max(0, (ilan.begen_sayisi || 0) - 1);
+      ilan.begenmeme_sayisi = (ilan.begenmeme_sayisi || 0) + 1;
+    } else {
+      ilan.begenmeme_sayisi = Math.max(0, (ilan.begenmeme_sayisi || 0) - 1);
+      ilan.begen_sayisi = (ilan.begen_sayisi || 0) + 1;
+    }
+  } else {
+    // Yeni reaksiyon
+    userReaksiyonlar.set(ilanId, tip);
+    if (tip === "begen") ilan.begen_sayisi = (ilan.begen_sayisi || 0) + 1;
+    else ilan.begenmeme_sayisi = (ilan.begenmeme_sayisi || 0) + 1;
+  }
+  _refreshRxnBtns(ilanId);
+
+  // Backend: önce DELETE (varsa), sonra INSERT (toggle off değilse)
+  try {
+    if (current) {
+      // Mevcut reaksiyonu sil
+      const delUrl = `${SUPABASE_URL}/rest/v1/reaksiyonlar?user_id=eq.${currentUser.id}&ilan_id=eq.${ilanId}`;
+      const r = await fetch(delUrl, {
+        method: "DELETE",
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + session.access_token }
+      });
+      if (!r.ok) throw new Error("DELETE " + r.status);
+    }
+    if (current !== tip) {
+      // Yeni reaksiyon ekle
+      const { error } = await rawInsert(
+        "reaksiyonlar",
+        { user_id: currentUser.id, ilan_id: ilanId, tip },
+        session.access_token
+      );
+      if (error) throw new Error(error.message);
+    }
+  } catch (e) {
+    // Rollback
+    if (prev.current) userReaksiyonlar.set(ilanId, prev.current);
+    else userReaksiyonlar.delete(ilanId);
+    ilan.begen_sayisi = prev.begen;
+    ilan.begenmeme_sayisi = prev.begenmeme;
+    _refreshRxnBtns(ilanId);
+    toast("Reaksiyon kaydedilemedi: " + (e.message || e), "error");
+  }
+}
+
+function _refreshRxnBtns(ilanId) {
+  const ilan = ilanlar.find(x => x.id === ilanId);
+  if (!ilan) return;
+  const cur = userReaksiyonlar.get(ilanId);
+  const isFav = favoriler.has(ilanId);
+
+  document.querySelectorAll(`[data-rxn-id="${ilanId}"]`).forEach(btn => {
+    const tip = btn.dataset.rxnTip;
+    const countEl = btn.querySelector(".rxn-count");
+    let active = false;
+    let count = 0;
+    if (tip === "kalp") { active = isFav; count = ilan.kalp_sayisi || 0; }
+    else if (tip === "begen") { active = cur === "begen"; count = ilan.begen_sayisi || 0; }
+    else if (tip === "begenmeme") { active = cur === "begenmeme"; count = ilan.begenmeme_sayisi || 0; }
+    btn.classList.toggle("active", active);
+    if (countEl) countEl.textContent = count > 0 ? count : "";
+  });
 }
 
 async function toggleFavori(ilanId) {
   if (!currentUser) { openModal("registerModal"); return; }
   const session = readStoredSession();
   if (!session?.access_token) return;
+  const ilan = ilanlar.find(x => x.id === ilanId);
+  if (!ilan) return;
   const isFav = favoriler.has(ilanId);
 
   if (isFav) {
-    // Sil
     favoriler.delete(ilanId);
-    _refreshFavBtn(ilanId);
+    ilan.kalp_sayisi = Math.max(0, (ilan.kalp_sayisi || 0) - 1);
+    _refreshRxnBtns(ilanId);
     try {
       const url = `${SUPABASE_URL}/rest/v1/favoriler?user_id=eq.${currentUser.id}&ilan_id=eq.${ilanId}`;
       const r = await fetch(url, {
         method: "DELETE",
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: "Bearer " + session.access_token
-        }
+        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + session.access_token }
       });
       if (!r.ok) throw new Error("HTTP " + r.status);
     } catch (e) {
       favoriler.add(ilanId);
-      _refreshFavBtn(ilanId);
-      toast("Favoriden çıkarılamadı: " + (e.message || e), "error");
+      ilan.kalp_sayisi = (ilan.kalp_sayisi || 0) + 1;
+      _refreshRxnBtns(ilanId);
+      toast("Kalp kaldırılamadı: " + (e.message || e), "error");
     }
   } else {
     favoriler.add(ilanId);
-    _refreshFavBtn(ilanId);
+    ilan.kalp_sayisi = (ilan.kalp_sayisi || 0) + 1;
+    _refreshRxnBtns(ilanId);
     const { error } = await rawInsert(
       "favoriler",
       { user_id: currentUser.id, ilan_id: ilanId },
@@ -687,20 +799,11 @@ async function toggleFavori(ilanId) {
     );
     if (error) {
       favoriler.delete(ilanId);
-      _refreshFavBtn(ilanId);
-      toast("Favoriye eklenemedi: " + error.message, "error");
-    } else {
-      toast("Favorilere eklendi", "ok", 1500);
+      ilan.kalp_sayisi = Math.max(0, (ilan.kalp_sayisi || 0) - 1);
+      _refreshRxnBtns(ilanId);
+      toast("Kalbe eklenemedi: " + error.message, "error");
     }
   }
-}
-
-function _refreshFavBtn(ilanId) {
-  const btn = document.querySelector(`[data-act="favori"][data-id="${ilanId}"]`);
-  if (!btn) return;
-  const isFav = favoriler.has(ilanId);
-  btn.classList.toggle("active", isFav);
-  btn.innerHTML = `<span class="fav-ico">${isFav ? "♥" : "♡"}</span> ${isFav ? "Favoriden Çıkar" : "Favorilere Ekle"}`;
 }
 
 // Kebab dropdown — DOM'a bir tane menü, hangi karta açıldıysa data ile takip
@@ -714,11 +817,11 @@ function _openKebab(btn, ilan) {
   btn.classList.add("open");
   const isMine = currentUser && ilan.user_id === currentUser.id;
   const items = [];
-  items.push(`<button type="button" class="kmenu-item" data-act="share" data-id="${ilan.id}"><span>🔗</span> Paylaş</button>`);
   if (isMine) {
     items.push(`<button type="button" class="kmenu-item" data-act="edit" data-id="${ilan.id}"><span>✏️</span> Düzenle</button>`);
-  } else if (currentUser) {
-    items.push(`<button type="button" class="kmenu-item" data-act="report" data-id="${ilan.id}"><span>🚩</span> Şikayet Et</button>`);
+    items.push(`<button type="button" class="kmenu-item" data-act="share" data-id="${ilan.id}"><span>🔗</span> Paylaş</button>`);
+  } else {
+    items.push(`<button type="button" class="kmenu-item" data-act="share" data-id="${ilan.id}"><span>🔗</span> Paylaş</button>`);
   }
   const menu = document.createElement("div");
   menu.className = "kebab-menu";
@@ -866,9 +969,22 @@ listingsEl.addEventListener("click", async e => {
     return;
   }
 
-  if (act === "favori") {
+  if (act === "rxn") {
     e.stopPropagation();
-    toggleFavori(id);
+    const tip = btn.dataset.rxnTip;
+    if (tip === "kalp") {
+      toggleFavori(id);
+    } else if (tip === "begen" || tip === "begenmeme") {
+      toggleReaksiyon(id, tip);
+    } else if (tip === "report") {
+      openSikayetModal(id);
+    }
+    return;
+  }
+
+  if (act === "share-main") {
+    e.stopPropagation();
+    copyIlanLink(id);
     return;
   }
 
