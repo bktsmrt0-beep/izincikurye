@@ -2949,14 +2949,78 @@ textarea#rwYorum:focus {
   color: #c2410c;
 }
 
-/* Mobile — sticky bottom bar */
+/* Mobile — sticky bottom bar + ultra-kompakt içerik (tek bakışta tüm detay) */
 @media (max-width: 980px) {
   .ilan-card-v75 {
     grid-template-columns: minmax(0, 1fr) !important;
-    padding: 14px 14px 0;
+    padding: 12px 12px 0;
     gap: 0;
+    border-radius: 12px;
   }
-  .card-main { padding-bottom: 8px; }
+  .card-main {
+    padding-bottom: 8px;
+    gap: 8px;
+  }
+
+  /* Üst chip satırı */
+  .card-pill { font-size: 11px; padding: 4px 9px; }
+  .pill-hemen { font-size: 10.5px; padding: 3px 8px; }
+  .card-aktif { font-size: 11px; }
+  .aktif-dot { width: 6px; height: 6px; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
+
+  /* Başlık küçük */
+  .card-title { font-size: 17px; letter-spacing: -0.3px; }
+
+  /* Saat satırı — yan yana ufak kutular, etiket gizli */
+  .card-time-row { gap: 8px; }
+  .card-time-box { padding: 8px 10px; gap: 8px; }
+  .time-ico { width: 26px; height: 26px; font-size: 14px; border-radius: 7px; }
+  .time-big { font-size: 13.5px; }
+  .time-lbl { font-size: 10px; }
+
+  /* Fiyat row daha sıkı */
+  .card-price-row { padding: 8px 4px; border-radius: 10px; }
+  .price-ico { font-size: 16px; margin-bottom: 2px; }
+  .price-big { font-size: 14px; }
+  .price-tl { font-size: 11.5px; }
+  .price-big small { font-size: 9.5px; }
+  .price-lbl { font-size: 9.5px; margin-top: 1px; }
+
+  /* Açıklama — max 2 satır ellipsiz */
+  .card-aciklama { padding: 8px 10px; font-size: 12px; gap: 6px; }
+  .aciklama-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    word-break: break-word;
+  }
+
+  /* Etiketler küçük */
+  .card-etiketler { gap: 5px; }
+  .etiket-chip { padding: 4px 8px; font-size: 11px; }
+  .etiket-chip-ico { font-size: 12px; }
+
+  /* Alt satır kompakt */
+  .card-bottom { padding-top: 8px; margin-top: 0; }
+  .card-delete-btn { font-size: 12.5px; padding: 2px 0; }
+  .card-kisaid { font-size: 11px; }
+
+  .card-contact {
+    position: sticky !important;
+    bottom: 0;
+    top: auto !important;
+    z-index: 5;
+    background: rgba(255, 255, 255, 0.97);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid #e5e7eb;
+    border-radius: 0 0 12px 12px;
+    padding: 8px 10px;
+    margin: 0 -12px;
+    align-self: stretch;
+    display: block;
+  }
 
   .card-contact {
     position: sticky !important;
