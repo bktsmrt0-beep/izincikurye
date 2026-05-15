@@ -2888,19 +2888,40 @@ textarea#rwYorum:focus {
   white-space: nowrap;
 }
 
-/* 🔥 Yüksek ücret rozeti (saatlik ≥ 250 ₺) */
+/* Ücret kademe rozetleri:
+   - tier-rocket (🚀): 250-270 ₺ rekabetçi
+   - tier-fire (🚀🔥): 280+ ₺ önerilen (en üst) */
+.pill-rocket {
+  background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+  color: #854d0e;
+  border: 1px solid #fde68a;
+}
 .pill-fire {
   background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
   color: #c2410c;
   border: 1px solid #fdba74;
 }
-.fire-badge {
-  font-size: 14px;
+.tier-badge {
+  font-size: 13px;
   line-height: 1;
   flex-shrink: 0;
-  filter: drop-shadow(0 1px 2px rgba(239, 68, 68, 0.3));
 }
-/* Yüksek ücretli ilan satırı — hafif turuncu kenar */
+.tier-rocket {
+  filter: drop-shadow(0 1px 2px rgba(202, 138, 4, 0.3));
+}
+.tier-fire {
+  font-size: 14px;
+  filter: drop-shadow(0 1px 2px rgba(239, 68, 68, 0.35));
+}
+/* Liste satır arka planları — kademe vurgusu */
+.ilan-row-rocket {
+  border-color: #fde68a;
+  background: linear-gradient(to right, #fefce8 0%, #fff 35%);
+}
+.ilan-row-rocket:hover {
+  border-color: #fcd34d;
+  background: linear-gradient(to right, #fef9c3 0%, #fefce8 35%);
+}
 .ilan-row-fire {
   border-color: #fdba74;
   background: linear-gradient(to right, #fff7ed 0%, #fff 30%);

@@ -546,14 +546,21 @@ function renderListings() {
 
   filtered.forEach(i => {
     const tahminiKazanc = (i.saat * i.fiyat + i.saat * 10 * i.km).toLocaleString("tr-TR");
-    const isYuksekUcret = i.fiyat >= 250;  // 250 ₺/saat ve üstü → 🔥
+    // Ücret kademeleri: 250-270 → 🚀 rekabetçi, 280+ → 🚀🔥 önerilen
+    const isFire = i.fiyat >= 280;
+    const isRocket = i.fiyat >= 250;
+    const tierBadge = isFire
+      ? '<span class="tier-badge tier-fire" title="Önerilen ücret — listede üstte">🚀🔥</span>'
+      : (isRocket ? '<span class="tier-badge tier-rocket" title="Rekabetçi ücret">🚀</span>' : "");
+    const tierClass = isFire ? " ilan-row-fire" : (isRocket ? " ilan-row-rocket" : "");
+
     const row = document.createElement("article");
-    row.className = "ilan-row" + (currentUser && i.user_id === currentUser.id ? " ilan-row-mine" : "") + (isYuksekUcret ? " ilan-row-fire" : "");
+    row.className = "ilan-row" + (currentUser && i.user_id === currentUser.id ? " ilan-row-mine" : "") + tierClass;
     row.dataset.id = i.id;
     row.dataset.act = "open-detail";
     row.innerHTML = `
       <div class="ilan-row-cell cell-bolge">
-        ${isYuksekUcret ? '<span class="fire-badge" title="Yüksek ücret — önerilen seviye">🔥</span>' : ""}
+        ${tierBadge}
         <span class="cell-ico">📍</span>
         <span class="cell-text">${escapeHtml(i.ilce)}, Ankara</span>
       </div>
@@ -640,7 +647,9 @@ function buildIlanCardHTML(i) {
         <div class="card-top-row">
           <span class="card-pill pill-ilce">📍 ${escapeHtml(i.ilce)}, Ankara</span>
           ${isMine ? '<span class="card-pill pill-mine">⚡ Senin İlanın</span>' : ""}
-          ${i.fiyat >= 250 ? '<span class="card-pill pill-fire" title="Yüksek ücret — önerilen seviye">🔥 Yüksek Ücret</span>' : ""}
+          ${i.fiyat >= 280
+            ? '<span class="card-pill pill-fire" title="Önerilen ücret — listede üstte">🚀🔥 Önerilen Ücret</span>'
+            : (i.fiyat >= 250 ? '<span class="card-pill pill-rocket" title="Rekabetçi ücret">🚀 Rekabetçi Ücret</span>' : "")}
         </div>
 
         <div class="card-title-row">
