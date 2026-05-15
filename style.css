@@ -363,6 +363,290 @@ body.sidebar-open { overflow: hidden; }
   .cell-aktif { font-size: 10.5px; }
 }
 
+/* ============ KURYE COMPACT SATIRI ============ */
+.kurye-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.4fr 1fr 0.8fr;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 14px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, transform .08s;
+}
+.kurye-row:hover {
+  background: #fff7ed;
+  border-color: #fed7aa;
+}
+.kurye-row:active { transform: scale(0.998); }
+.kurye-row-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.kurye-row-cell strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+.kurye-row-cell strong small {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 500;
+  margin-left: 1px;
+}
+.kurye-row-cell .cell-label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+}
+.kurye-row-avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: #fff7ed center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+.cell-ad .cell-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell-bolge .cell-text {
+  font-size: 13px;
+  color: #475569;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell-musait {
+  font-size: 11.5px;
+  color: #047857;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.cell-musait .cell-dot {
+  width: 8px; height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(34,197,94,0.2);
+  flex-shrink: 0;
+}
+.kurye-puan-inline {
+  font-size: 13px;
+  color: #ca8a04;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.kurye-puan-inline strong { color: #b45309; }
+.kurye-puan-inline small { color: #d97706; font-weight: 500; }
+
+@media (max-width: 600px) {
+  .kurye-row {
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-areas:
+      "ad ad ad musait"
+      "puan bolge bolge ucret";
+    gap: 4px 6px;
+    padding: 9px 12px;
+  }
+  .cell-ad { grid-area: ad; }
+  .cell-musait { grid-area: musait; justify-content: flex-end; }
+  .cell-puan { grid-area: puan; }
+  .cell-bolge { grid-area: bolge; }
+  .cell-ucret { grid-area: ucret; }
+  .cell-ad .cell-text { font-size: 13.5px; }
+  .kurye-row-cell strong { font-size: 12.5px; }
+  .kurye-row-cell .cell-label { display: none; }
+  .kurye-puan-inline { font-size: 12px; }
+  .cell-bolge .cell-text { font-size: 12px; }
+  .kurye-row-avatar { width: 28px; height: 28px; font-size: 15px; }
+}
+
+/* ============ KURYE DETAY MODAL ============ */
+#kuryeDetailModal .modal-card {
+  padding: 0;
+  max-width: 640px;
+  width: 100%;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+#kuryeDetailModal .modal-close {
+  position: absolute;
+  top: 8px; right: 8px;
+  z-index: 10;
+  background: #fff;
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  font-size: 20px;
+  color: #475569;
+  border: 0;
+  cursor: pointer;
+}
+.kurye-detail-v75 {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  max-height: calc(90vh - 16px);
+  overflow-y: auto;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+}
+.kd-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.kd-avatar {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  background: #fff7ed center/cover no-repeat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 30px;
+  flex-shrink: 0;
+  border: 3px solid #fff7ed;
+}
+.kd-info { flex: 1; min-width: 0; }
+.kd-name {
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+}
+.kd-musait {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: #047857;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+.kd-puan {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12.5px;
+  color: #92400e;
+  cursor: pointer;
+}
+.kd-puan:hover { background: #fde68a; }
+.kd-puan-stars { color: #d97706; letter-spacing: -1px; }
+.kd-puan strong { color: #b45309; font-weight: 800; }
+.kd-puan small { color: #d97706; font-weight: 500; }
+.kd-puan-empty { background: #f1f5f9; border-color: #e2e8f0; color: #94a3b8; cursor: default; }
+
+.kd-bio {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  font-size: 13px;
+  color: #7c2d12;
+  line-height: 1.45;
+  margin-bottom: 12px;
+}
+
+.kd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.kd-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+.kd-cell-label {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+.kd-cell strong {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.kd-bolge-wrap {
+  margin-bottom: 14px;
+}
+.kd-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.kd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #c2410c;
+}
+
+.kd-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.kd-actions .contact-btn {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 11px 14px;
+  font-size: 14px;
+  border-radius: 11px;
+  flex-direction: row;
+  gap: 6px;
+}
+
+@media (max-width: 600px) {
+  #kuryeDetailModal { padding: 8px; box-sizing: border-box; }
+  #kuryeDetailModal .modal-card { max-width: 100%; }
+  .kurye-detail-v75 { padding: 14px; }
+  .kd-grid { grid-template-columns: 1fr; }
+  .kd-name { font-size: 17px; }
+  .kd-avatar { width: 52px; height: 52px; font-size: 24px; }
+}
+
 /* Detay modalı — ID specificity ile modal-wide'i override */
 #ilanDetailModal .modal-card {
   padding: 0;

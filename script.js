@@ -1596,15 +1596,16 @@ let _closingFromPopstate = false;
 function closeModals() {
   const adresWasOpen = !document.getElementById("adresModal")?.classList.contains("hidden");
   const detailWasOpen = !document.getElementById("ilanDetailModal")?.classList.contains("hidden");
+  const kuryeWasOpen = !document.getElementById("kuryeDetailModal")?.classList.contains("hidden");
   document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
   document.body.classList.remove("modal-open");
-  // İlan detayı (eski adres veya yeni full card) kapanırken URL'i temizle
-  if (adresWasOpen || detailWasOpen) {
+  // İlan / kurye detayı kapanırken URL'i temizle
+  if (adresWasOpen || detailWasOpen || kuryeWasOpen) {
     const url = new URL(window.location.href);
-    const pathnameMatchesIlan = /^\/ilan\/[^/]+/.test(url.pathname);
-    if (url.searchParams.has("ilan") || pathnameMatchesIlan) {
+    const pathnameMatches = /^\/(ilan|kurye)\/[^/]+/.test(url.pathname);
+    if (url.searchParams.has("ilan") || pathnameMatches) {
       const st = history.state?.modal;
-      if (!_closingFromPopstate && (st === "adres" || st === "ilanDetail")) {
+      if (!_closingFromPopstate && (st === "adres" || st === "ilanDetail" || st === "kuryeDetail")) {
         history.back();
       } else if (!_closingFromPopstate) {
         history.replaceState(null, "", "/" + (url.search || ""));
@@ -1614,11 +1615,12 @@ function closeModals() {
   }
 }
 
-// Geri tuşu: ilan modalı açıksa kapat, siteden çıkma
+// Geri tuşu: detay modalları açıksa kapat, siteden çıkma
 window.addEventListener("popstate", () => {
   const adresOpen = !document.getElementById("adresModal")?.classList.contains("hidden");
   const detailOpen = !document.getElementById("ilanDetailModal")?.classList.contains("hidden");
-  if (adresOpen || detailOpen) {
+  const kuryeOpen = !document.getElementById("kuryeDetailModal")?.classList.contains("hidden");
+  if (adresOpen || detailOpen || kuryeOpen) {
     _closingFromPopstate = true;
     closeModals();
     _closingFromPopstate = false;
@@ -3278,7 +3280,7 @@ async function loadMusaitKuryeler() {
     const session = readStoredSession();
     // Sıralama: puan_ort DESC (NULL'lar sonda) → puan_sayisi DESC → musait_at DESC
     let q = `profiles?kullanici_tipi=eq.kurye&musait=eq.true&id=neq.${currentUser.id}`
-      + `&select=id,ad,soyad,tel,avatar_url,tercih_ilceler,calisma_baslangic,calisma_bitis,musait_at,bio,puan_ort,puan_sayisi`
+      + `&select=id,ad,soyad,tel,avatar_url,tercih_ilceler,calisma_baslangic,calisma_bitis,calisma_gunleri,musait_at,bio,puan_ort,puan_sayisi,min_ucret,max_ucret,created_at`
       + `&order=puan_ort.desc.nullslast,puan_sayisi.desc,musait_at.desc`;
     const { data, error } = await rawSelect(q, session?.access_token, 6000);
     if (error) {
@@ -3317,57 +3319,187 @@ function renderMusaitKuryeler() {
   kuryeListingsEl.classList.remove("hidden");
 
   kuryeler.forEach(k => {
-    const card = document.createElement("article");
-    card.className = "kurye-card";
     const adSoyad = ((k.ad || "") + " " + (k.soyad || "")).trim() || "Kurye";
-    const ilceler = (k.tercih_ilceler && k.tercih_ilceler.length)
-      ? k.tercih_ilceler.map(i => `<span class="kurye-ilce">📍 ${escapeHtml(i)}</span>`).join("")
-      : `<span class="muted small">Bölge belirtilmemiş</span>`;
-    const saat = (k.calisma_baslangic != null && k.calisma_bitis != null)
-      ? `<span class="kurye-saat">⏰ ${String(k.calisma_baslangic).padStart(2,"0")}:00 – ${String(k.calisma_bitis).padStart(2,"0")}:00</span>`
-      : "";
+    const ilceCount = (k.tercih_ilceler || []).length;
+    const ilceText = ilceCount === 0 ? "Bölge yok"
+      : ilceCount === 1 ? k.tercih_ilceler[0]
+      : `${k.tercih_ilceler[0]} +${ilceCount - 1}`;
+    const ucretText = (k.min_ucret && k.max_ucret)
+      ? `${k.min_ucret}-${k.max_ucret}<small>₺</small>`
+      : (k.min_ucret ? `${k.min_ucret}+ <small>₺</small>`
+      : (k.max_ucret ? `≤${k.max_ucret}<small>₺</small>` : "—"));
+    const puanText = k.puan_sayisi > 0
+      ? `<strong>${Number(k.puan_ort).toFixed(1)}</strong> <small>(${k.puan_sayisi})</small>`
+      : `<small class="muted">yok</small>`;
+    const musaitDakika = k.musait_at
+      ? Math.max(0, Math.floor((Date.now() - new Date(k.musait_at).getTime()) / 60000))
+      : 0;
+    const musaitText = musaitDakika < 60
+      ? `${musaitDakika} dk`
+      : musaitDakika < 1440
+      ? `${Math.floor(musaitDakika / 60)} sa`
+      : `${Math.floor(musaitDakika / 1440)} gün`;
     const avatarStyle = k.avatar_url
       ? `style="background-image:url('${k.avatar_url.replace(/'/g, "%27")}')"`
       : "";
     const avatarFallback = k.avatar_url ? "" : "👤";
 
-    // Puan rozeti
-    let puanHtml = "";
-    if (k.puan_sayisi > 0) {
-      const ort = Number(k.puan_ort).toFixed(1);
-      const fullStars = Math.round(k.puan_ort);
-      puanHtml = `<button type="button" class="kurye-puan" data-kact="show-reviews" data-id="${k.id}" data-ad="${escapeHtml(adSoyad)}" title="Yorumları gör">
-        <span class="kurye-puan-stars">${"★".repeat(fullStars)}${"☆".repeat(5 - fullStars)}</span>
-        <span class="kurye-puan-num"><strong>${ort}</strong> (${k.puan_sayisi})</span>
-      </button>`;
-    } else {
-      puanHtml = `<span class="kurye-puan kurye-puan-empty">Yorum yok</span>`;
-    }
-
-    card.innerHTML = `
-      <div class="kurye-head">
-        <div class="kurye-avatar" ${avatarStyle}>${avatarFallback}</div>
-        <div class="kurye-info">
-          <h3>${escapeHtml(adSoyad)}</h3>
-          <div class="kurye-meta">${ilceler}${saat}</div>
-          ${puanHtml}
-        </div>
+    const row = document.createElement("article");
+    row.className = "kurye-row";
+    row.dataset.id = k.id;
+    row.dataset.kact = "open-kurye-detail";
+    row.innerHTML = `
+      <div class="kurye-row-cell cell-ad">
+        <span class="kurye-row-avatar" ${avatarStyle}>${avatarFallback}</span>
+        <span class="cell-text">${escapeHtml(adSoyad)}</span>
       </div>
-      ${k.bio ? `<p class="kurye-bio">${escapeHtml(k.bio)}</p>` : ""}
-      <div class="actions">
-        <button class="action-btn call" data-kact="call" data-id="${k.id}">📞 Ara</button>
-        <button class="action-btn wa" data-kact="wa" data-id="${k.id}">💬 WhatsApp</button>
+      <div class="kurye-row-cell cell-puan">
+        <span class="cell-label">Puan</span>
+        <span class="kurye-puan-inline">⭐ ${puanText}</span>
+      </div>
+      <div class="kurye-row-cell cell-bolge">
+        <span class="cell-label">Bölge</span>
+        <span class="cell-text">📍 ${escapeHtml(ilceText)}</span>
+      </div>
+      <div class="kurye-row-cell cell-ucret">
+        <span class="cell-label">Ücret</span>
+        <strong>${ucretText}</strong>
+      </div>
+      <div class="kurye-row-cell cell-musait">
+        <span class="cell-dot"></span>
+        <span>${musaitText}</span>
       </div>
     `;
-    kuryeListingsEl.appendChild(card);
+    kuryeListingsEl.appendChild(row);
   });
 }
 
-// Kurye kart aksiyonları
-kuryeListingsEl?.addEventListener("click", e => {
+// =============== KURYE DETAY MODAL ===============
+
+function buildKuryeDetailHTML(k) {
+  const adSoyad = ((k.ad || "") + " " + (k.soyad || "")).trim() || "Kurye";
+  const tel = k.tel || "";
+  const telDisplay = tel ? _displayPhone(tel) : "—";
+
+  const avatarStyle = k.avatar_url
+    ? `style="background-image:url('${k.avatar_url.replace(/'/g, "%27")}')"`
+    : "";
+  const avatarFallback = k.avatar_url ? "" : "👤";
+
+  const ilceler = (k.tercih_ilceler || []).length
+    ? k.tercih_ilceler.map(i => `<span class="kd-chip kd-chip-ilce">📍 ${escapeHtml(i)}</span>`).join("")
+    : `<span class="muted small">Bölge belirtilmemiş</span>`;
+
+  const saatText = (k.calisma_baslangic != null && k.calisma_bitis != null)
+    ? `${String(k.calisma_baslangic).padStart(2, "0")}:00 → ${String(k.calisma_bitis).padStart(2, "0")}:00`
+    : "—";
+
+  const gunAdlari = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
+  const gunler = (k.calisma_gunleri || []).length
+    ? k.calisma_gunleri.map(g => gunAdlari[g - 1]).join(", ")
+    : "—";
+
+  const ucretText = (k.min_ucret && k.max_ucret)
+    ? `${k.min_ucret} - ${k.max_ucret} ₺/saat`
+    : (k.min_ucret ? `${k.min_ucret}₺+ /saat`
+    : (k.max_ucret ? `≤ ${k.max_ucret}₺/saat` : "—"));
+
+  let puanHtml = "";
+  if (k.puan_sayisi > 0) {
+    const ort = Number(k.puan_ort).toFixed(1);
+    const fullStars = Math.round(k.puan_ort);
+    puanHtml = `<button type="button" class="kd-puan" data-kact="show-reviews" data-id="${k.id}" data-ad="${escapeHtml(adSoyad)}" title="Yorumları gör">
+      <span class="kd-puan-stars">${"★".repeat(fullStars)}${"☆".repeat(5 - fullStars)}</span>
+      <strong>${ort}</strong>
+      <small>(${k.puan_sayisi} yorum)</small>
+    </button>`;
+  } else {
+    puanHtml = `<span class="kd-puan kd-puan-empty">Henüz yorum yok</span>`;
+  }
+
+  const musaitDakika = k.musait_at
+    ? Math.max(0, Math.floor((Date.now() - new Date(k.musait_at).getTime()) / 60000))
+    : 0;
+  const musaitText = musaitDakika < 60
+    ? `${musaitDakika} dakikadır müsait`
+    : musaitDakika < 1440
+    ? `${Math.floor(musaitDakika / 60)} saattir müsait`
+    : `${Math.floor(musaitDakika / 1440)} gündür müsait`;
+
+  return `
+    <article class="kurye-detail-v75">
+      <div class="kd-header">
+        <div class="kd-avatar" ${avatarStyle}>${avatarFallback}</div>
+        <div class="kd-info">
+          <h2 class="kd-name">${escapeHtml(adSoyad)}</h2>
+          <div class="kd-musait"><span class="aktif-dot"></span> ${musaitText}</div>
+          ${puanHtml}
+        </div>
+      </div>
+
+      ${k.bio ? `<div class="kd-bio"><span class="aciklama-ico">ℹ</span><span>${escapeHtml(k.bio)}</span></div>` : ""}
+
+      <div class="kd-grid">
+        <div class="kd-cell">
+          <span class="kd-cell-label">⏰ Çalışma Saati</span>
+          <strong>${saatText}</strong>
+        </div>
+        <div class="kd-cell">
+          <span class="kd-cell-label">📅 Günler</span>
+          <strong>${escapeHtml(gunler)}</strong>
+        </div>
+        <div class="kd-cell">
+          <span class="kd-cell-label">💰 Beklenen Ücret</span>
+          <strong>${ucretText}</strong>
+        </div>
+        <div class="kd-cell">
+          <span class="kd-cell-label">📞 Telefon</span>
+          <strong>${escapeHtml(telDisplay)}</strong>
+        </div>
+      </div>
+
+      <div class="kd-bolge-wrap">
+        <span class="kd-cell-label">Tercih Edilen Bölgeler</span>
+        <div class="kd-chips">${ilceler}</div>
+      </div>
+
+      <div class="kd-actions">
+        <button type="button" class="contact-btn contact-call" data-kact="call" data-id="${k.id}">
+          <span class="contact-ico">📞</span><span>Ara</span>
+        </button>
+        <button type="button" class="contact-btn contact-wa" data-kact="wa" data-id="${k.id}">
+          <span class="contact-ico">💬</span><span>WhatsApp</span>
+        </button>
+        ${k.puan_sayisi > 0 ? `<button type="button" class="contact-btn contact-addr" data-kact="show-reviews" data-id="${k.id}" data-ad="${escapeHtml(adSoyad)}">
+          <span class="contact-ico">⭐</span><span>Yorumlar</span>
+        </button>` : ""}
+      </div>
+    </article>
+  `;
+}
+
+function openKuryeDetail(k) {
+  const body = document.getElementById("kuryeDetailBody");
+  if (!body) return;
+  body.innerHTML = buildKuryeDetailHTML(k);
+  openModal("kuryeDetailModal");
+  try {
+    if (history.state?.modal !== "kuryeDetail" || history.state?.id !== k.id) {
+      history.pushState({ modal: "kuryeDetail", id: k.id }, "", `/kurye/${k.id}`);
+    }
+  } catch {}
+}
+
+// Kurye kart aksiyonları — global delegasyon (liste + detay modal)
+document.addEventListener("click", e => {
   const btn = e.target.closest("[data-kact]");
   if (!btn) return;
   if (!currentUser) { openModal("registerModal"); return; }
+  if (btn.dataset.kact === "open-kurye-detail") {
+    const k = kuryeler.find(x => x.id === btn.dataset.id);
+    if (k) openKuryeDetail(k);
+    return;
+  }
   if (btn.dataset.kact === "show-reviews") {
     openReviewViewModal(btn.dataset.id, btn.dataset.ad || "Kurye");
     return;
