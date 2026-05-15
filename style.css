@@ -3189,17 +3189,13 @@ textarea#rwYorum:focus {
   }
 }
 
-/* Çok dar (≤420px): biraz daha sıkı ama label görünür kalır */
+/* Çok dar (≤420px): tek sütun, daha sıkı padding */
 @media (max-width: 420px) {
   .ilan-card-v75 {
-    grid-template-columns: minmax(0, 1fr) 58px !important;
-    padding: 9px;
-    gap: 6px;
+    grid-template-columns: minmax(0, 1fr) !important;
+    padding: 6px;
+    gap: 0;
   }
-  .contact-actions .contact-btn { width: 58px; height: 48px; }
-  .contact-actions .contact-label { font-size: 9.5px; }
-  .contact-actions .contact-ico { font-size: 17px; }
-  .contact-more .contact-ico { font-size: 20px; }
 }
 @media (max-width: 520px) {
   /* Saat kutuları yan yana kalsın — sıkı boyutlar */
