@@ -2718,14 +2718,67 @@ textarea#rwYorum:focus {
 .contact-addr:hover { background: #e2e8f0; }
 .contact-btn.locked { opacity: 0.55; cursor: not-allowed; }
 
-/* Hızlı İletişim panel — alt bölüm: ayraç + inline menü öğeleri */
+/* Hızlı İletişim panel — alt bölüm: ayraç + Favori */
 .contact-divider {
   height: 1px;
   background: #e5e7eb;
   margin: 6px 0 4px;
 }
 
-/* Inline menü öğesi (Paylaş, Düzenle, Beğen, Beğenmeme, Sorun Bildir) */
+.contact-fav {
+  width: 100%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.contact-fav:hover { background: #fff1f2; border-color: #fbcfe8; color: #be185d; }
+.contact-fav.active {
+  background: #fff1f2;
+  border-color: #fbcfe8;
+  color: #be123c;
+}
+.contact-fav .fav-ico { font-size: 17px; line-height: 1; }
+.contact-fav.active .fav-ico { color: #e11d48; }
+.contact-fav.locked { opacity: 0.55; cursor: not-allowed; }
+
+/* Kebab menü içindeki reaksiyonlar (Beğen/Beğenmeme/Sorun Bildir + Paylaş/Düzenle) */
+.kebab-menu .kmenu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.kebab-menu .kmi-ico { font-size: 15px; line-height: 1; width: 20px; text-align: center; flex-shrink: 0; }
+.kebab-menu .kmi-label { flex: 1; min-width: 0; }
+.kebab-menu .kmi-count {
+  font-size: 11.5px;
+  color: #64748b;
+  font-weight: 700;
+  background: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-variant-numeric: tabular-nums;
+  min-width: 18px;
+  text-align: center;
+}
+.kebab-menu .kmi-count:empty { display: none; }
+.kmenu-rxn.active { color: #1d4ed8; }
+.kmenu-rxn.active .kmi-count { background: #dbeafe; color: #1e40af; }
+.kmenu-item.kmenu-rxn[data-rxn-tip="begenmeme"].active { color: #b91c1c; }
+.kmenu-item.kmenu-rxn[data-rxn-tip="begenmeme"].active .kmi-count { background: #fee2e2; color: #991b1b; }
+.kmenu-rxn-rep:hover { background: #fef2f2; color: #b91c1c; }
+
+/* Inline menü öğesi (Paylaş, Düzenle, Beğen, Beğenmeme, Sorun Bildir) — şu an kullanılmıyor ama bırakıldı */
 .menu-item {
   display: flex;
   align-items: center;
