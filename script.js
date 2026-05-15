@@ -805,11 +805,11 @@ function renderEmptyState() {
       document.getElementById("filterResetBtn")?.click();
     });
   } else if (selectedIlce !== "all") {
-    // Belirli ilçede ilan yok → diğer ilçelerde olanları öner
+    // Belirli ilçede ilan yok → davet edici, başka bölgeleri öner
     emptyEl.innerHTML = `
       <div class="empty-icon">🔍</div>
-      <h3>${selectedIlce}'da şu an aktif ilan yok</h3>
-      <p>Yakın bir ilçeyi dene veya tümünü gör:</p>
+      <h3>İlanları istediğiniz bölgede filtreleyebilirsiniz</h3>
+      <p>${escapeHtml(selectedIlce)} bölgesinde şu an ilan yok. Aşağıdan farklı bölge seçebilirsin:</p>
       <div class="empty-chips">
         <button class="chip" data-ilce="all">Tüm İlçeler</button>
         ${ANKARA_ILCELERI.filter(i => i !== selectedIlce).slice(0, 6).map(i =>
@@ -826,8 +826,8 @@ function renderEmptyState() {
   } else {
     emptyEl.innerHTML = `
       <div class="empty-icon">⏳</div>
-      <h3>Şu an aktif izinci ilanı yok</h3>
-      <p>Yeni ilanlar genelde sabah ve öğle saatlerinde yayınlanır. Birazdan tekrar bak.</p>
+      <h3>İlanları istediğiniz bölgede filtreleyebilirsiniz</h3>
+      <p>Şu an aktif ilan yok. Üst menüden ilçe seçerek arama yapabilirsin — yeni ilanlar genelde sabah ve öğle saatlerinde yayınlanır.</p>
     `;
   }
   emptyEl.classList.remove("hidden");
