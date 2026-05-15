@@ -2343,7 +2343,7 @@ textarea#rwYorum:focus {
 
 .ilan-card-v75 {
   display: grid;
-  grid-template-columns: 1fr 260px;
+  grid-template-columns: minmax(0, 1fr) 240px;
   gap: 18px;
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -2766,22 +2766,24 @@ textarea#rwYorum:focus {
   color: #c2410c;
 }
 
-/* Mobile — stack */
-@media (max-width: 880px) {
+/* Mobile — stack (en geç 980px'te dik düzen) */
+@media (max-width: 980px) {
   .ilan-card-v75 {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr) !important;
     padding: 16px;
     gap: 14px;
   }
   .card-contact {
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
+    position: static !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
     padding: 12px;
     gap: 8px;
+    align-self: stretch;
+    top: auto !important;
   }
   .contact-title { display: none; }
-  .contact-btn { flex: 1 1 calc(50% - 4px); padding: 11px 8px; font-size: 13.5px; }
+  .contact-btn { flex: 1 1 calc(50% - 4px); padding: 11px 8px; font-size: 13.5px; min-width: 0; }
   .contact-addr { flex: 1 1 100%; }
   .contact-fav { flex: 1 1 100%; margin-top: 0; }
 }
