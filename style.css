@@ -3118,7 +3118,12 @@ textarea#rwYorum:focus {
   .contact-more .contact-ico { font-size: 20px; }
 }
 @media (max-width: 520px) {
-  .card-time-row { grid-template-columns: 1fr; }
+  /* Saat kutuları yan yana kalsın — sıkı boyutlar */
+  .card-time-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+  .card-time-box { padding: 6px 8px; gap: 6px; }
+  .time-ico { width: 22px; height: 22px; font-size: 13px; }
+  .time-big { font-size: 12.5px; }
+  .time-lbl { font-size: 9.5px; }
   .card-price-row { padding: 8px; }
   .price-big { font-size: 14px; }
   .price-tl { font-size: 12px; }
