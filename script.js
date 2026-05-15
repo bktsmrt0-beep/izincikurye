@@ -3378,17 +3378,20 @@ function renderMusaitKuryeler() {
 
 function buildKuryeDetailHTML(k) {
   const adSoyad = ((k.ad || "") + " " + (k.soyad || "")).trim() || "Kurye";
-  const tel = k.tel || "";
-  const telDisplay = tel ? _displayPhone(tel) : "—";
 
   const avatarStyle = k.avatar_url
     ? `style="background-image:url('${k.avatar_url.replace(/'/g, "%27")}')"`
     : "";
   const avatarFallback = k.avatar_url ? "" : "👤";
 
-  const ilceler = (k.tercih_ilceler || []).length
-    ? k.tercih_ilceler.map(i => `<span class="kd-chip kd-chip-ilce">📍 ${escapeHtml(i)}</span>`).join("")
+  const ilceArr = k.tercih_ilceler || [];
+  const ilceler = ilceArr.length
+    ? ilceArr.map(i => `<span class="kd-chip kd-chip-ilce">📍 ${escapeHtml(i)}</span>`).join("")
     : `<span class="muted small">Bölge belirtilmemiş</span>`;
+  const ilceSummary = ilceArr.length === 0 ? "—"
+    : ilceArr.length === 1 ? ilceArr[0]
+    : ilceArr.length === 2 ? `${ilceArr[0]}, ${ilceArr[1]}`
+    : `${ilceArr[0]}, ${ilceArr[1]} <small>+${ilceArr.length - 2}</small>`;
 
   const saatText = (k.calisma_baslangic != null && k.calisma_bitis != null)
     ? `${String(k.calisma_baslangic).padStart(2, "0")}:00 → ${String(k.calisma_bitis).padStart(2, "0")}:00`
@@ -3453,13 +3456,13 @@ function buildKuryeDetailHTML(k) {
           <strong>${ucretText}</strong>
         </div>
         <div class="kd-cell">
-          <span class="kd-cell-label">📞 Telefon</span>
-          <strong>${escapeHtml(telDisplay)}</strong>
+          <span class="kd-cell-label">📍 Hakim Bölge</span>
+          <strong>${ilceSummary}</strong>
         </div>
       </div>
 
       <div class="kd-bolge-wrap">
-        <span class="kd-cell-label">Tercih Edilen Bölgeler</span>
+        <span class="kd-cell-label">Hakim Olduğu Bölgeler</span>
         <div class="kd-chips">${ilceler}</div>
       </div>
 
