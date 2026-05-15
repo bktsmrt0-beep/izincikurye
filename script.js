@@ -554,6 +554,14 @@ function renderListings() {
       : (isRocket ? '<span class="tier-badge tier-rocket" title="Rekabetçi ücret">🚀</span>' : "");
     const tierClass = isFire ? " ilan-row-fire" : (isRocket ? " ilan-row-rocket" : "");
 
+    // Net beğeni rozeti: pozitif yeşil, negatif kırmızı, 0 gizli
+    const netRxn = (i.begen_sayisi || 0) - (i.begenmeme_sayisi || 0);
+    const netRxnBadge = netRxn > 0
+      ? `<span class="net-rxn net-rxn-pos" title="${i.begen_sayisi} beğen − ${i.begenmeme_sayisi} beğenmeme">👍 +${netRxn}</span>`
+      : (netRxn < 0
+        ? `<span class="net-rxn net-rxn-neg" title="${i.begen_sayisi} beğen − ${i.begenmeme_sayisi} beğenmeme">👎 ${netRxn}</span>`
+        : "");
+
     const row = document.createElement("article");
     row.className = "ilan-row" + (currentUser && i.user_id === currentUser.id ? " ilan-row-mine" : "") + tierClass;
     row.dataset.id = i.id;
@@ -583,6 +591,7 @@ function renderListings() {
       <div class="ilan-row-cell cell-aktif">
         <span class="cell-dot"></span>
         <span class="ilan-aktif-sayac" data-created="${i.created_at}">…</span>
+        ${netRxnBadge}
       </div>
     `;
     listingsEl.appendChild(row);
