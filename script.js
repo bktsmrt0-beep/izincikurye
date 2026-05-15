@@ -526,6 +526,23 @@ function renderListings() {
         </div>
 
         ${i.aciklama ? `<div class="card-aciklama"><span class="aciklama-ico">ℹ</span><span class="aciklama-text">${escapeHtml(i.aciklama)}</span></div>` : ""}
+
+        <!-- Mobile-only inline iletişim satırı (açıklamanın altında) -->
+        <div class="mobile-contact-row">
+          <button type="button" class="mcr-btn mcr-call ${lockedClass}" data-act="call" data-id="${i.id}" ${lockedTitle}>
+            <span class="mcr-ico">📞</span><span class="mcr-label">Ara</span>
+          </button>
+          <button type="button" class="mcr-btn mcr-wa ${lockedClass}" data-act="wa" data-id="${i.id}" ${lockedTitle}>
+            <span class="mcr-ico">💬</span><span class="mcr-label">WhatsApp</span>
+          </button>
+          <button type="button" class="mcr-btn mcr-addr ${lockedClass}" data-act="addr" data-id="${i.id}" ${lockedTitle}>
+            <span class="mcr-ico">📍</span><span class="mcr-label">Adres</span>
+          </button>
+          <button type="button" class="mcr-btn mcr-more" data-act="kebab" data-id="${i.id}" aria-label="Daha fazla">
+            <span class="mcr-ico">⋮</span>
+          </button>
+        </div>
+
         ${etiketHtml}
 
         <div class="card-bottom">
