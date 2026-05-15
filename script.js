@@ -482,9 +482,6 @@ function renderListings() {
         <div class="card-top-row">
           <span class="card-pill pill-ilce">📍 ${escapeHtml(i.ilce)}, Ankara</span>
           ${isMine ? '<span class="card-pill pill-mine">⚡ Senin İlanın</span>' : ""}
-          <div class="card-top-right">
-            <span class="card-aktif"><span class="aktif-dot"></span><span class="ilan-aktif-sayac" data-created="${i.created_at}">başlatılıyor…</span></span>
-          </div>
         </div>
 
         <div class="card-title-row">
@@ -532,10 +529,10 @@ function renderListings() {
         ${etiketHtml}
 
         <div class="card-bottom">
-          ${isMine
-            ? `<button type="button" class="card-delete-btn" data-act="delete" data-id="${i.id}">🗑 İlanı Kaldır</button>`
-            : '<span></span>'}
-          <span class="card-kisaid">İlan No: <strong>${escapeHtml(kisaId)}</strong></span>
+          <span class="card-aktif"><span class="aktif-dot"></span><span class="ilan-aktif-sayac" data-created="${i.created_at}">başlatılıyor…</span></span>
+          ${isMine ? `<button type="button" class="card-edit-btn" data-act="edit" data-id="${i.id}">✏️ Düzenle</button>` : ""}
+          ${isMine ? `<button type="button" class="card-delete-btn" data-act="delete" data-id="${i.id}">🗑 Kaldır</button>` : ""}
+          <span class="card-kisaid">${escapeHtml(kisaId)}</span>
         </div>
       </div>
 
@@ -549,7 +546,7 @@ function renderListings() {
             <span class="contact-ico">💬</span><span class="contact-label">WhatsApp</span>
           </button>
           <button type="button" class="contact-btn contact-addr ${lockedClass}" data-act="addr" data-id="${i.id}" ${lockedTitle}>
-            <span class="contact-ico">📍</span><span class="contact-label">Adresi Gör</span>
+            <span class="contact-ico">📍</span><span class="contact-label">Adres</span>
           </button>
           <button type="button" class="contact-btn contact-more" data-act="kebab" data-id="${i.id}" aria-label="Daha fazla">
             <span class="contact-ico">⋮</span>
@@ -561,9 +558,6 @@ function renderListings() {
         <button type="button" class="menu-item" data-act="share-main" data-id="${i.id}">
           <span class="mi-ico">🔗</span><span class="mi-label">Paylaş</span>
         </button>
-        ${isMine ? `<button type="button" class="menu-item" data-act="edit" data-id="${i.id}">
-          <span class="mi-ico">✏️</span><span class="mi-label">Düzenle</span>
-        </button>` : ""}
 
         ${currentUser ? `
         <div class="contact-divider"></div>
@@ -817,13 +811,9 @@ function _closeKebab() {
 function _openKebab(btn, ilan) {
   _closeKebab();
   btn.classList.add("open");
-  const isMine = currentUser && ilan.user_id === currentUser.id;
   const cur = userReaksiyonlar.get(ilan.id);
   const items = [];
   items.push(`<button type="button" class="kmenu-item" data-act="share" data-id="${ilan.id}"><span class="kmi-ico">🔗</span><span class="kmi-label">Paylaş</span></button>`);
-  if (isMine) {
-    items.push(`<button type="button" class="kmenu-item" data-act="edit" data-id="${ilan.id}"><span class="kmi-ico">✏️</span><span class="kmi-label">Düzenle</span></button>`);
-  }
   items.push(`<div class="kmenu-sep"></div>`);
   items.push(`<button type="button" class="kmenu-item kmenu-rxn ${cur === 'begen' ? 'active' : ''}" data-act="rxn" data-rxn-tip="begen" data-rxn-id="${ilan.id}" data-id="${ilan.id}">
     <span class="kmi-ico">👍</span><span class="kmi-label">Beğen</span>
