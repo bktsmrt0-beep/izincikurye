@@ -541,15 +541,20 @@ function renderListings() {
 
       <aside class="card-contact">
         <h4 class="contact-title">Hızlı İletişim</h4>
-        <button type="button" class="contact-btn contact-call ${lockedClass}" data-act="call" data-id="${i.id}" ${lockedTitle}>
-          <span class="contact-ico">📞</span><span>Ara</span>
-        </button>
-        <button type="button" class="contact-btn contact-wa ${lockedClass}" data-act="wa" data-id="${i.id}" ${lockedTitle}>
-          <span class="contact-ico">💬</span><span>WhatsApp</span>
-        </button>
-        <button type="button" class="contact-btn contact-addr ${lockedClass}" data-act="addr" data-id="${i.id}" ${lockedTitle}>
-          <span class="contact-ico">📍</span><span>Adresi Gör</span>
-        </button>
+        <div class="contact-actions">
+          <button type="button" class="contact-btn contact-call ${lockedClass}" data-act="call" data-id="${i.id}" ${lockedTitle}>
+            <span class="contact-ico">📞</span><span class="contact-label">Ara</span>
+          </button>
+          <button type="button" class="contact-btn contact-wa ${lockedClass}" data-act="wa" data-id="${i.id}" ${lockedTitle}>
+            <span class="contact-ico">💬</span><span class="contact-label">WhatsApp</span>
+          </button>
+          <button type="button" class="contact-btn contact-addr ${lockedClass}" data-act="addr" data-id="${i.id}" ${lockedTitle}>
+            <span class="contact-ico">📍</span><span class="contact-label">Adresi Gör</span>
+          </button>
+          <button type="button" class="contact-btn contact-more" data-act="kebab" data-id="${i.id}" aria-label="Daha fazla">
+            <span class="contact-ico">⋮</span>
+          </button>
+        </div>
 
         <div class="contact-divider"></div>
 
