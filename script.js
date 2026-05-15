@@ -447,7 +447,8 @@ function renderListings() {
     const isMine = currentUser && i.user_id === currentUser.id;
     const isFav = currentUser && favoriler.has(i.id);
     const hemenBasla = _isHemenBasla(i.bas_saat);
-    const tahminiKazanc = (i.saat * i.fiyat).toLocaleString("tr-TR");
+    // Tahmini kazanç: (saat × saatlik ücret) + (saat × 10 km/saat × km ücreti)
+    const tahminiKazanc = (i.saat * i.fiyat + i.saat * 10 * i.km).toLocaleString("tr-TR");
     const kisaId = i.kisa_id || ("#" + String(i.id).slice(0, 8));
 
     // Kurye rozetleri
