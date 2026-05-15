@@ -115,7 +115,7 @@ let currentUser = null;   // { id, email, ad, soyad, tel }
 let ilanlar = [];
 let listingScope = "all"; // "all" | "mine"
 let contentTab = "ilanlar"; // "ilanlar" | "kuryeler"
-let currentFilters = { saat: "all", fiyat: "all", sort: "new", urgentOnly: false };
+let currentFilters = { saat: "all", fiyat: "all", sort: "smart", urgentOnly: false };
 const PAGE_SIZE = 20;
 let pageOffset = 0;
 let hasMoreIlanlar = true;
@@ -301,7 +301,12 @@ async function loadIlanlar({ append = false } = {}) {
   try {
     const filter = districtSelect.value;
     const tableOrView = currentUser ? "ilanlar" : "ilanlar_public";
-    let q = sb.from(tableOrView).select("*").order("created_at", { ascending: false });
+    // Sıralama: ücret odaklı — saatlik fiyat DESC, eşitlikte km DESC, eşitlikte yeniden eskiye
+    // İşletme yüksek ücret verirse listede üstte; düşük tutarsa aşağı iner
+    let q = sb.from(tableOrView).select("*")
+      .order("fiyat", { ascending: false })
+      .order("km", { ascending: false })
+      .order("created_at", { ascending: false });
     if (filter !== "all") q = q.eq("ilce", filter);
     if (listingScope === "mine" && currentUser) q = q.eq("user_id", currentUser.id);
     if (tableOrView === "ilanlar") q = q.gt("expires_at", new Date().toISOString());
@@ -463,8 +468,10 @@ function getFilteredIlanlar() {
     arr.sort((a, b) => a.fiyat - b.fiyat);
   } else if (sort === "price-desc") {
     arr.sort((a, b) => b.fiyat - a.fiyat);
+  } else if (sort === "new") {
+    arr.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
   }
-  // "new" is default DB order (created_at desc)
+  // "smart" is default DB order: fiyat DESC, km DESC, created_at DESC
   return arr;
 }
 
@@ -473,7 +480,7 @@ function activeFilterCount() {
   if (currentFilters.saat !== "all") n++;
   if (currentFilters.fiyat !== "all") n++;
   if (currentFilters.urgentOnly) n++;
-  if (currentFilters.sort !== "new") n++;
+  if (currentFilters.sort !== "smart") n++;
   if (districtSelect?.value && districtSelect.value !== "all") n++;
   return n;
 }
@@ -539,12 +546,14 @@ function renderListings() {
 
   filtered.forEach(i => {
     const tahminiKazanc = (i.saat * i.fiyat + i.saat * 10 * i.km).toLocaleString("tr-TR");
+    const isYuksekUcret = i.fiyat >= 250;  // 250 ₺/saat ve üstü → 🔥
     const row = document.createElement("article");
-    row.className = "ilan-row" + (currentUser && i.user_id === currentUser.id ? " ilan-row-mine" : "");
+    row.className = "ilan-row" + (currentUser && i.user_id === currentUser.id ? " ilan-row-mine" : "") + (isYuksekUcret ? " ilan-row-fire" : "");
     row.dataset.id = i.id;
     row.dataset.act = "open-detail";
     row.innerHTML = `
       <div class="ilan-row-cell cell-bolge">
+        ${isYuksekUcret ? '<span class="fire-badge" title="Yüksek ücret — önerilen seviye">🔥</span>' : ""}
         <span class="cell-ico">📍</span>
         <span class="cell-text">${escapeHtml(i.ilce)}, Ankara</span>
       </div>
@@ -631,6 +640,7 @@ function buildIlanCardHTML(i) {
         <div class="card-top-row">
           <span class="card-pill pill-ilce">📍 ${escapeHtml(i.ilce)}, Ankara</span>
           ${isMine ? '<span class="card-pill pill-mine">⚡ Senin İlanın</span>' : ""}
+          ${i.fiyat >= 250 ? '<span class="card-pill pill-fire" title="Yüksek ücret — önerilen seviye">🔥 Yüksek Ücret</span>' : ""}
         </div>
 
         <div class="card-title-row">
@@ -2170,8 +2180,8 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   e.target.reset();
   resetIlanFormMode();
   saatRange.value = 4;
-  fiyatRange.value = 200; fiyatVal.textContent = "200";
-  kmRange.value = 5; kmVal.textContent = "5";
+  fiyatRange.value = 280; fiyatVal.textContent = "280";
+  kmRange.value = 8; kmVal.textContent = "8";
   basSaat.value = "09:00"; bitSaat.value = "18:00";
   _updateSureOzeti();
   document.getElementById("ilanIletisimTel").value = "";
@@ -2254,10 +2264,10 @@ document.getElementById("urgentOnly")?.addEventListener("change", e => {
   renderListings();
 });
 document.getElementById("filterResetBtn")?.addEventListener("click", () => {
-  currentFilters = { saat: "all", fiyat: "all", sort: "new", urgentOnly: false };
+  currentFilters = { saat: "all", fiyat: "all", sort: "smart", urgentOnly: false };
   document.getElementById("saatFilter").value = "all";
   document.getElementById("fiyatFilter").value = "all";
-  document.getElementById("sortFilter").value = "new";
+  document.getElementById("sortFilter").value = "smart";
   document.getElementById("urgentOnly").checked = false;
   if (districtSelect.value !== "all") {
     districtSelect.value = "all";

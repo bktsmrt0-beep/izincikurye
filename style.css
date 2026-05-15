@@ -2888,6 +2888,28 @@ textarea#rwYorum:focus {
   white-space: nowrap;
 }
 
+/* 🔥 Yüksek ücret rozeti (saatlik ≥ 250 ₺) */
+.pill-fire {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  color: #c2410c;
+  border: 1px solid #fdba74;
+}
+.fire-badge {
+  font-size: 14px;
+  line-height: 1;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 2px rgba(239, 68, 68, 0.3));
+}
+/* Yüksek ücretli ilan satırı — hafif turuncu kenar */
+.ilan-row-fire {
+  border-color: #fdba74;
+  background: linear-gradient(to right, #fff7ed 0%, #fff 30%);
+}
+.ilan-row-fire:hover {
+  border-color: #fb923c;
+  background: linear-gradient(to right, #ffedd5 0%, #fff7ed 30%);
+}
+
 .card-aktif {
   display: inline-flex;
   align-items: center;

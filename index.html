@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=115" />
+  <link rel="stylesheet" href="style.css?v=116" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -130,6 +130,7 @@
 
         <label class="filter-label">Sıralama</label>
         <select id="sortFilter" class="select">
+          <option value="smart">🔥 Önerilen (Yüksek Ücret)</option>
           <option value="new">En Yeni</option>
           <option value="urgent">Az Kaldı (Acil)</option>
           <option value="price-asc">Fiyat (Artan)</option>
@@ -347,25 +348,27 @@
         <input type="hidden" name="saat" id="saatRange" value="4" />
         <p class="muted small" id="sureOzeti" style="margin:4px 0 8px;"></p>
 
-        <!-- Fiyat ölçeği: 200-300 step 10 -->
+        <!-- Fiyat ölçeği: 200-300 step 10, default 280 (önerilen) -->
         <div class="scale">
           <div class="scale-head">
             <span>Saatlik Ücret</span>
-            <strong><span id="fiyatVal">200</span> ₺</strong>
+            <strong><span id="fiyatVal">280</span> ₺</strong>
           </div>
-          <input type="range" name="fiyat" id="fiyatRange" min="200" max="300" step="10" value="200" />
+          <input type="range" name="fiyat" id="fiyatRange" min="200" max="300" step="10" value="280" />
           <div class="scale-foot"><span>200 ₺</span><span>300 ₺</span></div>
         </div>
+        <p class="muted small">💡 <strong>Önerilen ücret 280 ₺/saat.</strong> Bu fiyat veya üstü → ilanınız listede <strong>üstte 🔥 alev rozetiyle</strong> görünür. Düşük tutarsanız listede aşağıya iner.</p>
 
-        <!-- KM ücreti ölçeği: 5-10 step 1 -->
+        <!-- KM ücreti ölçeği: 5-10 step 1, default 8 (önerilen) -->
         <div class="scale">
           <div class="scale-head">
             <span>KM Ücreti</span>
-            <strong><span id="kmVal">5</span> ₺ / km</strong>
+            <strong><span id="kmVal">8</span> ₺ / km</strong>
           </div>
-          <input type="range" name="km" id="kmRange" min="5" max="10" step="1" value="5" />
+          <input type="range" name="km" id="kmRange" min="5" max="10" step="1" value="8" />
           <div class="scale-foot"><span>5 ₺</span><span>10 ₺</span></div>
         </div>
+        <p class="muted small">💡 <strong>Önerilen KM ücreti 8 ₺.</strong> Yüksek değer → ilanınız üst sıralarda kalır.</p>
 
         <!-- Çalışma saat aralığı -->
         <div class="row-2">
@@ -898,7 +901,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=115"></script>
-  <script src="script.js?v=115"></script>
+  <script src="supabase-config.js?v=116"></script>
+  <script src="script.js?v=116"></script>
 </body>
 </html>
