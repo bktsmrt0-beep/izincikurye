@@ -925,7 +925,13 @@ async function toggleReaksiyon(ilanId, tip) {
     ilan.begen_sayisi = prev.begen;
     ilan.begenmeme_sayisi = prev.begenmeme;
     _refreshRxnBtns(ilanId);
-    toast("Reaksiyon kaydedilemedi: " + (e.message || e), "error");
+    // Rate limit hatası özel mesaj (sql/14)
+    const msg = (e.message || String(e));
+    if (msg.includes("REAKSIYON_HIZ_LIMITI") || msg.includes("hızlı reaksiyon")) {
+      toast("⏱ Çok hızlı reaksiyon yapıyorsun. Lütfen 1 dakika bekle.", "error", 5000);
+    } else {
+      toast("Reaksiyon kaydedilemedi: " + msg, "error");
+    }
   }
 }
 
