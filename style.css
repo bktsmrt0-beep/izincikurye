@@ -259,9 +259,11 @@ body.sidebar-open { overflow: hidden; }
 .notice a { color: var(--orange-dark); font-weight: 600; text-decoration: underline; }
 
 .listings {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  display: flex;
+  flex-direction: column;
   gap: 14px;
+  max-width: 980px;
+  margin: 0 auto;
 }
 
 .card {
