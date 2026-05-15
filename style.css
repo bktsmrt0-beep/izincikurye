@@ -3012,9 +3012,44 @@ textarea#rwYorum:focus {
     border-radius: 10px;
     width: 100%;
   }
+  /* card-main 2-sütun iç grid — kartın sağı boş kalmasın */
   .card-main {
-    gap: 4px;
+    display: grid !important;
+    grid-template-columns: 1.1fr 1fr;
+    grid-template-areas:
+      "top    top"
+      "title  time"
+      "note   price"
+      "tags   tags"
+      "acts   acts"
+      "bot    bot";
+    column-gap: 8px;
+    row-gap: 4px;
+    align-items: start;
   }
+  .card-top-row    { grid-area: top; }
+  .card-title-row  { grid-area: title; align-self: center; }
+  .card-time-row   { grid-area: time; }
+  .card-price-row  { grid-area: price; }
+  .card-aciklama   { grid-area: note; align-self: center; }
+  .card-etiketler  { grid-area: tags; }
+  .mobile-contact-row { grid-area: acts; }
+  .card-bottom     { grid-area: bot; }
+  .trust-badges    { display: none; }  /* mobilde kompaktlık için gizli */
+
+  /* Sağ sütunda kompakt saat/fiyat: 2-cell time, 3-cell price kalsın ama daha sıkı */
+  .card-time-row { grid-template-columns: 1fr 1fr !important; gap: 4px; }
+  .card-time-box { padding: 5px 6px; gap: 5px; }
+  .time-ico { width: 20px; height: 20px; font-size: 11px; }
+  .time-big { font-size: 11.5px; }
+  .time-lbl { font-size: 8.5px; }
+  .card-price-row { padding: 5px 2px; }
+  .price-ico { font-size: 13px; margin-bottom: 0; }
+  .price-big { font-size: 12px; gap: 1px; }
+  .price-tl { font-size: 10px; }
+  .price-big small { font-size: 8.5px; }
+  .price-lbl { font-size: 8.5px; }
+
   .card-contact { display: none !important; }  /* Sağ aside mobilde gizli */
   .mobile-contact-row {
     display: flex !important;
