@@ -1431,6 +1431,14 @@ body.modal-open { overflow: hidden; }
   box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
+/* Müsait Kuryeler sekmesi — yeşil tema (müsait = yeşil ipucu) */
+.content-tab[data-content-tab="kuryeler"]:hover { color: #047857; }
+.content-tab[data-content-tab="kuryeler"].active {
+  background: #ecfdf5;
+  color: #047857;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.18);
+}
+
 /* ===== Müsaitlik kartı (Profilim Genel) ===== */
 .musait-card {
   display: flex;
