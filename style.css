@@ -2992,19 +2992,19 @@ textarea#rwYorum:focus {
 
   .ilan-card-v75 {
     grid-template-columns: minmax(0, 1fr) !important;
-    padding: 10px;
+    padding: 8px 8px 6px;
     gap: 0;
-    border-radius: 12px;
+    border-radius: 10px;
   }
   .card-main {
-    gap: 6px;
+    gap: 4px;
   }
   .card-contact { display: none !important; }  /* Sağ aside mobilde gizli */
   .mobile-contact-row {
     display: flex !important;
     flex-direction: row;
-    gap: 6px;
-    margin: 4px 0 2px;
+    gap: 4px;
+    margin: 2px 0 0;
     position: relative;
   }
   .mcr-btn {
@@ -3013,11 +3013,11 @@ textarea#rwYorum:focus {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 9px 6px;
+    gap: 4px;
+    padding: 7px 4px;
     border: 0;
-    border-radius: 10px;
-    font-size: 12.5px;
+    border-radius: 9px;
+    font-size: 11.5px;
     font-weight: 700;
     color: #fff;
     cursor: pointer;
@@ -3026,7 +3026,7 @@ textarea#rwYorum:focus {
   .mcr-btn:active { transform: scale(0.97); }
   .mcr-btn:hover { filter: brightness(1.05); }
   .mcr-btn.locked { opacity: 0.55; cursor: not-allowed; }
-  .mcr-ico { font-size: 16px; line-height: 1; }
+  .mcr-ico { font-size: 14px; line-height: 1; }
   .mcr-label { line-height: 1; }
   .mcr-call { background: #ff7a00; }
   .mcr-wa { background: #25d366; }
@@ -3036,13 +3036,13 @@ textarea#rwYorum:focus {
     border: 1px solid #e2e8f0;
   }
   .mcr-more {
-    flex: 0 0 38px;
+    flex: 0 0 32px;
     background: #f1f5f9;
     color: #475569;
     border: 1px solid #e2e8f0;
-    padding: 9px 4px;
+    padding: 7px 2px;
   }
-  .mcr-more .mcr-ico { font-size: 22px; font-weight: 700; }
+  .mcr-more .mcr-ico { font-size: 19px; font-weight: 700; }
   .mcr-more .mcr-label { display: none; }
 
   /* Kebab dropdown: ⋮ butondan sol-üst yönüne açılır */
@@ -3054,49 +3054,59 @@ textarea#rwYorum:focus {
     min-width: 200px;
   }
 
-  /* Üst chip satırı */
-  .card-pill { font-size: 11px; padding: 4px 9px; }
-  .pill-hemen { font-size: 10.5px; padding: 3px 8px; }
-  .card-aktif { font-size: 11px; }
-  .aktif-dot { width: 6px; height: 6px; box-shadow: 0 0 0 2px rgba(34,197,94,0.18); }
+  /* Üst chip satırı — sıkı */
+  .card-top-row { gap: 4px; }
+  .card-pill { font-size: 10.5px; padding: 3px 8px; }
+  .pill-hemen { font-size: 10px; padding: 2px 7px; }
 
   /* Başlık küçük */
-  .card-title { font-size: 17px; letter-spacing: -0.3px; }
+  .card-title { font-size: 15px; letter-spacing: -0.3px; line-height: 1.15; }
+  .card-title-row { gap: 6px; }
 
-  /* Saat satırı — yan yana ufak kutular, etiket gizli */
-  .card-time-row { gap: 8px; }
-  .card-time-box { padding: 8px 10px; gap: 8px; }
-  .time-ico { width: 26px; height: 26px; font-size: 14px; border-radius: 7px; }
-  .time-big { font-size: 13.5px; }
-  .time-lbl { font-size: 10px; }
+  /* Saat — yan yana ufak kutular */
+  .card-time-row { gap: 6px; }
+  .card-time-box { padding: 5px 8px; gap: 6px; border-radius: 9px; }
+  .time-ico { width: 22px; height: 22px; font-size: 12px; border-radius: 6px; }
+  .time-big { font-size: 12px; }
+  .time-lbl { font-size: 9px; }
 
-  /* Fiyat row daha sıkı */
-  .card-price-row { padding: 8px 4px; border-radius: 10px; }
-  .price-ico { font-size: 16px; margin-bottom: 2px; }
-  .price-big { font-size: 14px; }
-  .price-tl { font-size: 11.5px; }
-  .price-big small { font-size: 9.5px; }
-  .price-lbl { font-size: 9.5px; margin-top: 1px; }
+  /* Fiyat row — kompakt */
+  .card-price-row { padding: 6px 4px; border-radius: 9px; }
+  .price-ico { font-size: 14px; margin-bottom: 1px; }
+  .price-big { font-size: 13px; }
+  .price-tl { font-size: 11px; }
+  .price-big small { font-size: 9px; }
+  .price-lbl { font-size: 9px; margin-top: 0; }
 
-  /* Açıklama — max 2 satır ellipsiz */
-  .card-aciklama { padding: 8px 10px; font-size: 12px; gap: 6px; }
+  /* Açıklama — 1 satır ellipsiz */
+  .card-aciklama { padding: 6px 9px; font-size: 11.5px; gap: 5px; }
   .aciklama-text {
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+    -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
     word-break: break-word;
   }
+  .aciklama-ico { font-size: 13px; }
 
-  /* Etiketler küçük */
-  .card-etiketler { gap: 5px; }
-  .etiket-chip { padding: 4px 8px; font-size: 11px; }
-  .etiket-chip-ico { font-size: 12px; }
+  /* Etiketler — küçük tek satır overflow scroll */
+  .card-etiketler {
+    gap: 4px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .card-etiketler::-webkit-scrollbar { display: none; }
+  .etiket-chip { padding: 3px 7px; font-size: 10.5px; border-radius: 7px; flex-shrink: 0; }
+  .etiket-chip-ico { font-size: 11px; }
 
   /* Alt satır kompakt */
-  .card-bottom { padding-top: 8px; margin-top: 0; }
-  .card-delete-btn { font-size: 12.5px; padding: 2px 0; }
-  .card-kisaid { font-size: 11px; }
+  .card-bottom { padding-top: 6px; margin-top: 0; gap: 6px; }
+  .card-bottom .card-aktif { font-size: 11px; }
+  .card-bottom .aktif-dot { width: 6px; height: 6px; }
+  .card-edit-btn, .card-delete-btn { font-size: 11.5px; padding: 2px 4px; }
+  .card-kisaid { font-size: 10px; }
 
   /* Sağ kolon: dikey ikon-only butonlar (sticky kalktı) */
   .card-contact {
