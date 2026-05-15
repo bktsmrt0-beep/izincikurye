@@ -539,10 +539,7 @@ function renderListings() {
       </div>
 
       <aside class="card-contact">
-        <div class="contact-head">
-          <h4 class="contact-title">Hızlı İletişim</h4>
-          <span class="contact-kisaid">${escapeHtml(kisaId)}</span>
-        </div>
+        <h4 class="contact-title">Hızlı İletişim</h4>
         <button type="button" class="contact-btn contact-call ${lockedClass}" data-act="call" data-id="${i.id}" ${lockedTitle}>
           <span class="contact-ico">📞</span><span>Ara</span>
         </button>
@@ -577,8 +574,6 @@ function renderListings() {
             <span class="rxn-emoji">🚩</span>
           </button>
         </div>` : ""}
-
-        ${isMine ? `<button type="button" class="contact-delete" data-act="delete" data-id="${i.id}">🗑 İlanı Kaldır</button>` : ""}
       </aside>
     `;
     listingsEl.appendChild(card);
@@ -814,12 +809,14 @@ function _openKebab(btn, ilan) {
   _closeKebab();
   btn.classList.add("open");
   const isMine = currentUser && ilan.user_id === currentUser.id;
+  const kisaId = ilan.kisa_id || ("#" + String(ilan.id).slice(0, 8));
   const items = [];
+  items.push(`<div class="kmenu-header">İlan No: <strong>${escapeHtml(kisaId)}</strong></div>`);
+  items.push(`<button type="button" class="kmenu-item" data-act="share" data-id="${ilan.id}"><span>🔗</span> Paylaş</button>`);
   if (isMine) {
     items.push(`<button type="button" class="kmenu-item" data-act="edit" data-id="${ilan.id}"><span>✏️</span> Düzenle</button>`);
-    items.push(`<button type="button" class="kmenu-item" data-act="share" data-id="${ilan.id}"><span>🔗</span> Paylaş</button>`);
-  } else {
-    items.push(`<button type="button" class="kmenu-item" data-act="share" data-id="${ilan.id}"><span>🔗</span> Paylaş</button>`);
+    items.push(`<div class="kmenu-sep"></div>`);
+    items.push(`<button type="button" class="kmenu-item kmenu-danger" data-act="delete" data-id="${ilan.id}"><span>🗑</span> İlanı Kaldır</button>`);
   }
   const menu = document.createElement("div");
   menu.className = "kebab-menu";

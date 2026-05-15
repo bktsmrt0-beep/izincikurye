@@ -2467,8 +2467,26 @@ textarea#rwYorum:focus {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
 }
 .kmenu-item:hover { background: #f8fafc; }
+.kmenu-item.kmenu-danger { color: #dc2626; }
+.kmenu-item.kmenu-danger:hover { background: #fef2f2; color: #991b1b; }
+.kmenu-header {
+  padding: 8px 12px 6px;
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 4px;
+}
+.kmenu-header strong { color: #475569; font-weight: 700; font-variant-numeric: tabular-nums; }
+.kmenu-sep {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 4px 0;
+}
 
 /* Başlık */
 .card-title-row {
@@ -2666,43 +2684,12 @@ textarea#rwYorum:focus {
   position: sticky;
   top: 16px;
 }
-.contact-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 2px;
-}
 .contact-title {
-  margin: 0;
+  margin: 0 0 4px 0;
   font-size: 14px;
   font-weight: 700;
   color: #0f172a;
 }
-.contact-kisaid {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #94a3b8;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.3px;
-}
-.contact-delete {
-  background: none;
-  border: 0;
-  color: #dc2626;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  padding: 8px 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: 4px;
-  border-top: 1px dashed #fecaca;
-  border-radius: 0;
-}
-.contact-delete:hover { color: #991b1b; }
 .contact-btn {
   width: 100%;
   display: flex;
@@ -2879,8 +2866,6 @@ textarea#rwYorum:focus {
   .contact-divider { flex: 1 1 100%; margin: 4px 0 0; }
   .contact-share { flex: 1 1 100%; }
   .reaction-row { flex: 1 1 100%; margin-top: 0; }
-  .contact-head { flex: 1 1 100%; order: -1; }
-  .contact-delete { flex: 1 1 100%; }
 }
 @media (max-width: 520px) {
   .card-title { font-size: 22px; }
