@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=108" />
+  <link rel="stylesheet" href="style.css?v=109" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -764,10 +764,13 @@
             </div>
 
             <!-- Hakim olduğu bölgeler -->
-            <label>Hakim Olduğun Bölgeler <small class="muted">(birden fazla seçebilirsin)</small>
-              <select id="profileTercihIlceler" multiple size="6"></select>
+            <label style="margin-top:8px">Hakim Olduğun Bölgeler</label>
+            <label class="toggle-row" style="margin:4px 0 6px;cursor:pointer">
+              <input type="checkbox" id="profileTumBolgeler" />
+              <span>🌍 <strong>Her bölgede çalışabilirim</strong></span>
             </label>
-            <p class="muted small" style="margin-top:-6px">💡 Ctrl/Cmd basılı tutarak birden fazla seç.</p>
+            <div id="profileTercihIlceler" class="ilce-picker"></div>
+            <p class="muted small" style="margin-top:6px">💡 Bölgelere tıklayarak hakim olduklarını seç (birden fazla seçebilirsin).</p>
 
             <!-- Çalışma günleri -->
             <label style="margin-top:8px">Çalışma Günleri</label>
@@ -895,7 +898,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=108"></script>
-  <script src="script.js?v=108"></script>
+  <script src="supabase-config.js?v=109"></script>
+  <script src="script.js?v=109"></script>
 </body>
 </html>

@@ -2366,7 +2366,9 @@ function _readProfileForm() {
     // Kurye alanları
     arac_tipi: document.getElementById("profileAracTipi")?.value || "",
     arac_marka_model: document.getElementById("profileAracMarkaModel")?.value.trim() || "",
-    tercih_ilceler: Array.from(document.getElementById("profileTercihIlceler")?.selectedOptions || []).map(o => o.value),
+    tercih_ilceler: document.getElementById("profileTumBolgeler")?.checked
+      ? []
+      : Array.from(document.querySelectorAll("#profileTercihIlceler .ilce-chip.active")).map(c => c.dataset.ilce),
     calisma_gunleri: Array.from(document.querySelectorAll("#profileGunler .day-chip.active")).map(c => parseInt(c.dataset.day, 10)).filter(n => !Number.isNaN(n)),
     calisma_baslangic: (() => { const v = document.getElementById("profileCalismaBaslangic")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
     calisma_bitis: (() => { const v = document.getElementById("profileCalismaBitis")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
@@ -2405,10 +2407,25 @@ function refreshProfileSaveBtn() {
   if (btn) btn.disabled = !profileHasChanges();
 }
 
-// =============== PROFİL: tercih ilçeler + saat select doldur (bir kerelik) ===============
+// =============== PROFİL: tercih ilçeler (chip) + saat select doldur (bir kerelik) ===============
 (() => {
-  const ti = document.getElementById("profileTercihIlceler");
-  if (ti) ANKARA_ILCELERI.forEach(ilce => ti.appendChild(new Option(ilce, ilce)));
+  const ip = document.getElementById("profileTercihIlceler");
+  if (ip) {
+    ANKARA_ILCELERI.forEach(ilce => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "ilce-chip";
+      chip.dataset.ilce = ilce;
+      chip.textContent = ilce;
+      chip.addEventListener("click", () => {
+        if (document.getElementById("profileTumBolgeler")?.checked) return; // "her bölge" açıkken pasif
+        chip.classList.toggle("active");
+        refreshProfileSaveBtn();
+        clearStatus("profileStatus");
+      });
+      ip.appendChild(chip);
+    });
+  }
   const cb = document.getElementById("profileCalismaBaslangic");
   const cbit = document.getElementById("profileCalismaBitis");
   for (let h = 0; h < 24; h++) {
@@ -2417,6 +2434,17 @@ function refreshProfileSaveBtn() {
     if (cbit) cbit.appendChild(new Option(lbl, h));
   }
 })();
+
+// "Her bölgede çalışabilirim" toggle — açıkken tüm chip'leri devre dışı bırak
+document.getElementById("profileTumBolgeler")?.addEventListener("change", (e) => {
+  const isAll = e.target.checked;
+  document.querySelectorAll("#profileTercihIlceler .ilce-chip").forEach(chip => {
+    chip.classList.toggle("disabled", isAll);
+    if (isAll) chip.classList.remove("active");
+  });
+  refreshProfileSaveBtn();
+  clearStatus("profileStatus");
+});
 
 // Day chip toggle
 document.querySelectorAll("#profileGunler .day-chip").forEach(chip => {
@@ -2438,11 +2466,7 @@ if (_bioEl && _bioCntEl) {
   });
 }
 
-// Tercih ilçeler değişimi
-document.getElementById("profileTercihIlceler")?.addEventListener("change", () => {
-  refreshProfileSaveBtn();
-  clearStatus("profileStatus");
-});
+// Tercih ilçeler chip değişimleri zaten her chip'in click handler'ında refreshProfileSaveBtn çağırıyor
 ["profileCalismaBaslangic","profileCalismaBitis","profileMinUcret","profileMaxUcret","profileAracTipi","profileAracMarkaModel"].forEach(id => {
   document.getElementById(id)?.addEventListener("change", () => {
     refreshProfileSaveBtn();
@@ -2904,14 +2928,16 @@ function openProfileModal() {
     document.getElementById("profileAracTipi").value = currentUser.aracTipi || "";
     document.getElementById("profileAracMarkaModel").value = currentUser.aracMarkaModel || "";
 
-    // Hakim bölgeler (multi-select)
-    const tiEl = document.getElementById("profileTercihIlceler");
-    if (tiEl) {
-      const userIlceler = currentUser.tercihIlceler || [];
-      Array.from(tiEl.options).forEach(opt => {
-        opt.selected = userIlceler.includes(opt.value);
-      });
-    }
+    // Hakim bölgeler (chip + "her bölge" toggle)
+    const userIlceler = Array.isArray(currentUser.tercihIlceler) ? currentUser.tercihIlceler : null;
+    // tercih_ilceler boş dizi [] → "her bölge"; null → henüz doldurmadı; dolu → spesifik ilçeler
+    const isTumBolgeler = userIlceler !== null && userIlceler.length === 0;
+    const tumBolEl = document.getElementById("profileTumBolgeler");
+    if (tumBolEl) tumBolEl.checked = isTumBolgeler;
+    document.querySelectorAll("#profileTercihIlceler .ilce-chip").forEach(chip => {
+      chip.classList.toggle("active", (userIlceler || []).includes(chip.dataset.ilce));
+      chip.classList.toggle("disabled", isTumBolgeler);
+    });
 
     // Çalışma günleri (day chips)
     const userGunler = currentUser.calismaGunleri || [];
@@ -3480,10 +3506,11 @@ function renderMusaitKuryeler() {
 
   kuryeler.forEach(k => {
     const adSoyad = ((k.ad || "") + " " + (k.soyad || "")).trim() || "Kurye";
-    const ilceCount = (k.tercih_ilceler || []).length;
-    const ilceText = ilceCount === 0 ? "Bölge yok"
-      : ilceCount === 1 ? k.tercih_ilceler[0]
-      : `${k.tercih_ilceler[0]} +${ilceCount - 1}`;
+    const ilceArrRow = Array.isArray(k.tercih_ilceler) ? k.tercih_ilceler : null;
+    const ilceText = ilceArrRow === null ? "Belirtilmemiş"
+      : ilceArrRow.length === 0 ? "🌍 Her bölge"
+      : ilceArrRow.length === 1 ? ilceArrRow[0]
+      : `${ilceArrRow[0]} +${ilceArrRow.length - 1}`;
     const ucretText = (k.min_ucret && k.max_ucret)
       ? `${k.min_ucret}-${k.max_ucret}<small>₺</small>`
       : (k.min_ucret ? `${k.min_ucret}+ <small>₺</small>`
@@ -3544,11 +3571,15 @@ function buildKuryeDetailHTML(k) {
     : "";
   const avatarFallback = k.avatar_url ? "" : "👤";
 
-  const ilceArr = k.tercih_ilceler || [];
-  const ilceler = ilceArr.length
-    ? ilceArr.map(i => `<span class="kd-chip kd-chip-ilce">📍 ${escapeHtml(i)}</span>`).join("")
-    : `<span class="muted small">Bölge belirtilmemiş</span>`;
-  const ilceSummary = ilceArr.length === 0 ? "—"
+  const ilceArr = Array.isArray(k.tercih_ilceler) ? k.tercih_ilceler : null;
+  // null → henüz doldurmadı; [] → her bölge; [...] → spesifik
+  const ilceler = ilceArr === null
+    ? `<span class="muted small">Bölge belirtilmemiş</span>`
+    : ilceArr.length === 0
+    ? `<span class="kd-chip" style="background:#dbeafe;border-color:#93c5fd;color:#1e40af">🌍 Her bölgede çalışıyor</span>`
+    : ilceArr.map(i => `<span class="kd-chip kd-chip-ilce">📍 ${escapeHtml(i)}</span>`).join("");
+  const ilceSummary = ilceArr === null ? "—"
+    : ilceArr.length === 0 ? "🌍 Her bölge"
     : ilceArr.length === 1 ? ilceArr[0]
     : ilceArr.length === 2 ? `${ilceArr[0]}, ${ilceArr[1]}`
     : `${ilceArr[0]}, ${ilceArr[1]} <small>+${ilceArr.length - 2}</small>`;

@@ -1202,6 +1202,38 @@ body.modal-open { overflow: hidden; }
   border-color: var(--orange);
   color: white;
 }
+
+/* İlçe seçici (kurye hakim bölgeler) */
+.ilce-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+.ilce-chip {
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--gray-300);
+  background: white;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  color: var(--gray-700);
+  font-weight: 500;
+}
+.ilce-chip:hover { border-color: var(--orange); color: var(--orange-dark); }
+.ilce-chip.active {
+  background: var(--orange);
+  border-color: var(--orange);
+  color: white;
+}
+.ilce-chip.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--gray-100);
+  pointer-events: none;
+}
 .char-counter {
   font-size: 11px;
   color: var(--gray-500);
