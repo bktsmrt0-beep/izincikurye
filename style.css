@@ -1379,9 +1379,11 @@ body.modal-open { overflow: hidden; }
 
 /* ===== Müsait kurye kartları ===== */
 .kurye-listings {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 .kurye-card {
   background: #fff;
