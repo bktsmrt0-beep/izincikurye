@@ -455,22 +455,57 @@ body.sidebar-open { overflow: hidden; }
   .kurye-row {
     grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-template-areas:
-      "ad ad ad musait"
-      "puan bolge bolge ucret";
-    gap: 4px 6px;
-    padding: 9px 12px;
+      "ad    ad   puan  musait"
+      "bolge bolge bolge ucret";
+    gap: 3px 6px;
+    padding: 7px 10px;
   }
-  .cell-ad { grid-area: ad; }
+  .cell-ad { grid-area: ad; min-width: 0; }
   .cell-musait { grid-area: musait; justify-content: flex-end; }
-  .cell-puan { grid-area: puan; }
-  .cell-bolge { grid-area: bolge; }
-  .cell-ucret { grid-area: ucret; }
-  .cell-ad .cell-text { font-size: 13.5px; }
-  .kurye-row-cell strong { font-size: 12.5px; }
+  .cell-puan { grid-area: puan; justify-content: flex-end; }
+  .cell-bolge { grid-area: bolge; min-width: 0; }
+  .cell-ucret { grid-area: ucret; justify-content: flex-end; }
+
+  /* Ad + puan + ücret: SÖNÜK (önemli değil) */
+  .cell-ad .cell-text {
+    font-size: 12.5px;
+    color: #475569;
+    font-weight: 600;
+  }
+  .kurye-puan-inline {
+    font-size: 11px;
+    color: #ca8a04;
+  }
+  .kurye-puan-inline strong { font-weight: 700; }
+  .cell-ucret strong {
+    font-size: 11.5px;
+    color: #64748b;
+    font-weight: 600;
+  }
+  .cell-ucret strong small { font-size: 9px; }
+
+  /* Bölge: VURGULU (en önemli) */
+  .cell-bolge .cell-text {
+    font-size: 14.5px;
+    color: #c2410c;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+  }
+
+  /* Müsait süresi: VURGULU yeşil */
+  .cell-musait {
+    font-size: 13px;
+    color: #047857;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+  }
+  .cell-musait .cell-dot {
+    width: 9px; height: 9px;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.22);
+  }
+
   .kurye-row-cell .cell-label { display: none; }
-  .kurye-puan-inline { font-size: 12px; }
-  .cell-bolge .cell-text { font-size: 12px; }
-  .kurye-row-avatar { width: 28px; height: 28px; font-size: 15px; }
+  .kurye-row-avatar { width: 24px; height: 24px; font-size: 13px; }
 }
 
 /* ============ KURYE DETAY MODAL ============ */
