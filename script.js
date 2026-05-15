@@ -476,10 +476,6 @@ function renderListings() {
       }).join("")}</div>`;
     }
 
-    const kebabHtml = currentUser
-      ? `<div class="kebab-wrap"><button type="button" class="kebab-btn" data-act="kebab" data-id="${i.id}" aria-label="Daha fazla">⋮</button></div>`
-      : "";
-
     card.dataset.id = i.id;
     card.innerHTML = `
       <div class="card-main">
@@ -488,7 +484,6 @@ function renderListings() {
           ${isMine ? '<span class="card-pill pill-mine">⚡ Senin İlanın</span>' : ""}
           <div class="card-top-right">
             <span class="card-aktif"><span class="aktif-dot"></span><span class="ilan-aktif-sayac" data-created="${i.created_at}">başlatılıyor…</span></span>
-            ${kebabHtml}
           </div>
         </div>
 
@@ -558,11 +553,27 @@ function renderListings() {
 
         <div class="contact-divider"></div>
 
-        ${currentUser ? `<button type="button" class="contact-fav ${isFav ? 'active' : ''}" data-act="rxn" data-rxn-tip="kalp" data-rxn-id="${i.id}" data-id="${i.id}">
-          <span class="fav-ico">${isFav ? '♥' : '♡'}</span> ${isFav ? 'Favoriden Çıkar' : 'Favorilere Ekle'}
-        </button>` : `<button type="button" class="contact-fav locked" title="Önce kayıt olun">
-          <span class="fav-ico">♡</span> Favorilere Ekle
-        </button>`}
+        <button type="button" class="menu-item" data-act="share-main" data-id="${i.id}">
+          <span class="mi-ico">🔗</span><span class="mi-label">Paylaş</span>
+        </button>
+        ${isMine ? `<button type="button" class="menu-item" data-act="edit" data-id="${i.id}">
+          <span class="mi-ico">✏️</span><span class="mi-label">Düzenle</span>
+        </button>` : ""}
+
+        ${currentUser ? `
+        <div class="contact-divider"></div>
+
+        <button type="button" class="menu-item rxn-item rxn-begen ${userReaksiyonlar.get(i.id) === 'begen' ? 'active' : ''}" data-act="rxn" data-rxn-tip="begen" data-rxn-id="${i.id}" data-id="${i.id}">
+          <span class="mi-ico">👍</span><span class="mi-label">Beğen</span>
+          <span class="mi-count">${(i.begen_sayisi || 0) > 0 ? i.begen_sayisi : ""}</span>
+        </button>
+        <button type="button" class="menu-item rxn-item rxn-dis ${userReaksiyonlar.get(i.id) === 'begenmeme' ? 'active' : ''}" data-act="rxn" data-rxn-tip="begenmeme" data-rxn-id="${i.id}" data-id="${i.id}">
+          <span class="mi-ico">👎</span><span class="mi-label">Beğenmeme</span>
+          <span class="mi-count">${(i.begenmeme_sayisi || 0) > 0 ? i.begenmeme_sayisi : ""}</span>
+        </button>
+        <button type="button" class="menu-item rxn-item rxn-rep" data-act="rxn" data-rxn-tip="report" data-id="${i.id}">
+          <span class="mi-ico">🚩</span><span class="mi-label">Sorun Bildir</span>
+        </button>` : ""}
       </aside>
     `;
     listingsEl.appendChild(card);
