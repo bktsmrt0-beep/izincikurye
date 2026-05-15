@@ -807,22 +807,16 @@ function _refreshRxnBtns(ilanId) {
   const ilan = ilanlar.find(x => x.id === ilanId);
   if (!ilan) return;
   const cur = userReaksiyonlar.get(ilanId);
-  const isFav = favoriler.has(ilanId);
 
   document.querySelectorAll(`[data-rxn-id="${ilanId}"]`).forEach(btn => {
     const tip = btn.dataset.rxnTip;
-    const countEl = btn.querySelector(".kmi-count") || btn.querySelector(".mi-count") || btn.querySelector(".rxn-count");
+    const countEl = btn.querySelector(".kmi-count") || btn.querySelector(".mi-count");
     let active = false;
     let count = 0;
-    if (tip === "kalp") { active = isFav; count = ilan.kalp_sayisi || 0; }
-    else if (tip === "begen") { active = cur === "begen"; count = ilan.begen_sayisi || 0; }
+    if (tip === "begen") { active = cur === "begen"; count = ilan.begen_sayisi || 0; }
     else if (tip === "begenmeme") { active = cur === "begenmeme"; count = ilan.begenmeme_sayisi || 0; }
     btn.classList.toggle("active", active);
     if (countEl) countEl.textContent = count > 0 ? count : "";
-    // Favori butonu için label/icon güncelle (contact-fav)
-    if (tip === "kalp" && btn.classList.contains("contact-fav")) {
-      btn.innerHTML = `<span class="fav-ico">${isFav ? '♥' : '♡'}</span> ${isFav ? 'Favoriden Çıkar' : 'Favorilere Ekle'}`;
-    }
   });
 }
 

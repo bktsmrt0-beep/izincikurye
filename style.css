@@ -1385,49 +1385,6 @@ body.modal-open { overflow: hidden; }
   max-width: 1100px;
   margin: 0 auto;
 }
-.kurye-card {
-  background: #fff;
-  border: 1px solid var(--gray-200);
-  border-radius: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: border-color .15s, box-shadow .15s;
-}
-.kurye-card:hover { border-color: #fdba74; box-shadow: 0 4px 12px rgba(0,0,0,.05); }
-.kurye-head { display: flex; align-items: center; gap: 12px; }
-.kurye-avatar {
-  width: 52px; height: 52px;
-  border-radius: 50%;
-  background: #fde2c4 center/cover no-repeat;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 24px;
-  color: #c2410c;
-  flex-shrink: 0;
-  border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-}
-.kurye-info { flex: 1; min-width: 0; }
-.kurye-info h3 { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
-.kurye-meta {
-  display: flex; flex-wrap: wrap; gap: 4px 8px;
-  font-size: 12px; color: var(--gray-700);
-}
-.kurye-ilce {
-  background: var(--orange-soft); color: var(--orange-dark);
-  padding: 2px 7px; border-radius: 999px;
-  font-weight: 600;
-}
-.kurye-saat { color: var(--gray-500); }
-.kurye-bio {
-  font-size: 13px; color: var(--gray-700);
-  background: var(--gray-50);
-  padding: 8px 10px;
-  border-radius: 8px;
-  border-left: 3px solid var(--orange);
-}
-
 /* ===== Kurye Kontrol Paneli (anasayfa) ===== */
 .kurye-dashboard {
   background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
@@ -2075,37 +2032,6 @@ textarea#rwYorum:focus {
   color: #92400e;
   font-weight: 600;
 }
-
-/* Kurye karti (musait list) puan rozeti */
-.kurye-puan {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 4px 10px;
-  background: #fefce8;
-  border: 1px solid #fde68a;
-  border-radius: 999px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 12px;
-}
-.kurye-puan:hover { background: #fef3c7; }
-.kurye-puan-empty {
-  background: var(--gray-50);
-  border-color: var(--gray-200);
-  color: var(--gray-500);
-  cursor: default;
-  font-style: italic;
-}
-.kurye-puan-empty:hover { background: var(--gray-50); }
-.kurye-puan-stars {
-  color: #f59e0b;
-  letter-spacing: 1px;
-}
-.kurye-puan-num { color: #854d0e; font-weight: 700; }
-
-/* Mobil: drawer zaten fixed, ek rule gerek yok */
 
 /* ===== Adres modal sticky CTA ===== */
 .modal-card.has-sticky-cta {
@@ -3201,32 +3127,6 @@ textarea#rwYorum:focus {
   margin: 6px 0 4px;
 }
 
-.contact-fav {
-  width: 100%;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 11px 12px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #334155;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: background .15s, border-color .15s, color .15s;
-}
-.contact-fav:hover { background: #fff1f2; border-color: #fbcfe8; color: #be185d; }
-.contact-fav.active {
-  background: #fff1f2;
-  border-color: #fbcfe8;
-  color: #be123c;
-}
-.contact-fav .fav-ico { font-size: 17px; line-height: 1; }
-.contact-fav.active .fav-ico { color: #e11d48; }
-.contact-fav.locked { opacity: 0.55; cursor: not-allowed; }
-
 /* Kebab menü içindeki reaksiyonlar (Beğen/Beğenmeme/Sorun Bildir + Paylaş/Düzenle) */
 .kebab-menu .kmenu-item {
   display: flex;
@@ -3254,7 +3154,7 @@ textarea#rwYorum:focus {
 .kmenu-item.kmenu-rxn[data-rxn-tip="begenmeme"].active .kmi-count { background: #fee2e2; color: #991b1b; }
 .kmenu-rxn-rep:hover { background: #fef2f2; color: #b91c1c; }
 
-/* Inline menü öğesi (Paylaş, Düzenle, Beğen, Beğenmeme, Sorun Bildir) — şu an kullanılmıyor ama bırakıldı */
+/* Inline menü öğesi (PC sağ panelde Paylaş, Düzenle, Beğen, Beğenmeme, Sorun Bildir) */
 .menu-item {
   display: flex;
   align-items: center;
@@ -3295,84 +3195,6 @@ textarea#rwYorum:focus {
 .rxn-item.rxn-dis.active .mi-count { background: #fee2e2; color: #991b1b; }
 .rxn-item.rxn-rep:hover { background: #fef2f2; color: #b91c1c; }
 
-.contact-share {
-  width: 100%;
-  background: #f8fafc;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 11px 12px;
-  font-size: 14px;
-  font-weight: 700;
-  color: #334155;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: background .15s, border-color .15s, color .15s;
-}
-.contact-share:hover {
-  background: #fff7ed;
-  border-color: #fed7aa;
-  color: #c2410c;
-}
-.share-ico { font-size: 16px; line-height: 1; }
-
-.reaction-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 6px;
-  margin-top: 6px;
-}
-.rxn-btn {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 8px 4px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #475569;
-  font-variant-numeric: tabular-nums;
-  transition: background .15s, border-color .15s, transform .12s;
-}
-.rxn-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
-.rxn-btn:active { transform: scale(0.94); }
-.rxn-emoji { font-size: 18px; line-height: 1.1; filter: saturate(0.85); transition: filter .15s, transform .12s; }
-.rxn-btn:hover .rxn-emoji { filter: saturate(1.15); transform: scale(1.1); }
-.rxn-count { font-size: 11.5px; line-height: 1; min-height: 11px; }
-
-/* Aktif renkler */
-.rxn-kalp.active {
-  background: #fff1f2;
-  border-color: #fbcfe8;
-  color: #be123c;
-}
-.rxn-kalp.active .rxn-emoji { filter: saturate(1.3); }
-
-.rxn-begen.active {
-  background: #eff6ff;
-  border-color: #bfdbfe;
-  color: #1d4ed8;
-}
-.rxn-begen.active .rxn-emoji { filter: saturate(1.3); }
-
-.rxn-dis.active {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #b91c1c;
-}
-.rxn-dis.active .rxn-emoji { filter: saturate(1.3); }
-
-.rxn-rep:hover {
-  background: #fef2f2;
-  border-color: #fecaca;
-  color: #b91c1c;
-}
 
 /* Mobile-only inline iletişim satırı (PC'de gizli) */
 .mobile-contact-row { display: none; }
