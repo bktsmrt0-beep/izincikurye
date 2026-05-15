@@ -269,7 +269,7 @@ body.sidebar-open { overflow: hidden; }
 /* ============ COMPACT İLAN SATIRI (liste) ============ */
 .ilan-row {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1.2fr 1fr;
+  grid-template-columns: 2fr 0.7fr 1fr 1fr 1.2fr 1fr;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
@@ -343,20 +343,21 @@ body.sidebar-open { overflow: hidden; }
 /* Mobile compact row — 2 satır halinde compact */
 @media (max-width: 600px) {
   .ilan-row {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-template-areas:
-      "bolge bolge aktif"
-      "saat  km    kazanc";
-    gap: 4px 8px;
+      "bolge bolge bolge aktif"
+      "sure  saat  km    kazanc";
+    gap: 4px 6px;
     padding: 10px 12px;
   }
   .cell-bolge { grid-area: bolge; }
   .cell-aktif { grid-area: aktif; justify-content: flex-end; }
+  .cell-sure { grid-area: sure; }
   .cell-saatlik { grid-area: saat; }
   .cell-km { grid-area: km; }
   .cell-kazanc { grid-area: kazanc; }
   .cell-bolge .cell-text { font-size: 13px; }
-  .ilan-row-cell strong { font-size: 14px; }
+  .ilan-row-cell strong { font-size: 13.5px; }
   .cell-label { display: none; }  /* mobilde label gizli, sayı + birim yeterli */
   .ilan-row-cell strong small { font-size: 9.5px; }
   .cell-aktif { font-size: 10.5px; }

@@ -450,6 +450,10 @@ function renderListings() {
         <span class="cell-ico">📍</span>
         <span class="cell-text">${escapeHtml(i.ilce)}, Ankara</span>
       </div>
+      <div class="ilan-row-cell cell-sure">
+        <span class="cell-label">Süre</span>
+        <strong>${i.saat} <small>sa</small></strong>
+      </div>
       <div class="ilan-row-cell cell-saatlik">
         <span class="cell-label">Saatlik</span>
         <strong>${i.fiyat} <small>₺/sa</small></strong>
