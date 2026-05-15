@@ -1,5 +1,93 @@
 console.log("[init] script.js v7 başladı");
 
+// ============================================================
+// SCRIPT.JS YOL HARİTASI (v106) — Bölüm:Satır
+// ============================================================
+// BFCACHE FIX              : 17-29
+// VERİ (ilçeler)           : 31-37
+// DURUM (state)            : 39-58
+// DOM REF                  : 60-86
+// TOAST                    : 87-100
+// HATA BANNER              : 101-112
+// SUPABASE: SESSION        : 113-184
+// SUPABASE: İLANLAR        : 185-254
+//   ├─ renderSkeletons     : 186
+//   └─ loadIlanlar         : 211
+// RENDER                   : 255-508
+//   ├─ renderTopNav        : 256
+//   ├─ getFilteredIlanlar  : 360
+//   ├─ activeFilterCount   : 387
+//   └─ renderListings (compact row): 406-508
+// DETAY KARTI (modal)      : 509-679
+//   ├─ buildIlanCardHTML   : 511 — tam ilan kartı HTML
+//   └─ openIlanDetail      : 663 — modal aç + URL
+// renderEmptyState         : 681
+// FAVORİLER/ŞİKAYET/EDIT/KEBAB : 733-997
+//   ├─ loadFavoriler       : 735
+//   ├─ toggleReaksiyon     : 755 — beğen/beğenmeme birbirini iter
+//   ├─ _refreshRxnBtns     : 820
+//   ├─ toggleFavori        : 837 (UI yok ama DB aktif)
+//   ├─ _closeKebab/_openKebab : 881/886 (mobil ⋮ butonu)
+//   ├─ openSikayetModal    : 914 + form submit 923
+//   ├─ openEditIlan        : 947
+//   ├─ resetIlanFormMode   : 979
+//   └─ _isHemenBasla       : 988
+// KART AKSİYONLARI         : 998-1109 — global click delegasyon
+// YORUM/PUAN SİSTEMİ       : 1110-1410
+//   ├─ refreshPendingReviewCount : 1114
+//   ├─ openReviewListModal : 1189
+//   ├─ loadReviewList      : 1207
+//   ├─ openReviewWriteModal: 1279
+//   └─ openReviewViewModal : 1352 — kurye yorumlarını göster
+// İLAN KALDIRMA AKIŞI      : 1412-1592
+//   ├─ openDeleteIlanModal : 1413
+//   ├─ _phoneRaw10/_formatPhone10 : 1427/1434
+//   ├─ performDeleteWithReview : 1471
+//   └─ showAdres           : 1528 (eski adres modal — hâlâ var)
+// MODALLAR (open/close)    : 1592-1670 — closeModals popstate dahil
+// SIDEBAR DRAWER           : 1647-1726
+// KAYIT/AUTH               : 1728-1791
+// GİRİŞ                    : 1807-1848
+// ŞİFREMİ UNUTTUM          : 1849-1886
+// İLAN VER                 : 1887-2098
+//   ├─ calcSureSaat        : 1901 — gece geçişi destekli süre hesabı
+//   └─ ilanForm submit     : İLAN VER bölümünün sonunda
+// YARDIMCI                 : 2099-2154
+//   ├─ escapeHtml          : 2100
+//   ├─ formatAktifSure     : 2114
+//   ├─ _updateAktifSayaclar: 2129
+//   └─ formatRemaining     : 2141
+// FİLTRELER (client-side)  : 2155-2185
+// İLANLARIM TOGGLE         : 2186-2198
+// PROFİLİM YARDIMCILARI    : 2199-2415
+//   ├─ formatTel/_displayPhone/_phoneToE164/_isMobileTr : 2225-2263
+//   ├─ _readProfileForm/profileHasChanges : 2272/2293
+//   ├─ switchProfileTab    : 2376
+//   ├─ computeProfileCompletion : 2393
+//   └─ loadLastSignIn      : 2431
+// PROFİL: doldur listener   : 2314-2375 (gun-chip, bio counter, vs.)
+// PROFİL STATS / SMART CARD : 2469-2741
+// PROFİL MODAL             : 2742-3001
+//   ├─ openProfileModal    : 2756
+//   └─ _goToMyListings     : 2869
+// MÜSAİTLİK TOGGLE         : 3016-3042
+// ŞİFRE DEĞİŞTİR           : 3043-3085
+// HESABI KAPAT             : 3086-3149
+// KURYE KONTROL PANELİ     : 3150-3279
+//   ├─ renderKuryeDashboard: 3151
+//   └─ syncDashboardToggle : 3198
+// MÜSAİT KURYELER          : 3280-3384
+//   ├─ loadMusaitKuryeler  : 3281
+//   └─ renderMusaitKuryeler (compact row): 3308
+// KURYE DETAY MODAL        : 3385-3509
+//   ├─ buildKuryeDetailHTML: 3387
+//   └─ openKuryeDetail     : 3492
+// İLK YÜKLEME (IIFE)       : 3564-end
+//   ├─ _enforceRememberMe  : 3569
+//   ├─ openIlanFromUrl     : 3617 — deep link açıcı
+//   └─ copyIlanLink        : 3659 — paylaş URL
+// ============================================================
+
 // =============== BFCACHE FIX ===============
 window.addEventListener("pageshow", (e) => {
   if (e.persisted) {
