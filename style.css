@@ -2951,6 +2951,9 @@ textarea#rwYorum:focus {
 
 /* Mobile — sticky bottom bar + ultra-kompakt içerik (tek bakışta tüm detay) */
 @media (max-width: 980px) {
+  /* Listings tek sütun — kart ekranı taşmasın */
+  .listings { grid-template-columns: 1fr !important; }
+
   .ilan-card-v75 {
     grid-template-columns: minmax(0, 1fr) !important;
     padding: 12px 12px 0;
