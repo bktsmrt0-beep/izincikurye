@@ -536,17 +536,13 @@ function renderListings() {
 
         ${i.aciklama ? `<div class="card-aciklama"><span class="aciklama-ico">ℹ</span><span class="aciklama-text">${escapeHtml(i.aciklama)}</span></div>` : ""}
         ${etiketHtml}
-
-        <div class="card-bottom">
-          ${isMine
-            ? `<button type="button" class="card-delete-btn" data-act="delete" data-id="${i.id}">🗑 İlanı Kaldır</button>`
-            : '<span></span>'}
-          <span class="card-kisaid">İlan No: <strong>${escapeHtml(kisaId)}</strong></span>
-        </div>
       </div>
 
       <aside class="card-contact">
-        <h4 class="contact-title">Hızlı İletişim</h4>
+        <div class="contact-head">
+          <h4 class="contact-title">Hızlı İletişim</h4>
+          <span class="contact-kisaid">${escapeHtml(kisaId)}</span>
+        </div>
         <button type="button" class="contact-btn contact-call ${lockedClass}" data-act="call" data-id="${i.id}" ${lockedTitle}>
           <span class="contact-ico">📞</span><span>Ara</span>
         </button>
@@ -581,6 +577,8 @@ function renderListings() {
             <span class="rxn-emoji">🚩</span>
           </button>
         </div>` : ""}
+
+        ${isMine ? `<button type="button" class="contact-delete" data-act="delete" data-id="${i.id}">🗑 İlanı Kaldır</button>` : ""}
       </aside>
     `;
     listingsEl.appendChild(card);
