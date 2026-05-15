@@ -32,6 +32,15 @@ const PAGE_SIZE = 20;
 let pageOffset = 0;
 let hasMoreIlanlar = true;
 let kuryeler = [];
+let favoriler = new Set(); // ilan_id Set — kullanıcının favorileri
+let _editingIlanId = null; // ilan formu düzenleme modunda mı?
+
+// Etiket etiket→görsel eşleştirme
+const ETIKET_LABELS = {
+  paket_teslimati: { ico: "📦", label: "Paket Teslimatı" },
+  guvenli_odeme:   { ico: "🛡", label: "Güvenli Ödeme" },
+  anlik_ihtiyac:   { ico: "⏱", label: "Anlık İhtiyaç" }
+};
 
 // =============== DOM REF ===============
 const districtSelect = document.getElementById("districtSelect");
@@ -431,20 +440,16 @@ function renderListings() {
 
   filtered.forEach(i => {
     const card = document.createElement("article");
-    card.className = "card";
-    if (currentUser) card.classList.add("clickable");
+    card.className = "ilan-card-v75";
     const lockedClass = currentUser ? "" : "locked";
     const lockedTitle = currentUser ? "" : 'title="Önce kayıt olun"';
     const isMine = currentUser && i.user_id === currentUser.id;
-    const mineTag = isMine ? '<span class="mine-tag">Senin ilanın</span>' : "";
-    const deleteBar = isMine
-      ? `<div class="delete-bar"><button class="delete-btn" data-act="delete" data-id="${i.id}">🗑 İlanı Kaldır</button></div>`
-      : "";
+    const isFav = currentUser && favoriler.has(i.id);
+    const hemenBasla = _isHemenBasla(i.bas_saat);
+    const tahminiKazanc = (i.saat * i.fiyat).toLocaleString("tr-TR");
+    const kisaId = i.kisa_id || ("#" + String(i.id).slice(0, 8));
 
-    const remainingTxt = formatRemaining(i.expires_at);
-    const isUrgent = remainingTxt.urgent;
-
-    // Sadece kurye paylaşan ilanlarda puan + müsait rozeti
+    // Kurye rozetleri
     let kuryeBadges = "";
     if (currentUser && i.profile && i.profile.kullanici_tipi === "kurye") {
       const p = i.profile;
@@ -459,42 +464,101 @@ function renderListings() {
       }
     }
 
-    const urgentChip = isUrgent ? '<span class="ilan-urgent-chip">🔥 Acil</span>' : "";
-    const tahminiKazanc = (i.saat * i.fiyat).toLocaleString("tr-TR");
+    // Etiketler
+    let etiketHtml = "";
+    const etArr = Array.isArray(i.etiketler) ? i.etiketler : [];
+    if (etArr.length) {
+      etiketHtml = `<div class="card-etiketler">${etArr.map(k => {
+        const meta = ETIKET_LABELS[k];
+        if (!meta) return "";
+        return `<span class="etiket-chip"><span class="etiket-chip-ico">${meta.ico}</span>${meta.label}</span>`;
+      }).join("")}</div>`;
+    }
+
+    // Kebab dropdown sadece girişli kullanıcılar için
+    const kebabHtml = currentUser
+      ? `<div class="kebab-wrap"><button type="button" class="kebab-btn" data-act="kebab" data-id="${i.id}" aria-label="Daha fazla">⋮</button></div>`
+      : "";
 
     card.dataset.id = i.id;
     card.innerHTML = `
-      <div class="card-top">
-        <span class="badge badge-ilce">📍 ${escapeHtml(i.ilce)}</span>
-        <span class="ilan-aktif-sayac" data-created="${i.created_at}">başlatılıyor…</span>
-        ${urgentChip}
-      </div>
-      <h3>${escapeHtml(i.baslik)}${mineTag}</h3>
-      ${kuryeBadges}
-
-      <div class="ilan-hero">
-        <div class="ilan-hero-saat">
-          <span class="ilan-hero-bas">${i.bas_saat}</span>
-          <span class="ilan-hero-arrow">→</span>
-          <span class="ilan-hero-bit">${i.bit_saat}</span>
+      <div class="card-main">
+        <div class="card-top-row">
+          <span class="card-pill pill-ilce">📍 ${escapeHtml(i.ilce)}, Ankara</span>
+          ${isMine ? '<span class="card-pill pill-mine">⚡ Senin İlanın</span>' : ""}
+          <div class="card-top-right">
+            <span class="card-aktif"><span class="aktif-dot"></span><span class="ilan-aktif-sayac" data-created="${i.created_at}">başlatılıyor…</span></span>
+            ${kebabHtml}
+          </div>
         </div>
-        <div class="ilan-hero-sure">${i.saat} saat</div>
+
+        <div class="card-title-row">
+          <h3 class="card-title">${escapeHtml(i.baslik)}</h3>
+          ${hemenBasla ? '<span class="pill-hemen">⏰ Hemen Başla</span>' : ""}
+        </div>
+        ${kuryeBadges}
+
+        <div class="card-time-row">
+          <div class="card-time-box">
+            <span class="time-ico">🕐</span>
+            <div class="time-body">
+              <div class="time-big">${i.bas_saat} → ${i.bit_saat}</div>
+              <div class="time-lbl">Çalışma Saati</div>
+            </div>
+          </div>
+          <div class="card-time-box card-time-box-sec">
+            <span class="time-ico">📅</span>
+            <div class="time-body">
+              <div class="time-big">${i.saat} saat</div>
+              <div class="time-lbl">Süre</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-price-row">
+          <div class="price-cell">
+            <span class="price-ico">💰</span>
+            <div class="price-big">${i.fiyat} <span class="price-tl">₺</span><small>/saat</small></div>
+            <div class="price-lbl">Saatlik Ücret</div>
+          </div>
+          <div class="price-cell">
+            <span class="price-ico">🏍</span>
+            <div class="price-big">${i.km} <span class="price-tl">₺</span><small>/km</small></div>
+            <div class="price-lbl">KM Ücreti</div>
+          </div>
+          <div class="price-cell price-cell-kazanc">
+            <span class="price-ico">💵</span>
+            <div class="price-big">${tahminiKazanc} <span class="price-tl">₺</span></div>
+            <div class="price-lbl">Tahmini Kazanç</div>
+          </div>
+        </div>
+
+        ${i.aciklama ? `<div class="card-aciklama"><span class="aciklama-ico">ℹ</span><span class="aciklama-text">${escapeHtml(i.aciklama)}</span></div>` : ""}
+        ${etiketHtml}
+
+        <div class="card-bottom">
+          ${isMine
+            ? `<button type="button" class="card-delete-btn" data-act="delete" data-id="${i.id}">🗑 İlanı Kaldır</button>`
+            : '<span></span>'}
+          <span class="card-kisaid">İlan No: <strong>${escapeHtml(kisaId)}</strong></span>
+        </div>
       </div>
 
-      <div class="ilan-chips">
-        <span class="ilan-chip ilan-chip-fiyat"><span class="chip-ico">💰</span><strong>${i.fiyat} ₺</strong><small>/saat</small></span>
-        <span class="ilan-chip ilan-chip-km"><span class="chip-ico">🏍</span><strong>${i.km} ₺</strong><small>/km</small></span>
-        <span class="ilan-chip ilan-chip-kazanc"><span class="chip-ico">💵</span><strong>${tahminiKazanc} ₺</strong><small>tahmini</small></span>
-      </div>
-
-      ${i.aciklama ? `<p class="ilan-aciklama">${escapeHtml(i.aciklama)}</p>` : ""}
-
-      <div class="actions">
-        <button class="action-btn call ${lockedClass}" data-act="call" data-id="${i.id}" ${lockedTitle}>📞 Ara</button>
-        <button class="action-btn wa ${lockedClass}" data-act="wa" data-id="${i.id}" ${lockedTitle}>💬 WhatsApp</button>
-        <button class="action-btn addr ${lockedClass}" data-act="addr" data-id="${i.id}" ${lockedTitle}>📍 Adres</button>
-      </div>
-      ${deleteBar}
+      <aside class="card-contact">
+        <h4 class="contact-title">Hızlı İletişim</h4>
+        <button type="button" class="contact-btn contact-call ${lockedClass}" data-act="call" data-id="${i.id}" ${lockedTitle}>
+          <span class="contact-ico">📞</span><span>Ara</span>
+        </button>
+        <button type="button" class="contact-btn contact-wa ${lockedClass}" data-act="wa" data-id="${i.id}" ${lockedTitle}>
+          <span class="contact-ico">💬</span><span>WhatsApp</span>
+        </button>
+        <button type="button" class="contact-btn contact-addr ${lockedClass}" data-act="addr" data-id="${i.id}" ${lockedTitle}>
+          <span class="contact-ico">📍</span><span>Adresi Gör</span>
+        </button>
+        ${currentUser ? `<button type="button" class="contact-fav ${isFav ? 'active' : ''}" data-act="favori" data-id="${i.id}">
+          <span class="fav-ico">${isFav ? '♥' : '♡'}</span> ${isFav ? 'Favoriden Çıkar' : 'Favorilere Ekle'}
+        </button>` : ""}
+      </aside>
     `;
     listingsEl.appendChild(card);
   });
@@ -570,6 +634,188 @@ function renderEmptyState() {
   emptyEl.classList.remove("hidden");
 }
 
+// =============== FAVORİLER / ŞİKAYET / EDIT / KEBAB ===============
+
+async function loadFavoriler() {
+  favoriler = new Set();
+  if (!currentUser) return;
+  try {
+    const session = readStoredSession();
+    if (!session?.access_token) return;
+    const { data, error } = await rawSelect(
+      `favoriler?user_id=eq.${currentUser.id}&select=ilan_id`,
+      session.access_token,
+      5000
+    );
+    if (error) { console.warn("[loadFavoriler]", error); return; }
+    (data || []).forEach(r => favoriler.add(r.ilan_id));
+  } catch (e) { console.warn("[loadFavoriler throw]", e); }
+}
+
+async function toggleFavori(ilanId) {
+  if (!currentUser) { openModal("registerModal"); return; }
+  const session = readStoredSession();
+  if (!session?.access_token) return;
+  const isFav = favoriler.has(ilanId);
+
+  if (isFav) {
+    // Sil
+    favoriler.delete(ilanId);
+    _refreshFavBtn(ilanId);
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/favoriler?user_id=eq.${currentUser.id}&ilan_id=eq.${ilanId}`;
+      const r = await fetch(url, {
+        method: "DELETE",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + session.access_token
+        }
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status);
+    } catch (e) {
+      favoriler.add(ilanId);
+      _refreshFavBtn(ilanId);
+      toast("Favoriden çıkarılamadı: " + (e.message || e), "error");
+    }
+  } else {
+    favoriler.add(ilanId);
+    _refreshFavBtn(ilanId);
+    const { error } = await rawInsert(
+      "favoriler",
+      { user_id: currentUser.id, ilan_id: ilanId },
+      session.access_token
+    );
+    if (error) {
+      favoriler.delete(ilanId);
+      _refreshFavBtn(ilanId);
+      toast("Favoriye eklenemedi: " + error.message, "error");
+    } else {
+      toast("Favorilere eklendi", "ok", 1500);
+    }
+  }
+}
+
+function _refreshFavBtn(ilanId) {
+  const btn = document.querySelector(`[data-act="favori"][data-id="${ilanId}"]`);
+  if (!btn) return;
+  const isFav = favoriler.has(ilanId);
+  btn.classList.toggle("active", isFav);
+  btn.innerHTML = `<span class="fav-ico">${isFav ? "♥" : "♡"}</span> ${isFav ? "Favoriden Çıkar" : "Favorilere Ekle"}`;
+}
+
+// Kebab dropdown — DOM'a bir tane menü, hangi karta açıldıysa data ile takip
+function _closeKebab() {
+  document.querySelectorAll(".kebab-menu").forEach(m => m.remove());
+  document.querySelectorAll(".kebab-btn.open").forEach(b => b.classList.remove("open"));
+}
+
+function _openKebab(btn, ilan) {
+  _closeKebab();
+  btn.classList.add("open");
+  const isMine = currentUser && ilan.user_id === currentUser.id;
+  const items = [];
+  items.push(`<button type="button" class="kmenu-item" data-act="share" data-id="${ilan.id}"><span>🔗</span> Paylaş</button>`);
+  if (isMine) {
+    items.push(`<button type="button" class="kmenu-item" data-act="edit" data-id="${ilan.id}"><span>✏️</span> Düzenle</button>`);
+  } else if (currentUser) {
+    items.push(`<button type="button" class="kmenu-item" data-act="report" data-id="${ilan.id}"><span>🚩</span> Şikayet Et</button>`);
+  }
+  const menu = document.createElement("div");
+  menu.className = "kebab-menu";
+  menu.innerHTML = items.join("");
+  btn.parentElement.appendChild(menu);
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".kebab-btn") || e.target.closest(".kebab-menu")) return;
+  _closeKebab();
+}, true);
+
+// Şikayet modalı
+function openSikayetModal(ilanId) {
+  if (!currentUser) { openModal("registerModal"); return; }
+  document.getElementById("sikayetIlanId").value = ilanId;
+  document.getElementById("sikayetSebep").value = "";
+  document.getElementById("sikayetAciklama").value = "";
+  setStatus("sikayetStatus", "info", "");
+  openModal("sikayetModal");
+}
+
+document.getElementById("sikayetForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const ilanId = document.getElementById("sikayetIlanId").value;
+  const sebep = document.getElementById("sikayetSebep").value;
+  const aciklama = document.getElementById("sikayetAciklama").value.trim();
+  if (!sebep) { setStatus("sikayetStatus", "error", "Sebep seçmelisin."); return; }
+  const session = readStoredSession();
+  if (!session?.access_token) return;
+  const { error } = await rawInsert("sikayetler", {
+    ilan_id: ilanId || null,
+    user_id: currentUser.id,
+    sebep,
+    aciklama: aciklama || null
+  }, session.access_token);
+  if (error) {
+    setStatus("sikayetStatus", "error", "Bildirilemedi: " + error.message);
+    return;
+  }
+  closeModals();
+  toast("Şikayetin alındı. Moderatörler inceleyecek.", "ok", 3500);
+});
+
+// İlan düzenleme modu — formu doldur
+function openEditIlan(ilan) {
+  if (!currentUser || ilan.user_id !== currentUser.id) return;
+  _editingIlanId = ilan.id;
+
+  // Form değerlerini doldur
+  const form = document.getElementById("ilanForm");
+  form.querySelector("[name=ilan_id]").value = ilan.id;
+  form.querySelector("[name=baslik]").value = ilan.baslik || "";
+  form.querySelector("[name=ilce]").value = ilan.ilce || "";
+  form.querySelector("[name=fiyat]").value = ilan.fiyat || 200;
+  document.getElementById("fiyatVal").textContent = ilan.fiyat || 200;
+  form.querySelector("[name=km]").value = ilan.km || 5;
+  document.getElementById("kmVal").textContent = ilan.km || 5;
+  form.querySelector("[name=basSaat]").value = ilan.bas_saat || "09:00";
+  form.querySelector("[name=bitSaat]").value = ilan.bit_saat || "18:00";
+  form.querySelector("[name=isyeriAd]").value = ilan.isyeri_ad || "";
+  form.querySelector("[name=isyeriAdres]").value = ilan.isyeri_adres || "";
+  form.querySelector("[name=iletisimTel]").value = ilan.iletisim_tel ? _displayPhone(ilan.iletisim_tel) : "";
+  form.querySelector("[name=aciklama]").value = ilan.aciklama || "";
+
+  // Etiketler
+  const etArr = ilan.etiketler || [];
+  form.querySelectorAll("[name=etiketler]").forEach(cb => {
+    cb.checked = etArr.includes(cb.value);
+  });
+
+  if (typeof _updateSureOzeti === "function") _updateSureOzeti();
+  document.getElementById("ilanModalTitle").textContent = "İlanı Düzenle";
+  document.getElementById("ilanSubmitBtn").textContent = "Güncelle";
+  openModal("ilanModal");
+}
+
+function resetIlanFormMode() {
+  _editingIlanId = null;
+  const idInput = document.querySelector("#ilanForm [name=ilan_id]");
+  if (idInput) idInput.value = "";
+  document.getElementById("ilanModalTitle").textContent = "İzinci İlanı Ver";
+  document.getElementById("ilanSubmitBtn").textContent = "İlanı Yayınla";
+}
+
+// "Hemen Başla" rozeti — bas_saat şimdiden ±'ye yakınsa
+function _isHemenBasla(basSaat) {
+  if (!basSaat) return false;
+  const [h, m] = String(basSaat).split(":").map(Number);
+  if (Number.isNaN(h)) return false;
+  const now = new Date();
+  const start = new Date(); start.setHours(h, m || 0, 0, 0);
+  const diffMin = (start.getTime() - now.getTime()) / 60000;
+  return diffMin >= -120 && diffMin <= 60;
+}
+
 // =============== KART AKSİYONLARI ===============
 listingsEl.addEventListener("click", async e => {
   const btn = e.target.closest("[data-act]");
@@ -592,6 +838,40 @@ listingsEl.addEventListener("click", async e => {
     return;
   }
 
+  if (act === "kebab") {
+    e.stopPropagation();
+    const ilan = ilanlar.find(x => x.id === id);
+    if (!ilan) return;
+    if (btn.classList.contains("open")) _closeKebab();
+    else _openKebab(btn, ilan);
+    return;
+  }
+
+  if (act === "share") {
+    _closeKebab();
+    copyIlanLink(id);
+    return;
+  }
+
+  if (act === "edit") {
+    _closeKebab();
+    const ilan = ilanlar.find(x => x.id === id);
+    if (ilan) openEditIlan(ilan);
+    return;
+  }
+
+  if (act === "report") {
+    _closeKebab();
+    openSikayetModal(id);
+    return;
+  }
+
+  if (act === "favori") {
+    e.stopPropagation();
+    toggleFavori(id);
+    return;
+  }
+
   if (act === "delete") {
     if (!currentUser) return;
     const ilan = ilanlar.find(x => x.id === id);
@@ -608,7 +888,9 @@ listingsEl.addEventListener("click", async e => {
 
   const ilan = ilanlar.find(x => x.id === id);
   if (!ilan) return;
-  const tel = (ilan.profile?.tel || "").replace(/\s/g, "");
+  // İlan kendi iletişim telefonunu taşır; yoksa profile.tel fallback
+  const telRaw = (ilan.iletisim_tel || ilan.profile?.tel || "").trim();
+  const tel = telRaw.replace(/\s/g, "");
 
   if (act === "call") {
     if (!tel) return toast("Telefon bilgisi bulunamadı.", "error");
@@ -1441,6 +1723,10 @@ ilanVerBtn.addEventListener("click", () => {
     return;
   }
 
+  // Yeni ilan: edit modunu reset et
+  resetIlanFormMode();
+  document.querySelectorAll("#ilanForm input[name=etiketler]").forEach(c => { c.checked = false; });
+
   // İşletme için kayıtlı bilgileri otomatik doldur
   const isyeriAd = document.getElementById("ilanIsyeriAd");
   const isyeriAdres = document.getElementById("ilanIsyeriAdres");
@@ -1535,11 +1821,15 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   }
   saatRange.value = calcSaat;
 
-  const { error } = await sb.from("ilanlar").insert({
-    user_id: currentUser.id,
+  // Seçili etiketler
+  const etiketler = Array.from(
+    document.querySelectorAll("#ilanForm input[name=etiketler]:checked")
+  ).map(c => c.value);
+
+  const payload = {
     baslik,
     ilce,
-    saat: parseInt(fd.get("saat"), 10),
+    saat: calcSaat,
     fiyat: parseInt(fd.get("fiyat"), 10),
     km: parseInt(fd.get("km"), 10),
     bas_saat,
@@ -1547,20 +1837,51 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
     aciklama: (fd.get("aciklama") || "").trim() || null,
     isyeri_ad,
     isyeri_adres,
-    iletisim_tel: iletisim_tel_e164
-  });
-  if (error) {
-    // DB trigger rate limit hatası kullanıcı dostu mesaj
-    if (error.message?.includes("GUNLUK_ILAN_LIMITI")) {
+    iletisim_tel: iletisim_tel_e164,
+    etiketler
+  };
+
+  let opError = null;
+  if (_editingIlanId) {
+    // UPDATE modu
+    const session = readStoredSession();
+    if (!session?.access_token) { toast("Oturum geçersiz", "error"); return; }
+    try {
+      const url = `${SUPABASE_URL}/rest/v1/ilanlar?id=eq.${_editingIlanId}&user_id=eq.${currentUser.id}`;
+      const r = await fetch(url, {
+        method: "PATCH",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + session.access_token,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal"
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!r.ok) opError = { message: "HTTP " + r.status + " — " + (await r.text()) };
+    } catch (e) { opError = { message: e.message || String(e) }; }
+  } else {
+    // INSERT modu
+    const { error } = await sb.from("ilanlar").insert({
+      user_id: currentUser.id,
+      ...payload
+    });
+    opError = error || null;
+  }
+
+  if (opError) {
+    if (opError.message?.includes("GUNLUK_ILAN_LIMITI")) {
       toast("Günlük ilan limitine ulaştın (24 saatte max 5). Yarın tekrar dene.", "error", 6000);
     } else {
-      toast("İlan eklenemedi: " + error.message, "error");
+      toast((_editingIlanId ? "Güncellenemedi: " : "İlan eklenemedi: ") + opError.message, "error");
     }
     return;
   }
 
+  const wasEditing = !!_editingIlanId;
   closeModals();
   e.target.reset();
+  resetIlanFormMode();
   saatRange.value = 4;
   fiyatRange.value = 200; fiyatVal.textContent = "200";
   kmRange.value = 5; kmVal.textContent = "5";
@@ -1569,7 +1890,7 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   document.getElementById("ilanIletisimTel").value = "";
   document.getElementById("telEditHint")?.classList.add("hidden");
   await loadIlanlar();
-  toast("İlanın yayınlandı", "ok");
+  toast(wasEditing ? "İlanın güncellendi" : "İlanın yayınlandı", "ok");
 });
 
 // =============== YARDIMCI ===============
@@ -2943,6 +3264,7 @@ async function _enforceRememberMe() {
   // 3) Kalan tüm init işlerini PARALEL kullanılır (her biri bağımsız)
   await Promise.allSettled([
     (async () => { try { await loadIlanlar(); } catch (e) { console.error("init loadIlanlar:", e); } })(),
+    (async () => { try { await loadFavoriler(); } catch (e) { console.error("init loadFavoriler:", e); } })(),
     (async () => { try { await renderKuryeDashboard(); } catch (e) { console.error("init renderKuryeDashboard:", e); } })(),
     (async () => { try { await refreshPendingReviewCount(); } catch (e) { console.error("init refreshPendingReviewCount:", e); } })(),
     (async () => { try { await openIlanFromUrl(); } catch (e) { console.error("init openIlanFromUrl:", e); } })()

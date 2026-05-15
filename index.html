@@ -331,9 +331,10 @@
   <div class="modal hidden" id="ilanModal">
     <div class="modal-card modal-wide">
       <button class="modal-close" data-close>&times;</button>
-      <h2>İzinci İlanı Ver</h2>
+      <h2 id="ilanModalTitle">İzinci İlanı Ver</h2>
       <p class="muted small">⏱ İlanın yayınlandıktan <strong>24 saat sonra</strong> otomatik kaldırılacak.</p>
       <form id="ilanForm" class="form">
+        <input type="hidden" name="ilan_id" id="ilanEditId" value="" />
         <label>Başlık
           <input type="text" name="baslik" required maxlength="80" placeholder="Örn: 5 gün izinci kurye aranıyor" />
         </label>
@@ -397,7 +398,52 @@
           <textarea name="aciklama" rows="3" maxlength="300" placeholder="Bölge, araç durumu, ek notlar..."></textarea>
         </label>
 
-        <button type="submit" class="btn btn-primary btn-block">İlanı Yayınla</button>
+        <fieldset class="etiket-fieldset">
+          <legend>Etiketler <small class="muted">(opsiyonel — kuryelere hızlı ipucu)</small></legend>
+          <div class="etiket-checks">
+            <label class="etiket-check">
+              <input type="checkbox" name="etiketler" value="paket_teslimati" />
+              <span class="etiket-chip-form">📦 Paket Teslimatı</span>
+            </label>
+            <label class="etiket-check">
+              <input type="checkbox" name="etiketler" value="guvenli_odeme" />
+              <span class="etiket-chip-form">🛡 Güvenli Ödeme</span>
+            </label>
+            <label class="etiket-check">
+              <input type="checkbox" name="etiketler" value="anlik_ihtiyac" />
+              <span class="etiket-chip-form">⏱ Anlık İhtiyaç</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <button type="submit" class="btn btn-primary btn-block" id="ilanSubmitBtn">İlanı Yayınla</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== ŞİKAYET / BİLDİR MODAL ===== -->
+  <div class="modal hidden" id="sikayetModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>İlanı Bildir</h2>
+      <p class="muted small">Bu ilanın kuralları ihlal ettiğini düşünüyorsan bize bildir. Moderatörler inceler.</p>
+      <form id="sikayetForm" class="form" autocomplete="off">
+        <input type="hidden" id="sikayetIlanId" />
+        <label>Sebep <span class="req">*</span>
+          <select id="sikayetSebep" required>
+            <option value="">— Seçiniz —</option>
+            <option value="sahte_ilan">Sahte ilan / yanıltıcı bilgi</option>
+            <option value="dolandiricilik">Dolandırıcılık şüphesi</option>
+            <option value="uygunsuz_icerik">Uygunsuz içerik / dil</option>
+            <option value="yanlis_kategori">Yanlış kategori / spam</option>
+            <option value="diger">Diğer</option>
+          </select>
+        </label>
+        <label>Açıklama <small class="muted">(opsiyonel, max 500)</small>
+          <textarea id="sikayetAciklama" rows="4" maxlength="500" placeholder="Detay ekleyebilirsin..."></textarea>
+        </label>
+        <div id="sikayetStatus" class="status" style="margin-top:8px"></div>
+        <button type="submit" class="btn btn-primary btn-block">Bildir</button>
       </form>
     </div>
   </div>
@@ -770,7 +816,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=74"></script>
-  <script src="script.js?v=74"></script>
+  <script src="supabase-config.js?v=75"></script>
+  <script src="script.js?v=75"></script>
 </body>
 </html>

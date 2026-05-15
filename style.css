@@ -2336,3 +2336,463 @@ textarea#rwYorum:focus {
   .ilan-chip { padding: 7px 10px; font-size: 12px; }
   .ilan-chip strong { font-size: 14px; }
 }
+
+/* ===================================================================
+   v75: Yeni İlan Kartı — 2 Sütun Hızlı İletişim Paneli ile
+   =================================================================== */
+
+.ilan-card-v75 {
+  display: grid;
+  grid-template-columns: 1fr 260px;
+  gap: 18px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 22px;
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  transition: border-color .15s, box-shadow .15s;
+}
+.ilan-card-v75:hover {
+  border-color: #fed7aa;
+  box-shadow: 0 6px 20px rgba(255, 122, 0, 0.06);
+}
+
+/* SOL — ana içerik */
+.ilan-card-v75 .card-main { min-width: 0; display: flex; flex-direction: column; gap: 14px; }
+
+.card-top-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.card-top-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.card-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pill-ilce {
+  background: #fff7ed;
+  color: #c2410c;
+  border: 1px solid #fed7aa;
+}
+.pill-mine {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+.pill-hemen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: #fef3c7;
+  color: #b45309;
+  border: 1px solid #fde68a;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.card-aktif {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  color: #475569;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+.aktif-dot {
+  width: 8px; height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.18);
+}
+
+/* Kebab */
+.kebab-wrap { position: relative; }
+.kebab-btn {
+  width: 32px; height: 32px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  border-radius: 50%;
+  font-size: 18px;
+  line-height: 1;
+  color: #475569;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.kebab-btn:hover, .kebab-btn.open { background: #f1f5f9; border-color: #cbd5e1; }
+.kebab-menu {
+  position: absolute;
+  top: 38px; right: 0;
+  z-index: 50;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+  padding: 6px;
+  min-width: 170px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kmenu-item {
+  text-align: left;
+  background: none;
+  border: 0;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #1f2937;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.kmenu-item:hover { background: #f8fafc; }
+
+/* Başlık */
+.card-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.card-title {
+  font-size: 26px;
+  line-height: 1.15;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.5px;
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+/* Saat row — 2 büyük kutu */
+.card-time-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.card-time-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 14px;
+}
+.card-time-box-sec {
+  background: #f5f3ff;
+  border-color: #ddd6fe;
+}
+.time-ico {
+  font-size: 22px;
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  background: #fff;
+  border-radius: 10px;
+  flex-shrink: 0;
+}
+.time-body { min-width: 0; }
+.time-big {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+.time-lbl {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 2px;
+}
+
+/* Fiyat row — 3 hücreli bordered box */
+.card-price-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 14px;
+  background: #fafbfc;
+}
+.price-cell {
+  text-align: center;
+  padding: 4px 8px;
+  position: relative;
+}
+.price-cell + .price-cell::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 12%;
+  bottom: 12%;
+  width: 1px;
+  background: #e5e7eb;
+}
+.price-ico {
+  font-size: 22px;
+  display: block;
+  margin-bottom: 4px;
+}
+.price-big {
+  font-size: 19px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: -0.4px;
+  line-height: 1.1;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  justify-content: center;
+}
+.price-big small {
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-left: 2px;
+}
+.price-tl { font-size: 16px; color: #475569; }
+.price-lbl {
+  font-size: 11.5px;
+  color: #64748b;
+  margin-top: 4px;
+}
+.price-cell-kazanc .price-big,
+.price-cell-kazanc .price-tl { color: #047857; }
+.price-cell-kazanc .price-lbl { color: #059669; font-weight: 600; }
+
+/* Açıklama */
+.card-aciklama {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  font-size: 13.5px;
+  color: #7c2d12;
+  line-height: 1.45;
+}
+.aciklama-ico {
+  font-weight: 800;
+  color: #ea580c;
+  flex-shrink: 0;
+  font-size: 15px;
+}
+.aciklama-text { word-break: break-word; }
+
+/* Etiketler */
+.card-etiketler {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.etiket-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #334155;
+}
+.etiket-chip-ico { font-size: 14px; }
+
+/* Bottom */
+.card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: 4px;
+}
+.card-delete-btn {
+  background: none;
+  border: 0;
+  color: #dc2626;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.card-delete-btn:hover { color: #991b1b; text-decoration: underline; }
+.card-kisaid {
+  font-size: 12.5px;
+  color: #94a3b8;
+  font-variant-numeric: tabular-nums;
+}
+.card-kisaid strong { color: #475569; font-weight: 700; }
+
+/* SAĞ — Hızlı İletişim paneli */
+.card-contact {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-self: start;
+  position: sticky;
+  top: 16px;
+}
+.contact-title {
+  margin: 0 0 4px 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+.contact-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: transform .1s, filter .15s;
+}
+.contact-btn:hover { filter: brightness(1.05); }
+.contact-btn:active { transform: scale(0.98); }
+.contact-ico { font-size: 16px; line-height: 1; }
+.contact-call { background: #ff7a00; }
+.contact-wa { background: #25d366; }
+.contact-addr {
+  background: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+}
+.contact-addr:hover { background: #e2e8f0; }
+.contact-btn.locked { opacity: 0.55; cursor: not-allowed; }
+
+.contact-fav {
+  background: none;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.contact-fav:hover { background: #fff1f2; color: #be185d; border-color: #fbcfe8; }
+.contact-fav.active {
+  background: #fff1f2;
+  color: #be123c;
+  border-color: #fbcfe8;
+  border-style: solid;
+}
+.fav-ico { font-size: 16px; line-height: 1; }
+.contact-fav.active .fav-ico { color: #e11d48; }
+
+/* Form içi etiket fieldset (ilan ver modalı) */
+.etiket-fieldset {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin: 6px 0 10px;
+}
+.etiket-fieldset legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  padding: 0 6px;
+}
+.etiket-fieldset legend small { font-weight: 400; color: #64748b; margin-left: 4px; }
+.etiket-checks { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.etiket-check {
+  cursor: pointer;
+  position: relative;
+}
+.etiket-check input { position: absolute; opacity: 0; pointer-events: none; }
+.etiket-chip-form {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #fff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #475569;
+  transition: all .15s;
+}
+.etiket-check:hover .etiket-chip-form { border-color: #fed7aa; }
+.etiket-check input:checked + .etiket-chip-form {
+  background: #fff7ed;
+  border-color: #fb923c;
+  color: #c2410c;
+}
+
+/* Mobile — stack */
+@media (max-width: 880px) {
+  .ilan-card-v75 {
+    grid-template-columns: 1fr;
+    padding: 16px;
+    gap: 14px;
+  }
+  .card-contact {
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 12px;
+    gap: 8px;
+  }
+  .contact-title { display: none; }
+  .contact-btn { flex: 1 1 calc(50% - 4px); padding: 11px 8px; font-size: 13.5px; }
+  .contact-addr { flex: 1 1 100%; }
+  .contact-fav { flex: 1 1 100%; margin-top: 0; }
+}
+@media (max-width: 520px) {
+  .card-title { font-size: 22px; }
+  .card-time-row { grid-template-columns: 1fr; }
+  .card-price-row { padding: 10px; }
+  .price-big { font-size: 16px; }
+  .price-tl { font-size: 14px; }
+  .price-ico { font-size: 19px; }
+  .price-lbl { font-size: 10.5px; }
+  .ilan-card-v75 { padding: 14px; border-radius: 14px; }
+}
+
