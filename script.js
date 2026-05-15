@@ -232,7 +232,9 @@ async function syncSession() {
         isAdresi: profile?.is_adresi || "",
         isTelefonu: profile?.is_telefonu || "",
         musait: !!profile?.musait,
-        musaitAt: profile?.musait_at || null
+        musaitAt: profile?.musait_at || null,
+        aracTipi: profile?.arac_tipi || "",
+        aracMarkaModel: profile?.arac_marka_model || ""
       };
     } else {
       currentUser = null;
@@ -2360,7 +2362,16 @@ function _readProfileForm() {
     isletme_adi: document.getElementById("profileIsletmeAdi")?.value.trim() || "",
     isletme_tipi: document.getElementById("profileIsletmeTipi")?.value || "",
     is_telefonu: document.getElementById("profileIsTelefonu")?.value.trim() || "",
-    is_adresi: document.getElementById("profileIsAdresi")?.value.trim() || ""
+    is_adresi: document.getElementById("profileIsAdresi")?.value.trim() || "",
+    // Kurye alanları
+    arac_tipi: document.getElementById("profileAracTipi")?.value || "",
+    arac_marka_model: document.getElementById("profileAracMarkaModel")?.value.trim() || "",
+    tercih_ilceler: Array.from(document.getElementById("profileTercihIlceler")?.selectedOptions || []).map(o => o.value),
+    calisma_gunleri: Array.from(document.querySelectorAll("#profileGunler .day-chip.active")).map(c => parseInt(c.dataset.day, 10)).filter(n => !Number.isNaN(n)),
+    calisma_baslangic: (() => { const v = document.getElementById("profileCalismaBaslangic")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
+    calisma_bitis: (() => { const v = document.getElementById("profileCalismaBitis")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
+    min_ucret: (() => { const v = document.getElementById("profileMinUcret")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
+    max_ucret: (() => { const v = document.getElementById("profileMaxUcret")?.value; return v === "" || v == null ? null : parseInt(v, 10); })()
   };
 }
 
@@ -2377,6 +2388,15 @@ function profileHasChanges() {
   if (f.isletme_tipi !== (currentUser.isletmeTipi || "")) return true;
   if (_telDigits(f.is_telefonu) !== _telDigits(currentUser.isTelefonu || "")) return true;
   if (f.is_adresi !== (currentUser.isAdresi || "")) return true;
+  // Kurye alanları
+  if (f.arac_tipi !== (currentUser.aracTipi || "")) return true;
+  if (f.arac_marka_model !== (currentUser.aracMarkaModel || "")) return true;
+  if (JSON.stringify([...f.tercih_ilceler].sort()) !== JSON.stringify([...(currentUser.tercihIlceler || [])].sort())) return true;
+  if (JSON.stringify([...f.calisma_gunleri].sort()) !== JSON.stringify([...(currentUser.calismaGunleri || [])].sort())) return true;
+  if (f.calisma_baslangic !== (currentUser.calismaBaslangic ?? null)) return true;
+  if (f.calisma_bitis !== (currentUser.calismaBitis ?? null)) return true;
+  if (f.min_ucret !== (currentUser.minUcret ?? null)) return true;
+  if (f.max_ucret !== (currentUser.maxUcret ?? null)) return true;
   return false;
 }
 
@@ -2423,7 +2443,7 @@ document.getElementById("profileTercihIlceler")?.addEventListener("change", () =
   refreshProfileSaveBtn();
   clearStatus("profileStatus");
 });
-["profileCalismaBaslangic","profileCalismaBitis","profileMinUcret","profileMaxUcret"].forEach(id => {
+["profileCalismaBaslangic","profileCalismaBitis","profileMinUcret","profileMaxUcret","profileAracTipi","profileAracMarkaModel"].forEach(id => {
   document.getElementById(id)?.addEventListener("change", () => {
     refreshProfileSaveBtn();
     clearStatus("profileStatus");
@@ -2877,6 +2897,40 @@ function openProfileModal() {
   document.getElementById("profileBioWrap")?.classList.toggle("hidden", isIsletme);
   document.getElementById("profileIsletmeAdresWrap")?.classList.toggle("hidden", !isIsletme);
 
+  // Kurye-only blok: göster + değerleri yükle
+  const isKurye = currentUser.kullaniciTipi === "kurye";
+  document.getElementById("profileKuryeWrap")?.classList.toggle("hidden", !isKurye);
+  if (isKurye) {
+    document.getElementById("profileAracTipi").value = currentUser.aracTipi || "";
+    document.getElementById("profileAracMarkaModel").value = currentUser.aracMarkaModel || "";
+
+    // Hakim bölgeler (multi-select)
+    const tiEl = document.getElementById("profileTercihIlceler");
+    if (tiEl) {
+      const userIlceler = currentUser.tercihIlceler || [];
+      Array.from(tiEl.options).forEach(opt => {
+        opt.selected = userIlceler.includes(opt.value);
+      });
+    }
+
+    // Çalışma günleri (day chips)
+    const userGunler = currentUser.calismaGunleri || [];
+    document.querySelectorAll("#profileGunler .day-chip").forEach(chip => {
+      const d = parseInt(chip.dataset.day, 10);
+      chip.classList.toggle("active", userGunler.includes(d));
+    });
+
+    // Çalışma saati
+    const cb = document.getElementById("profileCalismaBaslangic");
+    const cbit = document.getElementById("profileCalismaBitis");
+    if (cb) cb.value = currentUser.calismaBaslangic != null ? String(currentUser.calismaBaslangic) : "";
+    if (cbit) cbit.value = currentUser.calismaBitis != null ? String(currentUser.calismaBitis) : "";
+
+    // Ücret aralığı
+    document.getElementById("profileMinUcret").value = currentUser.minUcret ?? "";
+    document.getElementById("profileMaxUcret").value = currentUser.maxUcret ?? "";
+  }
+
   // İşletme alanlarını doldur
   const isletmeAdiEl = document.getElementById("profileIsletmeAdi");
   const isletmeTipiEl = document.getElementById("profileIsletmeTipi");
@@ -3031,6 +3085,18 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
     updateObj.is_telefonu = f.is_telefonu || null;
     updateObj.is_adresi = f.is_adresi || null;
   }
+  // Kurye alanları
+  const isKuryeUser = currentUser.kullaniciTipi === "kurye";
+  if (isKuryeUser) {
+    updateObj.arac_tipi = f.arac_tipi || null;
+    updateObj.arac_marka_model = f.arac_marka_model || null;
+    updateObj.tercih_ilceler = f.tercih_ilceler;
+    updateObj.calisma_gunleri = f.calisma_gunleri;
+    updateObj.calisma_baslangic = f.calisma_baslangic;
+    updateObj.calisma_bitis = f.calisma_bitis;
+    updateObj.min_ucret = f.min_ucret;
+    updateObj.max_ucret = f.max_ucret;
+  }
   const { error: profErr } = await sb.from("profiles").update(updateObj).eq("id", currentUser.id);
   if (profErr) {
     setBusy("profileSaveBtn", false);
@@ -3049,6 +3115,18 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
       isletmeTipi: f.isletme_tipi,
       isTelefonu: f.is_telefonu,
       isAdresi: f.is_adresi
+    });
+  }
+  if (isKuryeUser) {
+    Object.assign(currentUser, {
+      aracTipi: f.arac_tipi,
+      aracMarkaModel: f.arac_marka_model,
+      tercihIlceler: f.tercih_ilceler,
+      calismaGunleri: f.calisma_gunleri,
+      calismaBaslangic: f.calisma_baslangic,
+      calismaBitis: f.calisma_bitis,
+      minUcret: f.min_ucret,
+      maxUcret: f.max_ucret
     });
   }
 

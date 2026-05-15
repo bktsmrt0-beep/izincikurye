@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=107" />
+  <link rel="stylesheet" href="style.css?v=108" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -743,6 +743,69 @@
             <p class="char-counter"><span id="bioCount">0</span>/300</p>
           </div>
 
+          <!-- KURYE-ONLY BLOK (sadece kullanici_tipi='kurye' için görünür) -->
+          <div id="profileKuryeWrap" class="hidden">
+            <p class="muted small" style="margin:14px 0 10px;">🏍 <strong>Kurye Bilgilerin</strong> — müsait olduğunda işletmeler bu bilgileri görür.</p>
+
+            <!-- Araç tipi + marka/model -->
+            <div class="row-2">
+              <label>Araç Tipi
+                <select id="profileAracTipi">
+                  <option value="">— Seçiniz —</option>
+                  <option value="motosiklet">🏍 Motosiklet</option>
+                  <option value="bisiklet">🚲 Bisiklet</option>
+                  <option value="scooter">🛴 Scooter</option>
+                  <option value="araba">🚗 Araba</option>
+                </select>
+              </label>
+              <label>Marka / Model
+                <input type="text" id="profileAracMarkaModel" maxlength="60" placeholder="Örn: Honda CB125F" />
+              </label>
+            </div>
+
+            <!-- Hakim olduğu bölgeler -->
+            <label>Hakim Olduğun Bölgeler <small class="muted">(birden fazla seçebilirsin)</small>
+              <select id="profileTercihIlceler" multiple size="6"></select>
+            </label>
+            <p class="muted small" style="margin-top:-6px">💡 Ctrl/Cmd basılı tutarak birden fazla seç.</p>
+
+            <!-- Çalışma günleri -->
+            <label style="margin-top:8px">Çalışma Günleri</label>
+            <div id="profileGunler" class="day-picker">
+              <button type="button" class="day-chip" data-day="1">Pzt</button>
+              <button type="button" class="day-chip" data-day="2">Sal</button>
+              <button type="button" class="day-chip" data-day="3">Çar</button>
+              <button type="button" class="day-chip" data-day="4">Per</button>
+              <button type="button" class="day-chip" data-day="5">Cum</button>
+              <button type="button" class="day-chip" data-day="6">Cmt</button>
+              <button type="button" class="day-chip" data-day="7">Paz</button>
+            </div>
+
+            <!-- Çalışma saati -->
+            <div class="row-2" style="margin-top:10px">
+              <label>Başlangıç Saati
+                <select id="profileCalismaBaslangic">
+                  <option value="">—</option>
+                </select>
+              </label>
+              <label>Bitiş Saati
+                <select id="profileCalismaBitis">
+                  <option value="">—</option>
+                </select>
+              </label>
+            </div>
+
+            <!-- Ücret aralığı -->
+            <div class="row-2">
+              <label>Min. Saatlik Ücret <small class="muted">(₺)</small>
+                <input type="number" id="profileMinUcret" min="100" max="999" step="10" placeholder="250" />
+              </label>
+              <label>Max. Saatlik Ücret <small class="muted">(₺)</small>
+                <input type="number" id="profileMaxUcret" min="100" max="999" step="10" placeholder="300" />
+              </label>
+            </div>
+          </div>
+
           <!-- İş Adresi (sadece işletme için görünür) — ilan formuna otomatik dolar -->
           <div id="profileIsletmeAdresWrap" class="hidden">
             <label>İş Adresi <span class="req">*</span>
@@ -832,7 +895,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=107"></script>
-  <script src="script.js?v=107"></script>
+  <script src="supabase-config.js?v=108"></script>
+  <script src="script.js?v=108"></script>
 </body>
 </html>
