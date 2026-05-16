@@ -1755,13 +1755,29 @@ function closeModals() {
   document.title = "İzinci Kurye — Ankara";
 }
 
-// Geri tuşu: HERHANGİ bir modal açıksa kapat, siteden çıkma
+// Geri tuşu öncelik sırası: 1) Modal 2) Sidebar 3) Tab geçişi
 window.addEventListener("popstate", () => {
   const anyModalOpen = !!document.querySelector(".modal:not(.hidden)");
   if (anyModalOpen) {
     _closingFromPopstate = true;
     closeModals();
     _closingFromPopstate = false;
+    return;
+  }
+  const sidebarOpen = document.getElementById("sidebarDrawer")?.classList.contains("open");
+  if (sidebarOpen) {
+    _closingSidebarFromPopstate = true;
+    closeSidebar();
+    _closingSidebarFromPopstate = false;
+    return;
+  }
+  // Sekme geçişi: state.tab varsa veya yoksa default'a dön
+  const wantedTab = history.state?.tab || "ilanlar";
+  if (typeof contentTab !== "undefined" && wantedTab !== contentTab) {
+    _switchingTabFromPopstate = true;
+    const btn = document.querySelector(`.content-tab[data-content-tab="${wantedTab}"]`);
+    if (btn) btn.click();
+    _switchingTabFromPopstate = false;
   }
 });
 
@@ -1780,12 +1796,24 @@ function openSidebar() {
   document.getElementById("sidebarOverlay")?.classList.remove("hidden");
   document.getElementById("hamburgerBtn")?.setAttribute("aria-expanded", "true");
   document.body.classList.add("sidebar-open");
+  // History state — geri tuşu sidebar'ı kapatır
+  try {
+    if (!history.state?.sidebar) {
+      history.pushState({ sidebar: true }, "", window.location.href);
+    }
+  } catch {}
 }
+let _closingSidebarFromPopstate = false;
 function closeSidebar() {
+  const wasOpen = document.getElementById("sidebarDrawer")?.classList.contains("open");
   document.getElementById("sidebarDrawer")?.classList.remove("open");
   document.getElementById("sidebarOverlay")?.classList.add("hidden");
   document.getElementById("hamburgerBtn")?.setAttribute("aria-expanded", "false");
   document.body.classList.remove("sidebar-open");
+  if (!wasOpen) return;
+  if (!_closingSidebarFromPopstate && history.state?.sidebar) {
+    history.back();
+  }
 }
 function toggleSidebar() {
   const open = document.getElementById("sidebarDrawer")?.classList.contains("open");
@@ -3834,10 +3862,32 @@ document.addEventListener("click", e => {
   }
 });
 
+// Sekme geçişi popstate'ten geldiyse history push etme (sonsuz döngü olmasın)
+let _switchingTabFromPopstate = false;
+
 // Ana içerik sekme şeridi
 document.querySelectorAll(".content-tab").forEach(btn => {
   btn.addEventListener("click", async () => {
-    contentTab = btn.dataset.contentTab;
+    const newTab = btn.dataset.contentTab;
+    if (newTab === contentTab) return;  // zaten bu sekmedeyiz
+
+    // History yönetimi: geri tuşu sekme arasında gezsin, siteden çıkmasın
+    if (!_switchingTabFromPopstate) {
+      try {
+        const isDefault = (newTab === "ilanlar");
+        const wasDefault = (history.state?.tab || "ilanlar") === "ilanlar";
+        if (isDefault && !wasDefault) {
+          // Müsait Kuryeler → Aktif İlanlar: state.tab'i geri al
+          history.back();
+          return;  // popstate handler tab'ı zaten değiştirecek
+        } else if (!isDefault) {
+          // Aktif İlanlar → Müsait Kuryeler: yeni state push
+          history.pushState({ tab: newTab }, "", window.location.href);
+        }
+      } catch {}
+    }
+
+    contentTab = newTab;
     document.querySelectorAll(".content-tab").forEach(b => b.classList.toggle("active", b === btn));
     const showK = contentTab === "kuryeler";
     listingsEl.classList.toggle("hidden", showK);
