@@ -2362,7 +2362,12 @@ function setBusy(btnId, busy, busyText) {
 function formatTel(raw) {
   if (!raw) return "";
   let d = (raw || "").replace(/\D/g, "");
-  if (d.startsWith("90") && d.length >= 12) d = d.slice(2);
+  // Her zaman baştaki '90' veya '0' prefix'lerini kaldır
+  // (TR cep numarası 5 ile başlar; 90 her zaman ülke kodu, 0 her zaman ulusal prefix)
+  // Önceki kod 'length >= 12' kontrolüyle sadece tam E.164 yapıştırmasında striplerdi —
+  // ama focus handler '+90 ' pre-fill ediyor + kullanıcı 1 hane yazınca '905' oluyor
+  // → length 3 → strip yapılmıyor → bug: '+90 905' (kullanıcı düzeltemiyor).
+  if (d.startsWith("90")) d = d.slice(2);
   else if (d.startsWith("0")) d = d.slice(1);
   d = d.slice(0, 10);
   if (!d) return "+90 ";
