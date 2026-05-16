@@ -898,16 +898,38 @@ body.sidebar-open { overflow: hidden; }
   padding: 22px;
   position: relative;
   max-height: 90vh; overflow-y: auto;
+  /* Flex column: × butonunu sticky tutmak için */
+  display: flex;
+  flex-direction: column;
 }
 .modal-card.modal-wide { max-width: 480px; }
 .modal-card h2 { font-size: 18px; margin-bottom: 4px; }
 .modal-close {
-  position: absolute; top: 8px; right: 12px;
-  background: transparent; border: 0;
-  font-size: 24px; color: var(--gray-500);
-  cursor: pointer; line-height: 1;
+  /* Sticky: modal içeriği aşağı kaydırılınca da × hep üst-sağda görünür */
+  position: sticky;
+  top: 0;
+  align-self: flex-end;
+  margin: -8px -8px -32px 0;   /* sağ-üste yapıştır, sonraki içerik üstüne çıksın */
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--gray-500);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  transition: color .12s, background .12s;
 }
-.modal-close:hover { color: var(--gray-900); }
+.modal-close:hover { color: var(--gray-900); background: rgba(255,255,255,1); }
 
 /* FORM */
 .form { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
