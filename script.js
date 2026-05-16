@@ -2239,12 +2239,30 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   } else {
     // INSERT modu — rawInsert bypass (sb.from takılma riski)
     const session = readStoredSession();
+    if (!session?.access_token) {
+      // Token expired/eksik → RLS başarısız olur. Önceden yakala.
+      toast("Oturumun sona ermiş görünüyor. Lütfen tekrar giriş yap.", "error", 6000);
+      setTimeout(() => openModal("loginModal"), 800);
+      return;
+    }
+    console.log("[ilanInsert] user_id:", currentUser.id, "hasToken:", !!session.access_token);
     const { error } = await rawInsert(
       "ilanlar",
       { user_id: currentUser.id, ...payload },
-      session?.access_token
+      session.access_token
     );
-    opError = error || null;
+    if (error) {
+      console.error("[ilanInsert] error:", error);
+      // RLS hatası ise muhtemelen token bozuk veya user_id mismatch
+      if (error.message?.includes("row-level security") || error.message?.includes("RLS")) {
+        toast("Oturum doğrulanamadı. Lütfen çıkış yapıp tekrar giriş yap.", "error", 6000);
+        opError = error;
+      } else {
+        opError = error;
+      }
+    } else {
+      opError = null;
+    }
   }
 
   if (opError) {
