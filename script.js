@@ -2199,11 +2199,13 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
       if (!r.ok) opError = { message: "HTTP " + r.status + " — " + (await r.text()) };
     } catch (e) { opError = { message: e.message || String(e) }; }
   } else {
-    // INSERT modu
-    const { error } = await sb.from("ilanlar").insert({
-      user_id: currentUser.id,
-      ...payload
-    });
+    // INSERT modu — rawInsert bypass (sb.from takılma riski)
+    const session = readStoredSession();
+    const { error } = await rawInsert(
+      "ilanlar",
+      { user_id: currentUser.id, ...payload },
+      session?.access_token
+    );
     opError = error || null;
   }
 
@@ -3182,7 +3184,25 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
     updateObj.min_ucret = f.min_ucret;
     updateObj.max_ucret = f.max_ucret;
   }
-  const { error: profErr } = await sb.from("profiles").update(updateObj).eq("id", currentUser.id);
+  // Ham PATCH — sb.from takılma riski bypass
+  const session = readStoredSession();
+  let profErr = null;
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + (session?.access_token || SUPABASE_KEY),
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify(updateObj)
+    });
+    if (!r.ok) {
+      const txt = await r.text();
+      profErr = { message: "HTTP " + r.status + " — " + txt };
+    }
+  } catch (e) { profErr = { message: e.message || String(e) }; }
   if (profErr) {
     setBusy("profileSaveBtn", false);
     setStatus("profileStatus", "error", "Profil güncellenemedi: " + profErr.message);
@@ -3916,22 +3936,30 @@ async function openIlanFromUrl() {
   // Önce yüklü listede ara
   let ilan = ilanlar.find(x => x.id === id);
 
-  // Yüklü değilse direkt çek (deep link senaryosu)
+  // Yüklü değilse direkt çek (deep link senaryosu) — rawSelect bypass
   if (!ilan) {
     const tableOrView = currentUser ? "ilanlar" : "ilanlar_public";
-    const { data, error } = await sb.from(tableOrView).select("*").eq("id", id).maybeSingle();
-    if (error || !data) {
+    const session = readStoredSession();
+    const { data, error } = await rawSelect(
+      `${tableOrView}?id=eq.${id}&select=*&limit=1`,
+      session?.access_token,
+      6000
+    );
+    const row = Array.isArray(data) && data.length ? data[0] : null;
+    if (error || !row) {
       toast("İlan bulunamadı veya süresi dolmuş.", "error");
       history.replaceState(null, "", "/");
       return;
     }
-    ilan = data;
-    // Profil bilgisini de çek
+    ilan = row;
+    // Profil bilgisini de çek (rawSelect)
     if (currentUser) {
-      const { data: prof } = await sb.from("profiles")
-        .select("id, ad, soyad, tel, created_at, musait, musait_at, kullanici_tipi")
-        .eq("id", ilan.user_id).maybeSingle();
-      ilan.profile = prof || null;
+      const { data: profArr } = await rawSelect(
+        `profiles?id=eq.${ilan.user_id}&select=id,ad,soyad,tel,created_at,musait,musait_at,kullanici_tipi&limit=1`,
+        session?.access_token,
+        4000
+      );
+      ilan.profile = (Array.isArray(profArr) && profArr.length) ? profArr[0] : null;
     }
   }
 
