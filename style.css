@@ -620,20 +620,23 @@ body.sidebar-open { overflow: hidden; }
   box-sizing: border-box;
 }
 #kuryeDetailModal .modal-close {
-  position: absolute;
-  top: 8px; right: 8px;
-  z-index: 10;
-  background: #fff;
+  /* Viewport-fixed (v137) — uzun detay modallarında kaydırınca × kaybolmasın */
+  position: fixed;
+  top: 14px; right: 14px;
+  z-index: 1010;
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
-  width: 32px; height: 32px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  width: 38px; height: 38px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  font-size: 20px;
-  color: #475569;
-  border: 0;
+  font-size: 24px;
+  color: var(--gray-700);
   cursor: pointer;
 }
 .kurye-detail-v75 {
@@ -794,21 +797,24 @@ body.sidebar-open { overflow: hidden; }
   box-sizing: border-box;
 }
 #ilanDetailModal .modal-close {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 10;
-  background: #fff;
+  /* Viewport-fixed (v137) — uzun detay modallarında kaydırınca × kaybolmasın */
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1010;
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
-  width: 32px; height: 32px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  width: 38px; height: 38px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
-  font-size: 20px;
-  color: #475569;
-  border: 0;
+  font-size: 24px;
+  color: var(--gray-700);
   cursor: pointer;
 }
 #ilanDetailModal .ilan-card-v75 {

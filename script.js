@@ -2700,15 +2700,18 @@ async function loadLastSignIn() {
 document.getElementById("downloadDataBtn")?.addEventListener("click", async () => {
   if (!currentUser) return;
   toast("Verilerin hazırlanıyor...", "info", 1500);
-  const [{ data: profil }, { data: ilanlar }] = await Promise.all([
-    sb.from("profiles").select("*").eq("id", currentUser.id).maybeSingle(),
-    sb.from("ilanlar").select("*").eq("user_id", currentUser.id)
+  // Raw fetch bypass — sb.from lock takılma riski (CLAUDE.md tuzak #48)
+  const session = readStoredSession();
+  const [{ data: profArr }, { data: ilanArr }] = await Promise.all([
+    rawSelect(`profiles?id=eq.${currentUser.id}&select=*&limit=1`, session?.access_token, 6000),
+    rawSelect(`ilanlar?user_id=eq.${currentUser.id}&select=*`, session?.access_token, 6000)
   ]);
+  const profil = Array.isArray(profArr) && profArr.length ? profArr[0] : null;
   const payload = {
     indirilme_tarihi: new Date().toISOString(),
     kullanici: { id: currentUser.id, email: currentUser.email },
     profil: profil || {},
-    ilanlar: ilanlar || []
+    ilanlar: ilanArr || []
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -2782,14 +2785,17 @@ async function loadProfileStats() {
   }
 
   // ============ KPI ============
-  // KPI 1 — Aktif İlan sayısı (expires_at > now)
+  // KPI 1 — Aktif İlan sayısı (expires_at > now) — raw bypass
   let aktifIlan = 0;
   try {
-    const { count } = await sb.from("ilanlar")
-      .select("id", { count: "exact", head: true })
-      .eq("user_id", currentUser.id)
-      .gt("expires_at", new Date().toISOString());
-    aktifIlan = count ?? 0;
+    const session = readStoredSession();
+    const nowIso = new Date().toISOString();
+    const { data } = await rawSelect(
+      `ilanlar?user_id=eq.${currentUser.id}&expires_at=gt.${encodeURIComponent(nowIso)}&select=id`,
+      session?.access_token,
+      4000
+    );
+    aktifIlan = Array.isArray(data) ? data.length : 0;
   } catch (e) { console.warn("[kpi aktif ilan]", e); }
 
   // KPI 2 — bekleyen yorum (işletme) veya aldığım yorum (kurye)
@@ -3264,13 +3270,19 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
   }
   // Ham PATCH — sb.from takılma riski bypass
   const session = readStoredSession();
+  if (!session?.access_token) {
+    setBusy("profileSaveBtn", false);
+    setStatus("profileStatus", "error", "Oturumun sona ermiş, lütfen tekrar giriş yap.");
+    setTimeout(() => { closeModals(); openModal("loginModal"); }, 1200);
+    return;
+  }
   let profErr = null;
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
       method: "PATCH",
       headers: {
         apikey: SUPABASE_KEY,
-        Authorization: "Bearer " + (session?.access_token || SUPABASE_KEY),
+        Authorization: "Bearer " + session.access_token,
         "Content-Type": "application/json",
         Prefer: "return=minimal"
       },
@@ -3488,15 +3500,36 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async () =
     return;
   }
 
+  // Raw DELETE bypass — sb.from lock takılma riski (kritik an: kullanıcı hesabını kapatamayabilirdi)
+  const session = readStoredSession();
+  if (!session?.access_token) {
+    toast("Oturumun sona ermiş, lütfen tekrar giriş yap.", "error", 5000);
+    return;
+  }
+  const _rawDelete = async (path) => {
+    try {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+        method: "DELETE",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + session.access_token,
+          Prefer: "return=minimal"
+        }
+      });
+      if (!r.ok) return { error: { message: "HTTP " + r.status + " — " + (await r.text()) } };
+      return { error: null };
+    } catch (e) { return { error: { message: e.message || String(e) } }; }
+  };
+
   // 1) Kullanıcının ilanlarını sil
-  const { error: ilanErr } = await sb.from("ilanlar").delete().eq("user_id", currentUser.id);
+  const { error: ilanErr } = await _rawDelete(`ilanlar?user_id=eq.${currentUser.id}`);
   if (ilanErr) {
     toast("İlanlar silinemedi: " + ilanErr.message, "error");
     return;
   }
 
   // 2) Profil satırını sil
-  const { error: profErr } = await sb.from("profiles").delete().eq("id", currentUser.id);
+  const { error: profErr } = await _rawDelete(`profiles?id=eq.${currentUser.id}`);
   if (profErr) {
     toast("Profil silinemedi: " + profErr.message, "error");
     return;
