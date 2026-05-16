@@ -3349,30 +3349,82 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
 });
 
 // =============== MÜSAİTLİK TOGGLE ===============
-document.getElementById("musaitToggle")?.addEventListener("change", async e => {
+// Müsait toggle ortak helper'ı — DB update + UI sync (raw fetch ile sb.from bypass)
+async function _commitMusait(yeni) {
   if (!currentUser) return;
-  const yeni = e.target.checked;
-  const nowIso = new Date().toISOString();
-  // Toggle anında UI güncelle (UX hızlı)
-  document.getElementById("musaitTitle").textContent = yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
-  document.getElementById("musaitCard")?.classList.toggle("active", yeni);
-
-  const { error } = await sb.from("profiles")
-    .update({ musait: yeni, musait_at: nowIso })
-    .eq("id", currentUser.id);
-  if (error) {
-    // Geri al
-    e.target.checked = !yeni;
-    document.getElementById("musaitTitle").textContent = !yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
-    document.getElementById("musaitCard")?.classList.toggle("active", !yeni);
-    toast("Güncellenemedi: " + error.message, "error");
+  const session = readStoredSession();
+  if (!session?.access_token) {
+    toast("Oturumun sona ermiş, lütfen tekrar giriş yap.", "error", 5000);
+    setTimeout(() => openModal("loginModal"), 800);
     return;
   }
+  const nowIso = new Date().toISOString();
+
+  // Optimistic UI — anında her iki yerde de güncelle
   currentUser.musait = yeni;
-  currentUser.musaitAt = nowIso;
-  // Dashboard switch'ini de senkron tut
+  const mt = document.getElementById("musaitToggle");
+  if (mt) mt.checked = yeni;
+  const mTitle = document.getElementById("musaitTitle");
+  if (mTitle) mTitle.textContent = yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
+  document.getElementById("musaitCard")?.classList.toggle("active", yeni);
   syncDashboardToggle();
-  toast(yeni ? "🟢 Müsait olarak işaretlendin" : "🔴 Artık müsait değilsin", "ok");
+
+  // Ham PATCH — sb.from bypass
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + session.access_token,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify({ musait: yeni, musait_at: nowIso })
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status + " — " + (await r.text()));
+    currentUser.musaitAt = nowIso;
+    toast(yeni ? "🟢 Müsait olarak işaretlendin" : "🔴 Artık müsait değilsin", "ok");
+  } catch (e) {
+    // Rollback
+    currentUser.musait = !yeni;
+    if (mt) mt.checked = !yeni;
+    if (mTitle) mTitle.textContent = !yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
+    document.getElementById("musaitCard")?.classList.toggle("active", !yeni);
+    syncDashboardToggle();
+    toast("Güncellenemedi: " + (e.message || e), "error");
+  }
+}
+
+// Müsait olma onay modalı — açma için kural beyanı gerek, kapatma direkt
+function _openMusaitOnay(onConfirm) {
+  const cb = document.getElementById("musaitKurallarOnay");
+  const btn = document.getElementById("musaitOnayConfirm");
+  if (cb) cb.checked = false;
+  if (btn) btn.disabled = true;
+  if (cb && btn) {
+    cb.onchange = () => { btn.disabled = !cb.checked; };
+  }
+  if (btn) {
+    btn.onclick = () => {
+      if (!cb?.checked) return;
+      closeModals();
+      onConfirm();
+    };
+  }
+  openModal("musaitOnayModal");
+}
+
+document.getElementById("musaitToggle")?.addEventListener("change", e => {
+  if (!currentUser) return;
+  const yeni = e.target.checked;
+  if (yeni) {
+    // Açma → onay iste, gerçek değişiklik onaylanınca
+    e.target.checked = false;  // onay verilene kadar gerçek değişiklik yok
+    _openMusaitOnay(() => _commitMusait(true));
+  } else {
+    // Kapatma → doğrudan
+    _commitMusait(false);
+  }
 });
 
 // =============== ŞİFRE DEĞİŞTİR (girişli kullanıcı) ===============
@@ -3570,38 +3622,15 @@ function syncDashboardToggle() {
   }
 }
 
-// Büyük banner handler — tek tıkla DB güncelle, her yerde senkronize tut
-document.getElementById("kmbToggle")?.addEventListener("click", async () => {
+// Büyük banner handler — müsait OLURKEN kurallar onayı ister
+document.getElementById("kmbToggle")?.addEventListener("click", () => {
   if (!currentUser) return;
   const yeni = !currentUser.musait;
-  const nowIso = new Date().toISOString();
-
-  // Optimistic UI — anında banner'ı güncelle
-  currentUser.musait = yeni;
-  syncDashboardToggle();
-
-  const { error } = await sb.from("profiles")
-    .update({ musait: yeni, musait_at: nowIso })
-    .eq("id", currentUser.id);
-
-  if (error) {
-    // Geri al
-    currentUser.musait = !yeni;
-    syncDashboardToggle();
-    toast("Güncellenemedi: " + error.message, "error");
-    return;
+  if (yeni) {
+    _openMusaitOnay(() => _commitMusait(true));
+  } else {
+    _commitMusait(false);
   }
-  currentUser.musaitAt = nowIso;
-
-  // Profilim modal toggle'ı da senkron tut
-  const mt = document.getElementById("musaitToggle");
-  if (mt) {
-    mt.checked = yeni;
-    const t = document.getElementById("musaitTitle");
-    if (t) t.textContent = yeni ? "🟢 Şu an müsaitim" : "🔴 Müsait değilim";
-    document.getElementById("musaitCard")?.classList.toggle("active", yeni);
-  }
-  toast(yeni ? "🟢 Müsait olarak işaretlendin" : "🟠 Artık meşgulsün", "ok");
 });
 
 // Hızlı bağlantılar

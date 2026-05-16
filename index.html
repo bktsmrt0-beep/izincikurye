@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=134" />
+  <link rel="stylesheet" href="style.css?v=135" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -436,6 +436,34 @@
 
         <button type="submit" class="btn btn-primary btn-block" id="ilanSubmitBtn">İlanı Yayınla</button>
       </form>
+    </div>
+  </div>
+
+  <!-- ===== KURYE MÜSAİT OLMA ONAY MODALI ===== -->
+  <div class="modal hidden" id="musaitOnayModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>🟢 Müsait Olmak Üzeresin</h2>
+      <p class="muted">Müsait olduğunda işletmeler seni listede görür ve doğrudan iletişime geçebilir.</p>
+
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 16px;margin:14px 0;font-size:14px;color:#7c2d12;">
+        <strong>Onaylaman gerekenler:</strong>
+        <ul style="margin:8px 0 0 18px;line-height:1.6;">
+          <li>Profilindeki bilgiler <strong>doğru ve güncel</strong></li>
+          <li>Belirttiğin saat aralığında <strong>gerçekten müsaitsin</strong></li>
+          <li>İşletmelerle <strong>medeni ve dürüst iletişim</strong> kuracaksın</li>
+          <li>İlan Verme Kuralları'na uyacaksın</li>
+        </ul>
+      </div>
+
+      <label class="consent">
+        <input type="checkbox" id="musaitKurallarOnay" />
+        <span>
+          <a href="/ilan-kurallari.html" target="_blank" rel="noopener">İlan Verme Kuralları</a>'nı okudum ve müsait olduğum süre boyunca bu kurallara uyacağımı beyan ediyorum. <span class="req">*</span>
+        </span>
+      </label>
+
+      <button type="button" class="btn btn-primary btn-block" id="musaitOnayConfirm" disabled style="margin-top:14px">🟢 Müsait Ol</button>
     </div>
   </div>
 
@@ -916,7 +944,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=134"></script>
-  <script src="script.js?v=134"></script>
+  <script src="supabase-config.js?v=135"></script>
+  <script src="script.js?v=135"></script>
 </body>
 </html>
