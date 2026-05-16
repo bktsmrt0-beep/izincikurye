@@ -3830,12 +3830,21 @@ const _isRecoveryUrl = _hashSnapshot.includes("type=recovery");
 async function _enforceRememberMe() {
   // "Beni hatirla" = 0 ise: yeni sekme/tarayici acilisinda oturumu sonlandir.
   // sessionStorage flag i sadece sayfa yenileme/ic navigasyonda korunur.
+  //
+  // ÖNEMLİ: sb.auth.signOut() supabase-js publishable key + lock'a takılabilir
+  // ve init'i bloklar. Bunun yerine localStorage'daki token'ları MANUEL siliyoruz
+  // (signOut'un yaptığı şey budur — local scope).
   try {
     if (localStorage.getItem("izk_remember") !== "0") return;
     const stillActive = sessionStorage.getItem("izk_session_active") === "1";
     if (!stillActive) {
-      console.log("[init] Beni-hatirla=0 ve yeni sekme/tarayici → local signOut");
-      await sb.auth.signOut({ scope: "local" }).catch(() => {});
+      console.log("[init] Beni-hatirla=0 ve yeni sekme/tarayici → local token clear");
+      try {
+        // sb-<ref>-auth-token formatındaki tüm Supabase tokenlarını sil
+        Object.keys(localStorage)
+          .filter(k => k.startsWith("sb-") && k.endsWith("-auth-token"))
+          .forEach(k => localStorage.removeItem(k));
+      } catch {}
       localStorage.removeItem("izk_remember");
     }
     sessionStorage.setItem("izk_session_active", "1");
