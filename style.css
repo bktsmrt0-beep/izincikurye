@@ -898,38 +898,43 @@ body.sidebar-open { overflow: hidden; }
   padding: 22px;
   position: relative;
   max-height: 90vh; overflow-y: auto;
-  /* Flex column: × butonunu sticky tutmak için */
-  display: flex;
-  flex-direction: column;
 }
 .modal-card.modal-wide { max-width: 480px; }
 .modal-card h2 { font-size: 18px; margin-bottom: 4px; }
+
+/* × butonu: viewport'a sabitli (fixed) — modal içeriği aşağı kaydırılınca
+   da her zaman üst-sağ köşede görünür. */
 .modal-close {
-  /* Sticky: modal içeriği aşağı kaydırılınca da × hep üst-sağda görünür */
-  position: sticky;
-  top: 0;
-  align-self: flex-end;
-  margin: -8px -8px -32px 0;   /* sağ-üste yapıştır, sonraki içerik üstüne çıksın */
-  z-index: 10;
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 1010;        /* modal'ın üstünde (modal z=1000) */
   background: rgba(255, 255, 255, 0.95);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 38px;
+  height: 38px;
   padding: 0;
-  font-size: 20px;
+  font-size: 24px;
   line-height: 1;
-  color: var(--gray-500);
+  color: var(--gray-700);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  transition: color .12s, background .12s;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  transition: color .12s, background .12s, transform .12s;
 }
-.modal-close:hover { color: var(--gray-900); background: rgba(255,255,255,1); }
+.modal-close:hover { color: var(--gray-900); background: #fff; transform: scale(1.05); }
+.modal-close:active { transform: scale(0.95); }
+/* Modal'ın kendisi pozisyon kontekstinde sabit */
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
 
 /* FORM */
 .form { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
