@@ -1824,7 +1824,13 @@ document.querySelectorAll("[data-close]").forEach(b =>
   b.addEventListener("click", closeModals)
 );
 document.querySelectorAll(".modal").forEach(m =>
-  m.addEventListener("click", e => { if (e.target === m) closeModals(); })
+  m.addEventListener("click", e => {
+    if (e.target !== m) return;  // sadece backdrop click
+    // Form içeren modal'ı kazara kapatma — veri kaybı önleme
+    // Kullanıcı × butonu veya Esc ile bilinçli kapatabilir
+    if (m.querySelector("form")) return;
+    closeModals();
+  })
 );
 
 document.getElementById("guestRegisterLink").addEventListener("click", e => {
