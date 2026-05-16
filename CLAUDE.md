@@ -7,7 +7,7 @@
 - **Hosting:** Vercel (auto-deploy from `main`), domain: https://izincikurye.vercel.app
 - **Repo:** https://github.com/bktsmrt0-beep/izincikurye
 
-> **Not:** Her HTML/JS/CSS değişiminde `index.html` ve `admin.html`'de `?v=N` query parametresi artırılır. Commit + push → Vercel otomatik deploy ~30-60sn. Şu an `?v=122`.
+> **Not:** Her HTML/JS/CSS değişiminde `index.html` ve `admin.html`'de `?v=N` query parametresi artırılır. Commit + push → Vercel otomatik deploy ~30-60sn. Şu an `?v=124`.
 
 > **Önemli:** script.js'in başında **YOL HARİTASI** yorum bloğu vardır (satır 3-95) — feature için doğrudan satır aralığına git, Grep tarama yapmadan. Bu CLAUDE.md o haritanın geniş açıklamasıdır.
 
@@ -346,6 +346,7 @@ RLS: kullanıcı kendi şikayetlerini görür, admin hepsini görür ve güncell
 | `12_kurye_arac.sql` | profiles.arac_tipi + arac_marka_model (CHECK constraint, idempotent) |
 | `13_ilan_sort_score.sql` | ilanlar.sort_score generated column (fiyat*2 + km*10 + begen*3 - begenmeme*3) + index |
 | `14_reaksiyon_rate_limit.sql` | reaksiyonlar before-insert trigger — kullanıcı 60sn'de max 10 reaksiyon |
+| `15_ilanlar_public_view_refresh.sql` | ilanlar_public view DROP+CREATE — yeni sütunları (sort_score, kalp/begen/begenmeme_sayisi, etiketler, kisa_id) dahil eder |
 
 ### Storage
 
@@ -524,6 +525,8 @@ refreshProfileSaveBtn() // değişiklik yoksa Kaydet pasif
 45. **Reaksiyon rate limit (v121+, sql/14):** Kullanıcı 60sn'de max 10 reaksiyon → trigger `check_reaksiyon_rate_limit()` BEFORE INSERT, fazlasında `REAKSIYON_HIZ_LIMITI` exception. Frontend `toggleReaksiyon` catch bloğu mesajı içeriyorsa özel toast. DELETE kapsam dışı (toggle off serbest).
 46. **Compact satırda net beğeni rozeti (v120+):** `.net-rxn-pos` (yeşil `👍 +N`) / `.net-rxn-neg` (kırmızı `👎 -N`). `net=0` ise rozet hiç gözükmez. `cell-aktif` hücresinde sayaç yanında. Hover'da title attr ile detay (`5 beğen − 8 beğenmeme`).
 47. **Boş durum mesajları davet edici tonda (v119+):** `İlanları/Müsait kuryeleri istediğiniz bölgede filtreleyebilirsiniz` — eski "X yok" tarzı negatif mesajlar yerine eylem öneren cümleler. Hem statik HTML (`#emptyState`, `#kuryeEmptyState`), hem `renderEmptyState` JS render.
+48. **🔴 KRİTİK: `sb.auth.signOut()` init'i bloklar (v123 fix):** `_enforceRememberMe` içinde `sb.auth.signOut({scope:'local'})` çağrılırsa supabase-js publishable key + lock mekanizmasıyla **promise asla resolve etmiyor** → tüm IIFE asılı kalıyor → loadIlanlar hiç başlamıyor → sayfa skeleton'da takılıyor. Yan etki olarak `SIGNED_OUT` event fire ediyor, listener `syncSession` çalıştırıp `storage check` logu basıyor (yanıltıcı). Çözüm: `localStorage`daki `sb-*-auth-token` keylerini MANUEL sil. **Kural:** Init path'inde HİÇBİR `sb.auth.*` veya `sb.from()` çağrısı yapma — hep raw bypass kullan.
+49. **ilanlar_public view sütun ekleme tuzağı (v15 sql/15):** View `SELECT * FROM ilanlar` ile oluşturulduysa, `*` view oluşma anında sabit sütun listesine çevrilir. Sonradan `ALTER TABLE ADD COLUMN` (sort_score, kalp_sayisi, vs.) view'a YANSIMAZ. Anon kullanıcı yeni sütunla sıralama isterse 400 alır. Çözüm: `DROP VIEW + CREATE VIEW` explicit kolon listesiyle (sql/15). Genel kural: yeni sütun → view recreate.
 
 ---
 

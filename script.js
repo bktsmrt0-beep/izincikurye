@@ -304,14 +304,23 @@ async function loadIlanlar({ append = false } = {}) {
     // Sıralama: sort_score DESC (DB generated column — sql/13)
     // Formul: fiyat*2 + km*10 + begen*3 - begenmeme*3
     // İşletme yüksek ücret verir → üstte; çok beğenmeme alırsa → aşağı iner
-    let q = sb.from(tableOrView).select("*")
-      .order("sort_score", { ascending: false })
-      .order("created_at", { ascending: false });
-    if (filter !== "all") q = q.eq("ilce", filter);
-    if (listingScope === "mine" && currentUser) q = q.eq("user_id", currentUser.id);
-    if (tableOrView === "ilanlar") q = q.gt("expires_at", new Date().toISOString());
-    q = q.range(pageOffset, pageOffset + PAGE_SIZE - 1);
-    const { data, error } = await q;
+    //
+    // rawSelect bypass: sb.from(...) lock'a takılabilir, ham fetch güvenli (CLAUDE.md tuzak #1+#48)
+    const params = new URLSearchParams();
+    params.set("select", "*");
+    params.set("order", "sort_score.desc,created_at.desc");
+    if (filter !== "all") params.set("ilce", "eq." + filter);
+    if (listingScope === "mine" && currentUser) params.set("user_id", "eq." + currentUser.id);
+    if (tableOrView === "ilanlar") params.set("expires_at", "gt." + new Date().toISOString());
+    params.set("limit", String(PAGE_SIZE));
+    params.set("offset", String(pageOffset));
+
+    const session = readStoredSession();
+    const { data, error } = await rawSelect(
+      `${tableOrView}?${params.toString()}`,
+      session?.access_token,
+      8000
+    );
     if (error) {
       console.error("[loadIlanlar]", error);
       showError("İlanlar yüklenemedi: " + error.message);
@@ -319,16 +328,17 @@ async function loadIlanlar({ append = false } = {}) {
       renderListings();
       return;
     }
-    const page = data || [];
+    const page = Array.isArray(data) ? data : [];
     hasMoreIlanlar = page.length === PAGE_SIZE;
     ilanlar = append ? [...ilanlar, ...page] : page;
     pageOffset += page.length;
 
     if (currentUser && page.length) {
       const userIds = [...new Set(page.map(i => i.user_id))];
-      const { data: profiles, error: pErr } = await sb.from("profiles")
-        .select("id, ad, soyad, tel, created_at, musait, musait_at, kullanici_tipi, puan_ort, puan_sayisi")
-        .in("id", userIds);
+      // rawSelect ile profile batch fetch — sb.from bypass
+      const idsParam = userIds.join(",");
+      const profUrl = `profiles?id=in.(${idsParam})&select=id,ad,soyad,tel,created_at,musait,musait_at,kullanici_tipi,puan_ort,puan_sayisi`;
+      const { data: profiles, error: pErr } = await rawSelect(profUrl, session?.access_token, 6000);
       if (pErr) console.warn("[profiles batch]", pErr.message);
       const map = Object.fromEntries((profiles || []).map(p => [p.id, p]));
       page.forEach(i => { i.profile = map[i.user_id]; });
@@ -422,7 +432,8 @@ function renderTopNav() {
         localStorage.removeItem("izk_remember");
         sessionStorage.removeItem("izk_session_active");
       } catch {}
-      sb.auth.signOut({ scope: "local" }).catch(() => {});
+      // Not: sb.auth.signOut çağrısı kaldırıldı — localStorage zaten temizlendi,
+      // ek olarak signOut takılma riski taşıyor (publishable key + lock).
       window.location.href = "/";
     });
     menu.append(out);
@@ -3342,7 +3353,7 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async () =
     localStorage.removeItem("izk_remember");
     sessionStorage.removeItem("izk_session_active");
   } catch {}
-  sb.auth.signOut({ scope: "local" }).catch(() => {});
+  // Not: sb.auth.signOut çağrısı kaldırıldı — localStorage temizlendi, takılma riski yok.
 
   toast("Hesabın kapatıldı. Geçmişin için teşekkürler.", "ok", 5000);
   setTimeout(() => { window.location.href = "/"; }, 1500);
