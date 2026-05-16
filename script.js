@@ -788,13 +788,11 @@ function openIlanDetail(ilan) {
   if (!body) return;
   body.innerHTML = buildIlanCardHTML(ilan);
   openModal("ilanDetailModal");
-  // URL'i güncelle (derin link)
+  // URL'i güncelle (derin link) — openModal zaten push etti, replace ile tek entry kalsın
   try {
     const url = "/ilan/" + ilan.id;
-    if (history.state?.modal === "ilanDetail" && history.state?.id === ilan.id) {
-      // zaten aynı, no-op
-    } else {
-      history.pushState({ modal: "ilanDetail", id: ilan.id }, "", url);
+    if (!(history.state?.modal === "ilanDetail" && history.state?.id === ilan.id)) {
+      history.replaceState({ modal: "ilanDetail", id: ilan.id }, "", url);
     }
   } catch {}
   _updateAktifSayaclar();
@@ -1682,17 +1680,12 @@ function showAdres(i) {
 
   // URL'i güncelle: clean URL `/ilan/<id>` — pushState ile history girişi ekle
   // (geri tuşu modalı kapatsın, siteden çıkmasın)
+  // openModal'ı önce çağır (push state'i o yapar), sonra URL ve title'ı replace ile güncelle
+  openModal("adresModal");
   try {
-    const onIlanPath = /^\/ilan\/[^/]+/.test(window.location.pathname);
-    if (onIlanPath) {
-      history.replaceState({ modal: "adres", id: i.id }, "", "/ilan/" + i.id);
-    } else {
-      history.pushState({ modal: "adres", id: i.id }, "", "/ilan/" + i.id);
-    }
+    history.replaceState({ modal: "adres", id: i.id }, "", "/ilan/" + i.id);
     document.title = `${i.baslik} · ${i.ilce} · ${i.fiyat}₺ — izincikurye`;
   } catch {}
-
-  openModal("adresModal");
 }
 
 // Adres modal sticky CTA — call/wa
@@ -1723,6 +1716,22 @@ function openModal(id) {
   document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
   document.body.classList.add("modal-open");
+
+  // History state ekle — geri tuşu sayfadan çıkmasın, modal'ı kapatsın.
+  // Akıllı: zaten bir modal state varsa replace, yoksa push.
+  try {
+    const cur = history.state?.modal;
+    if (cur === id) {
+      // zaten doğru state, no-op
+    } else if (cur) {
+      // başka modal'dan geçiş — entry sayısı artmasın diye replace
+      history.replaceState({ modal: id }, "", window.location.href);
+    } else {
+      // yeni modal açılışı — push (back tuşu kapatacak)
+      history.pushState({ modal: id }, "", window.location.href);
+    }
+  } catch {}
+
   // İlk inputa odaklan (varsa)
   setTimeout(() => {
     const first = document.querySelector("#" + id + " input:not([type='hidden']):not([disabled]), #" + id + " select:not([disabled]), #" + id + " textarea:not([disabled])");
@@ -1731,33 +1740,25 @@ function openModal(id) {
 }
 let _closingFromPopstate = false;
 function closeModals() {
-  const adresWasOpen = !document.getElementById("adresModal")?.classList.contains("hidden");
-  const detailWasOpen = !document.getElementById("ilanDetailModal")?.classList.contains("hidden");
-  const kuryeWasOpen = !document.getElementById("kuryeDetailModal")?.classList.contains("hidden");
+  const wasAnyModalOpen = !!document.querySelector(".modal:not(.hidden)");
   document.querySelectorAll(".modal").forEach(m => m.classList.add("hidden"));
   document.body.classList.remove("modal-open");
-  // İlan / kurye detayı kapanırken URL'i temizle
-  if (adresWasOpen || detailWasOpen || kuryeWasOpen) {
-    const url = new URL(window.location.href);
-    const pathnameMatches = /^\/(ilan|kurye)\/[^/]+/.test(url.pathname);
-    if (url.searchParams.has("ilan") || pathnameMatches) {
-      const st = history.state?.modal;
-      if (!_closingFromPopstate && (st === "adres" || st === "ilanDetail" || st === "kuryeDetail")) {
-        history.back();
-      } else if (!_closingFromPopstate) {
-        history.replaceState(null, "", "/" + (url.search || ""));
-      }
-    }
-    document.title = "İzinci Kurye — Ankara";
+
+  if (!wasAnyModalOpen) return;
+
+  // History temizliği — modal state'i geri al
+  if (!_closingFromPopstate && history.state?.modal) {
+    // openModal'ın push'unu geri al → URL ve state baştaki haline döner
+    history.back();
   }
+
+  document.title = "İzinci Kurye — Ankara";
 }
 
-// Geri tuşu: detay modalları açıksa kapat, siteden çıkma
+// Geri tuşu: HERHANGİ bir modal açıksa kapat, siteden çıkma
 window.addEventListener("popstate", () => {
-  const adresOpen = !document.getElementById("adresModal")?.classList.contains("hidden");
-  const detailOpen = !document.getElementById("ilanDetailModal")?.classList.contains("hidden");
-  const kuryeOpen = !document.getElementById("kuryeDetailModal")?.classList.contains("hidden");
-  if (adresOpen || detailOpen || kuryeOpen) {
+  const anyModalOpen = !!document.querySelector(".modal:not(.hidden)");
+  if (anyModalOpen) {
     _closingFromPopstate = true;
     closeModals();
     _closingFromPopstate = false;
@@ -3797,9 +3798,10 @@ function openKuryeDetail(k) {
   if (!body) return;
   body.innerHTML = buildKuryeDetailHTML(k);
   openModal("kuryeDetailModal");
+  // openModal push etti, URL'i replace ile değiştir (tek history entry)
   try {
     if (history.state?.modal !== "kuryeDetail" || history.state?.id !== k.id) {
-      history.pushState({ modal: "kuryeDetail", id: k.id }, "", `/kurye/${k.id}`);
+      history.replaceState({ modal: "kuryeDetail", id: k.id }, "", `/kurye/${k.id}`);
     }
   } catch {}
 }
