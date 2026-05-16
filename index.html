@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=132" />
+  <link rel="stylesheet" href="style.css?v=133" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -218,7 +218,8 @@
         <a href="/sozlesmeler.html#uyelik">Üyelik Sözleşmesi</a> ·
         <a href="/sozlesmeler.html#kvkk">KVKK Aydınlatma</a> ·
         <a href="/sozlesmeler.html#cerez">Çerez Politikası</a> ·
-        <a href="/sozlesmeler.html#ticari-ileti">Ticari İleti İzni</a>
+        <a href="/sozlesmeler.html#ticari-ileti">Ticari İleti İzni</a> ·
+        <a href="/ilan-kurallari.html">İlan Verme Kuralları</a>
       </p>
     </div>
   </footer>
@@ -406,6 +407,13 @@
 
         <label>Açıklama
           <textarea name="aciklama" rows="3" maxlength="300" placeholder="Bölge, araç durumu, ek notlar..."></textarea>
+        </label>
+
+        <label class="consent" style="margin-top:8px">
+          <input type="checkbox" name="kurallar_onay" id="ilanKurallarOnay" required />
+          <span>
+            <a href="/ilan-kurallari.html" target="_blank" rel="noopener">İlan Verme Kuralları</a>'nı okudum ve ilanımın bu kurallara uygun olduğunu beyan ediyorum. <span class="req">*</span>
+          </span>
         </label>
 
         <fieldset class="etiket-fieldset">
@@ -908,7 +916,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=132"></script>
-  <script src="script.js?v=132"></script>
+  <script src="supabase-config.js?v=133"></script>
+  <script src="script.js?v=133"></script>
 </body>
 </html>

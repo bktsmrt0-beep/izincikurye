@@ -1090,6 +1090,9 @@ function openEditIlan(ilan) {
   form.querySelector("[name=isyeriAdres]").value = ilan.isyeri_adres || "";
   form.querySelector("[name=iletisimTel]").value = ilan.iletisim_tel ? _displayPhone(ilan.iletisim_tel) : "";
   form.querySelector("[name=aciklama]").value = ilan.aciklama || "";
+  // Düzenleme modunda kurallar zaten önce kabul edilmişti — otomatik işaretle
+  const onayEl = document.getElementById("ilanKurallarOnay");
+  if (onayEl) onayEl.checked = true;
 
   // Etiketler
   const etArr = ilan.etiketler || [];
@@ -2176,6 +2179,12 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   }
   if (!_isMobileTr(iletisim_tel_raw)) {
     toast("İletişim telefonu cep numarası olmalı (5 ile başlamalı). Sabit hat (312, 232, vb.) WhatsApp desteklemez.", "error", 6000); return;
+  }
+  // Kural onayı zorunlu
+  if (!document.getElementById("ilanKurallarOnay")?.checked) {
+    toast("Önce İlan Verme Kuralları'nı okuyup onaylamalısın.", "error", 5000);
+    document.getElementById("ilanKurallarOnay")?.scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
   }
   const iletisim_tel_e164 = _phoneToE164(iletisim_tel_raw);
   if (bas_saat === bit_saat) {
