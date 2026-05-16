@@ -242,8 +242,11 @@ async function syncSession() {
         musait: !!profile?.musait,
         musaitAt: profile?.musait_at || null,
         aracTipi: profile?.arac_tipi || "",
-        aracMarkaModel: profile?.arac_marka_model || ""
+        aracMarkaModel: profile?.arac_marka_model || "",
+        silinmekUzereAt: profile?.silinmek_uzere_at || null
       };
+      // Soft-delete banner — kullanıcı 7 gün içinde geri dönmüşse uyar
+      if (typeof window._showSilinecekBanner === "function") window._showSilinecekBanner();
     } else {
       currentUser = null;
     }
@@ -3482,30 +3485,75 @@ document.getElementById("changePasswordForm").addEventListener("submit", async e
   toast("Şifren güncellendi", "ok");
 });
 
-// =============== HESABI KAPAT ===============
-document.getElementById("deleteAccountBtn").addEventListener("click", async () => {
+// =============== HESABI KAPAT (v138 — soft-delete + 7 gün bekleme) ===============
+// Akış: kullanıcı modal'da anket + onay → ilanlar silinir + geri bildirim INSERT
+// + profiles.silinmek_uzere_at = now(). 7 gün içinde login olursa banner → vazgeç PATCH.
+// 7 gün dolarsa pg_cron job auth.users CASCADE ile siler (sql/16).
+
+let _hkSelectedSebep = null;
+
+document.getElementById("deleteAccountBtn")?.addEventListener("click", () => {
   if (!currentUser) return;
+  // Modal state reset
+  _hkSelectedSebep = null;
+  document.querySelectorAll("#hkSebepPicker .ilce-chip").forEach(c => c.classList.remove("active"));
+  const ac = document.getElementById("hkAciklama"); if (ac) ac.value = "";
+  const cb = document.getElementById("hkOnay"); if (cb) cb.checked = false;
+  const btn = document.getElementById("hesapKapatConfirm"); if (btn) btn.disabled = true;
+  openModal("hesapKapatModal");
+});
 
-  const ok1 = confirm(
-    "Hesabını kapatmak istediğinden emin misin?\n\n" +
-    "• Tüm ilanların silinecek\n" +
-    "• Profil bilgilerin silinecek\n" +
-    "• Bu işlem GERİ ALINAMAZ"
-  );
-  if (!ok1) return;
+// Sebep chip seçimi (tek seçim)
+document.querySelectorAll("#hkSebepPicker .ilce-chip").forEach(chip => {
+  chip.addEventListener("click", () => {
+    const sebep = chip.dataset.sebep;
+    if (_hkSelectedSebep === sebep) {
+      _hkSelectedSebep = null;
+      chip.classList.remove("active");
+    } else {
+      _hkSelectedSebep = sebep;
+      document.querySelectorAll("#hkSebepPicker .ilce-chip").forEach(c => c.classList.remove("active"));
+      chip.classList.add("active");
+    }
+  });
+});
 
-  const onay = prompt('Onaylamak için aşağıya tam olarak şunu yaz:\n\nHESABIMI KAPAT');
-  if (onay !== "HESABIMI KAPAT") {
-    toast("Onay metni eşleşmedi, işlem iptal edildi.", "error");
-    return;
-  }
+// Onay tick → confirm butonu aktif
+document.getElementById("hkOnay")?.addEventListener("change", e => {
+  const btn = document.getElementById("hesapKapatConfirm");
+  if (btn) btn.disabled = !e.target.checked;
+});
 
-  // Raw DELETE bypass — sb.from lock takılma riski (kritik an: kullanıcı hesabını kapatamayabilirdi)
+// Verilerini indir — modal içinden tetik (mevcut downloadDataBtn akışını çağır)
+document.getElementById("hkVeriIndirBtn")?.addEventListener("click", () => {
+  document.getElementById("downloadDataBtn")?.click();
+});
+
+// Asıl kapatma — soft-delete
+document.getElementById("hesapKapatConfirm")?.addEventListener("click", async () => {
+  if (!currentUser) return;
   const session = readStoredSession();
   if (!session?.access_token) {
     toast("Oturumun sona ermiş, lütfen tekrar giriş yap.", "error", 5000);
     return;
   }
+  const btn = document.getElementById("hesapKapatConfirm");
+  if (btn) { btn.disabled = true; btn.textContent = "İşleniyor..."; }
+
+  // 1) Geri bildirim INSERT (sebep + aciklama) — opsiyonel, hata olursa devam et
+  const aciklama = (document.getElementById("hkAciklama")?.value || "").trim() || null;
+  if (_hkSelectedSebep || aciklama) {
+    try {
+      await rawInsert("hesap_kapatma_geri_bildirim", {
+        user_id: currentUser.id,
+        sebep: _hkSelectedSebep,
+        aciklama,
+        email_snapshot: currentUser.email
+      }, session.access_token);
+    } catch (e) { console.warn("[hk geri bildirim]", e); }
+  }
+
+  // 2) İlanları sil (artık görünmesin)
   const _rawDelete = async (path) => {
     try {
       const r = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -3520,32 +3568,88 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async () =
       return { error: null };
     } catch (e) { return { error: { message: e.message || String(e) } }; }
   };
-
-  // 1) Kullanıcının ilanlarını sil
   const { error: ilanErr } = await _rawDelete(`ilanlar?user_id=eq.${currentUser.id}`);
   if (ilanErr) {
+    if (btn) { btn.disabled = false; btn.textContent = "Hesabımı Kapat"; }
     toast("İlanlar silinemedi: " + ilanErr.message, "error");
     return;
   }
 
-  // 2) Profil satırını sil
-  const { error: profErr } = await _rawDelete(`profiles?id=eq.${currentUser.id}`);
-  if (profErr) {
-    toast("Profil silinemedi: " + profErr.message, "error");
+  // 3) Profil soft-delete — silinmek_uzere_at = now()
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + session.access_token,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify({ silinmek_uzere_at: new Date().toISOString() })
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status + " — " + (await r.text()));
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Hesabımı Kapat"; }
+    toast("Hesap kapatma işaretlenemedi: " + (e.message || e), "error");
     return;
   }
 
-  // 3) Storage temizle + oturumu kapat (local scope, hızlı)
+  // 4) localStorage temizle + çıkış
   try {
     Object.keys(localStorage).filter(k => k.startsWith("sb-")).forEach(k => localStorage.removeItem(k));
     Object.keys(sessionStorage).filter(k => k.startsWith("sb-")).forEach(k => sessionStorage.removeItem(k));
     localStorage.removeItem("izk_remember");
     sessionStorage.removeItem("izk_session_active");
   } catch {}
-  // Not: sb.auth.signOut çağrısı kaldırıldı — localStorage temizlendi, takılma riski yok.
 
-  toast("Hesabın kapatıldı. Geçmişin için teşekkürler.", "ok", 5000);
-  setTimeout(() => { window.location.href = "/"; }, 1500);
+  closeModals();
+  toast("Hesabın kapatma sürecine alındı. 7 gün içinde geri dönebilirsin.", "ok", 6000);
+  setTimeout(() => { window.location.href = "/"; }, 2000);
+});
+
+// =============== "Hesabımı Geri Aç" — soft-delete iptali ===============
+function _showSilinecekBanner() {
+  if (!currentUser?.silinmekUzereAt) {
+    document.getElementById("silinecekBanner")?.classList.add("hidden");
+    return;
+  }
+  const baslangic = new Date(currentUser.silinmekUzereAt);
+  const silmeTarihi = new Date(baslangic.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const tarihStr = silmeTarihi.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+  const el = document.getElementById("silinecekTarih");
+  if (el) el.textContent = tarihStr;
+  document.getElementById("silinecekBanner")?.classList.remove("hidden");
+}
+window._showSilinecekBanner = _showSilinecekBanner;
+
+document.getElementById("silinmektenVazgecBtn")?.addEventListener("click", async () => {
+  if (!currentUser) return;
+  const session = readStoredSession();
+  if (!session?.access_token) {
+    toast("Oturumun sona ermiş, lütfen tekrar giriş yap.", "error");
+    return;
+  }
+  const btn = document.getElementById("silinmektenVazgecBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "..."; }
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + session.access_token,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify({ silinmek_uzere_at: null })
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    currentUser.silinmekUzereAt = null;
+    document.getElementById("silinecekBanner")?.classList.add("hidden");
+    toast("Hoş geldin! Hesabın aktif durumda.", "ok", 4000);
+  } catch (e) {
+    toast("İşlem başarısız: " + (e.message || e), "error");
+    if (btn) { btn.disabled = false; btn.textContent = "↩ Hesabımı Geri Aç"; }
+  }
 });
 document.querySelectorAll('input[type="password"]').forEach(input => {
   const wrap = document.createElement("span");

@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=137" />
+  <link rel="stylesheet" href="style.css?v=138" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -53,6 +53,14 @@
     <span class="fab-plus">+</span>
     <span class="fab-text">İlan Ver</span>
   </button>
+
+  <!-- ===== HESAP SİLİNECEK BANNER (soft-delete bekleme süresi) ===== -->
+  <section id="silinecekBanner" class="hidden" aria-live="polite" style="position:sticky;top:56px;z-index:45;background:#fef2f2;border-bottom:1px solid #fecaca;padding:10px 16px;color:#991b1b;font-size:14px;line-height:1.5;">
+    <div style="max-width:1100px;margin:0 auto;display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <span>⚠️ <strong>Hesabın <span id="silinecekTarih">—</span> tarihinde kalıcı olarak silinecek.</strong> Vazgeçmek istersen şimdi geri dönebilirsin.</span>
+      <button type="button" class="btn btn-sm btn-primary" id="silinmektenVazgecBtn" style="margin-left:auto">↩ Hesabımı Geri Aç</button>
+    </div>
+  </section>
 
   <!-- ===== KURYE MÜSAİTLİK BÜYÜK BANNER (sadece kurye girişli, en üstte) ===== -->
   <section id="kuryeMusaitBanner" class="kurye-musait-banner hidden" aria-live="polite">
@@ -464,6 +472,51 @@
       </label>
 
       <button type="button" class="btn btn-primary btn-block" id="musaitOnayConfirm" disabled style="margin-top:14px">🟢 Müsait Ol</button>
+    </div>
+  </div>
+
+  <!-- ===== HESABI KAPAT MODAL (v138) ===== -->
+  <div class="modal hidden" id="hesapKapatModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>👋 Hesabını Kapatmak Üzeresin</h2>
+      <p class="muted">Ayrılışın bizim için üzücü. Birkaç önemli not paylaşmamıza izin ver.</p>
+
+      <div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:10px;padding:12px 16px;margin:14px 0;font-size:14px;color:#7c2d12;line-height:1.6;">
+        <strong>Neler olacak?</strong>
+        <ul style="margin:8px 0 0 18px;">
+          <li><strong>Tüm ilanların</strong> hemen yayından kalkar</li>
+          <li>Hesabın <strong>7 gün</strong> içinde kalıcı olarak silinir</li>
+          <li>Bu süre içinde tekrar giriş yaparsan <strong>vazgeçebilirsin</strong></li>
+        </ul>
+      </div>
+
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin:14px 0;font-size:14px;color:#1e40af;">
+        💾 <strong>Verilerini yanına almak ister misin?</strong> Silmeden önce profil ve ilan geçmişini JSON olarak indirebilirsin.
+        <div style="margin-top:8px;">
+          <button type="button" class="btn btn-ghost btn-sm" id="hkVeriIndirBtn">📥 Verilerimi İndir</button>
+        </div>
+      </div>
+
+      <label class="form-label" style="margin-top:8px">Bizden ayrılma sebebini paylaşır mısın? <span class="muted small">(opsiyonel)</span></label>
+      <div class="ilce-picker" id="hkSebepPicker" style="margin-top:6px">
+        <button type="button" class="ilce-chip" data-sebep="bulamadim">Aradığım kuryeyi/işi bulamadım</button>
+        <button type="button" class="ilce-chip" data-sebep="az_ilan">Çok az ilan var</button>
+        <button type="button" class="ilce-chip" data-sebep="teknik">Teknik sorunlar yaşadım</button>
+        <button type="button" class="ilce-chip" data-sebep="baska_uygulama">Başka bir uygulama kullanıyorum</button>
+        <button type="button" class="ilce-chip" data-sebep="diger">Diğer</button>
+      </div>
+      <textarea id="hkAciklama" placeholder="Eklemek istediğin bir şey varsa buraya yazabilirsin (opsiyonel)" maxlength="500" rows="3" style="margin-top:10px;width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:8px;font-family:inherit;font-size:14px;resize:vertical;"></textarea>
+
+      <label class="consent" style="margin-top:14px">
+        <input type="checkbox" id="hkOnay" />
+        <span>Hesabımın <strong>7 gün</strong> içinde kalıcı olarak silineceğini ve bu süre içinde giriş yaparak <strong>vazgeçebileceğimi</strong> anladım. <span class="req">*</span></span>
+      </label>
+
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button type="button" class="btn btn-ghost" data-close style="flex:1">Vazgeç</button>
+        <button type="button" class="btn btn-danger" id="hesapKapatConfirm" disabled style="flex:1">Hesabımı Kapat</button>
+      </div>
     </div>
   </div>
 
@@ -944,7 +997,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=137"></script>
-  <script src="script.js?v=137"></script>
+  <script src="supabase-config.js?v=138"></script>
+  <script src="script.js?v=138"></script>
 </body>
 </html>
