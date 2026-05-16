@@ -258,6 +258,43 @@ body.sidebar-open { overflow: hidden; }
 }
 .notice a { color: var(--orange-dark); font-weight: 600; text-decoration: underline; }
 
+/* "İlanlarım" modu banner'ı — sadece o moddayken görünür, tek tıkla geri dönüş */
+.ilanlarim-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  color: #7c2d12;
+}
+.ib-icon { font-size: 18px; flex-shrink: 0; }
+.ib-text { flex: 1; min-width: 0; }
+.ib-text strong { color: #c2410c; }
+.ib-back {
+  background: #ea580c;
+  color: white;
+  border: 0;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, transform .12s;
+  flex-shrink: 0;
+}
+.ib-back:hover { background: #c2410c; }
+.ib-back:active { transform: scale(0.97); }
+@media (max-width: 480px) {
+  .ilanlarim-banner { padding: 9px 11px; font-size: 13px; gap: 8px; }
+  .ib-text { font-size: 13px; }
+  .ib-back { padding: 6px 10px; font-size: 12px; }
+}
+
 .listings {
   display: flex;
   flex-direction: column;

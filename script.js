@@ -2350,16 +2350,33 @@ document.getElementById("filterResetBtn")?.addEventListener("click", () => {
 });
 
 // =============== İLANLARIM TOGGLE ===============
-document.querySelectorAll("#myListingsPanel .seg-btn").forEach(btn => {
-  btn.addEventListener("click", async () => {
-    const scope = btn.dataset.scope;
-    if (scope === listingScope) return;
-    listingScope = scope;
-    document.querySelectorAll("#myListingsPanel .seg-btn").forEach(b => {
-      b.classList.toggle("active", b.dataset.scope === scope);
-    });
-    await loadIlanlar();
+// Listing scope helper — sidebar segment + banner butonu aynı yere bağlı
+async function _setListingScope(newScope) {
+  if (newScope === listingScope) return;
+  listingScope = newScope;
+  // Sidebar seg butonlarını senkronla
+  document.querySelectorAll("#myListingsPanel .seg-btn").forEach(b => {
+    b.classList.toggle("active", b.dataset.scope === newScope);
   });
+  // Banner: "mine" modunda + "Aktif İlanlar" sekmesinde göster
+  _updateIlanlarimBanner();
+  await loadIlanlar();
+}
+
+function _updateIlanlarimBanner() {
+  const banner = document.getElementById("ilanlarimBanner");
+  if (!banner) return;
+  const shouldShow = listingScope === "mine" && contentTab === "ilanlar";
+  banner.classList.toggle("hidden", !shouldShow);
+}
+
+document.querySelectorAll("#myListingsPanel .seg-btn").forEach(btn => {
+  btn.addEventListener("click", () => _setListingScope(btn.dataset.scope));
+});
+
+// Banner "Tüm İlanlar →" butonu
+document.getElementById("ilanlarimBannerBack")?.addEventListener("click", () => {
+  _setListingScope("all");
 });
 
 // =============== PROFİLİM YARDIMCILARI ===============
@@ -3893,6 +3910,7 @@ document.querySelectorAll(".content-tab").forEach(btn => {
     listingsEl.classList.toggle("hidden", showK);
     emptyEl.classList.toggle("hidden", showK);
     document.getElementById("myListingsPanel")?.classList.toggle("hidden", showK || !currentUser);
+    _updateIlanlarimBanner();  // sekme değişince banner görünürlüğünü güncelle
     if (showK) {
       if (!currentUser) {
         kuryeListingsEl.classList.add("hidden");

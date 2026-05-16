@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=131" />
+  <link rel="stylesheet" href="style.css?v=132" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -188,6 +188,13 @@
       <div class="content-tabs" role="tablist">
         <button type="button" class="content-tab active" data-content-tab="ilanlar" role="tab">📋 Aktif İlanlar</button>
         <button type="button" class="content-tab" data-content-tab="kuryeler" role="tab">🏍️ Müsait Kuryeler</button>
+      </div>
+
+      <!-- "İlanlarım" modu banner'ı (sadece o moddayken görünür) -->
+      <div id="ilanlarimBanner" class="ilanlarim-banner hidden" aria-live="polite">
+        <span class="ib-icon">📋</span>
+        <span class="ib-text">Sadece <strong>kendi ilanların</strong> gösteriliyor</span>
+        <button type="button" class="ib-back" id="ilanlarimBannerBack">Tüm İlanlar →</button>
       </div>
 
       <div id="guestNotice" class="notice hidden">
@@ -901,7 +908,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=131"></script>
-  <script src="script.js?v=131"></script>
+  <script src="supabase-config.js?v=132"></script>
+  <script src="script.js?v=132"></script>
 </body>
 </html>
