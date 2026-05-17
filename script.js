@@ -866,6 +866,7 @@ function renderEmptyState() {
     emptyEl.querySelectorAll(".chip").forEach(c => {
       c.addEventListener("click", () => {
         districtSelect.value = c.dataset.ilce;
+        _updateBolgeBanner();
         loadIlanlar();
       });
     });
@@ -2504,7 +2505,11 @@ function formatRemaining(expIso) {
   return { text: `${m} dk kaldı`, urgent };
 }
 
-districtSelect.addEventListener("change", loadIlanlar);
+districtSelect.addEventListener("change", () => {
+  _updateBolgeBanner();
+  loadIlanlar();
+  if (typeof loadMusaitKuryeler === "function") loadMusaitKuryeler();
+});
 
 // =============== FİLTRELER (client-side) ===============
 document.getElementById("saatFilter")?.addEventListener("change", e => {
@@ -2531,6 +2536,7 @@ document.getElementById("filterResetBtn")?.addEventListener("click", () => {
   document.getElementById("urgentOnly").checked = false;
   if (districtSelect.value !== "all") {
     districtSelect.value = "all";
+    _updateBolgeBanner();
     loadIlanlar();
   } else {
     renderListings();
@@ -2558,6 +2564,19 @@ function _updateIlanlarimBanner() {
   banner.classList.toggle("hidden", !shouldShow);
 }
 
+// Bölge filtresi banner'ı — ilçe ≠ "all" iken görünür (v150)
+function _updateBolgeBanner() {
+  const banner = document.getElementById("bolgeBanner");
+  if (!banner) return;
+  const ilce = districtSelect?.value || "all";
+  const shouldShow = ilce !== "all";
+  banner.classList.toggle("hidden", !shouldShow);
+  if (shouldShow) {
+    const label = document.getElementById("bolgeBannerIlce");
+    if (label) label.textContent = ilce;
+  }
+}
+
 document.querySelectorAll("#myListingsPanel .seg-btn").forEach(btn => {
   btn.addEventListener("click", () => _setListingScope(btn.dataset.scope));
 });
@@ -2565,6 +2584,15 @@ document.querySelectorAll("#myListingsPanel .seg-btn").forEach(btn => {
 // Banner "Tüm İlanlar →" butonu
 document.getElementById("ilanlarimBannerBack")?.addEventListener("click", () => {
   _setListingScope("all");
+});
+
+// Bölge banner'ı "Tüm Bölgeler →" butonu (v150)
+document.getElementById("bolgeBannerBack")?.addEventListener("click", () => {
+  if (!districtSelect) return;
+  districtSelect.value = "all";
+  _updateBolgeBanner();
+  loadIlanlar();
+  if (typeof loadMusaitKuryeler === "function") loadMusaitKuryeler();
 });
 
 // =============== PROFİLİM YARDIMCILARI ===============
