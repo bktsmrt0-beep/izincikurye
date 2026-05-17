@@ -229,22 +229,26 @@ document.addEventListener("click", async e => {
   }
   else if (act === "onayla-ilan") {
     if (!confirm("Bu ilanı onaylamak istediğinden emin misin?")) return;
-    const { error } = await sb.from("ilanlar")
+    const { data, error } = await sb.from("ilanlar")
       .update({ durum: "onayli", red_sebebi: null })
-      .eq("id", id);
+      .eq("id", id)
+      .select();
     if (error) return alert("Onaylama hatası: " + error.message);
+    if (!data || data.length === 0) return alert("İşlem yapıldı görünüyor ama hiçbir satır güncellenmedi. Admin RLS policy eksik olabilir (sql/20 çalıştırıldı mı?).");
     await loadBekleyen();
     await loadIlanlar();
   }
   else if (act === "reddet-ilan") {
     const sebep = prompt("Red sebebini yaz (kullanıcıya gösterilecek):");
-    if (sebep === null) return;  // iptal
+    if (sebep === null) return;
     const trimmed = sebep.trim();
     if (trimmed.length < 5) return alert("Red sebebi en az 5 karakter olmalı.");
-    const { error } = await sb.from("ilanlar")
+    const { data, error } = await sb.from("ilanlar")
       .update({ durum: "reddedildi", red_sebebi: trimmed })
-      .eq("id", id);
+      .eq("id", id)
+      .select();
     if (error) return alert("Reddetme hatası: " + error.message);
+    if (!data || data.length === 0) return alert("İşlem yapıldı görünüyor ama hiçbir satır güncellenmedi. Admin RLS policy eksik olabilir (sql/20 çalıştırıldı mı?).");
     await loadBekleyen();
     await loadIlanlar();
   }
