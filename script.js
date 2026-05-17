@@ -124,11 +124,15 @@ let favoriler = new Set(); // ilan_id Set — kullanıcının kalpleri (favorile
 let userReaksiyonlar = new Map(); // ilan_id -> "begen" | "begenmeme"
 let _editingIlanId = null; // ilan formu düzenleme modunda mı?
 
-// Etiket etiket→görsel eşleştirme
+// Etiket key→görsel eşleştirme (v147 — yeniden tasarım)
 const ETIKET_LABELS = {
-  paket_teslimati: { ico: "📦", label: "Paket Teslimatı" },
-  guvenli_odeme:   { ico: "🛡", label: "Güvenli Ödeme" },
-  anlik_ihtiyac:   { ico: "⏱", label: "Anlık İhtiyaç" }
+  acil:                 { ico: "🔥", label: "Acil" },
+  gun_sonu_odeme:       { ico: "💵", label: "Gün Sonu Ödeme" },
+  pizza_kutusu_sart:    { ico: "🍕", label: "Pizza Kutusu Şart" },
+  buyuk_kutu_sart:      { ico: "📦", label: "Büyük Kutu Şart" },
+  bolgeyi_bilmesi_sart: { ico: "🧭", label: "Bölgeyi Bilmesi Şart" },
+  kisa_mesafe:          { ico: "📍", label: "Kısa Mesafe" },
+  uzun_mesafe:          { ico: "🛣", label: "Uzun Mesafe" }
 };
 
 // Araç tipi→ikon+etiket eşleştirme (kurye profili)

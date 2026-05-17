@@ -318,7 +318,7 @@ bas_saat, bit_saat   text (HH:00) -- gece geçişi: bit < bas
 aciklama     text
 isyeri_ad, isyeri_adres   text
 iletisim_tel text  -- E.164 formatında (+90...), boşsa profiles.tel fallback
-etiketler    text[] DEFAULT '{}'   -- paket_teslimati / guvenli_odeme / anlik_ihtiyac
+etiketler    text[] DEFAULT '{}'   -- v147: acil / gun_sonu_odeme / pizza_kutusu_sart / buyuk_kutu_sart / bolgeyi_bilmesi_sart / kisa_mesafe / uzun_mesafe (eski: paket_teslimati / guvenli_odeme / anlik_ihtiyac — null-guard ile atlanır)
 kisa_id      text UNIQUE          -- KRY-XXXX okunabilir kısa ID (sequence + trigger)
 kalp_sayisi  int DEFAULT 0        -- favoriler denormalized count
 begen_sayisi int DEFAULT 0        -- reaksiyonlar (begen) denormalized count
