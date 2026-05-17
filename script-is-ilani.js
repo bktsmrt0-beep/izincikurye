@@ -186,10 +186,11 @@
       aksiyonlar.push(`<button class="iir-act iir-act-danger" data-iict="delete" data-id="${i.id}" title="Sil">🗑</button>`);
     }
 
+    // İlan başlığı = işletme adı (kategori rozeti kaldırıldı, sub-tab zaten gösteriyor)
     return `
       <article class="is-ilan-row" data-id="${i.id}">
-        <div class="iir-cell iir-kategori">
-          <span class="iic-kategori">${turMeta.emoji} ${turMeta.label}</span>
+        <div class="iir-cell iir-isletme-baslik" title="${window.escapeHtml(turMeta.label)}">
+          <span class="iir-isletme-ad">🏢 ${window.escapeHtml(isletme || "İlan")}</span>
         </div>
         <div class="iir-cell iir-ilce">
           <span class="iir-label">İlçe</span>
@@ -198,10 +199,6 @@
         <div class="iir-cell iir-maas">
           <span class="iir-label">Maaş</span>
           <span class="iir-value">💰 ${maas}</span>
-        </div>
-        <div class="iir-cell iir-isletme">
-          <span class="iir-label">İşletme</span>
-          <span class="iir-value">🏢 ${window.escapeHtml(isletme || "—")}</span>
         </div>
         <div class="iir-cell iir-tarih">
           <span class="iir-label">Tarih</span>

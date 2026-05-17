@@ -3843,7 +3843,7 @@ textarea#rwYorum:focus {
   margin: 0 auto;
 }
 
-/* İş ilanı compact row (v156 — anlık ilan .ilan-row pattern'ına benzer) */
+/* İş ilanı compact row (v156 — anlık ilan .ilan-row pattern'ına benzer; v166: işletme adı vurgulu) */
 .is-ilan-row {
   background: #fff;
   border: 1px solid #e5e7eb;
@@ -3852,9 +3852,21 @@ textarea#rwYorum:focus {
   cursor: pointer;
   transition: border-color .15s, box-shadow .15s;
   display: grid;
-  grid-template-columns: minmax(120px, 1.2fr) 1fr 1fr 1.2fr 1fr auto;
+  grid-template-columns: minmax(160px, 1.6fr) 1fr 1fr 1fr auto;
   gap: 12px;
   align-items: center;
+}
+.iir-isletme-baslik {
+  min-width: 0;
+}
+.iir-isletme-ad {
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #c2410c;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .is-ilan-row:hover {
   border-color: var(--orange);
@@ -4007,29 +4019,28 @@ textarea#rwYorum:focus {
   margin-top: 14px;
 }
 
-/* Mobile: 2 satıra dön (anlık ilan pattern ile aynı) */
+/* Mobile: işletme adı üstte tam genişlikte, alt satırlar küçük (v166) */
 @media (max-width: 600px) {
   .is-ilan-row {
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
-      "kategori durum"
+      "isletme isletme"
       "ilce maas"
-      "isletme tarih";
+      "tarih aksiyon";
     padding: 10px 12px;
-    gap: 8px 12px;
+    gap: 6px 12px;
   }
-  .iir-kategori { grid-area: kategori; }
+  .iir-isletme-baslik { grid-area: isletme; }
   .iir-ilce { grid-area: ilce; }
   .iir-maas { grid-area: maas; }
-  .iir-isletme { grid-area: isletme; }
-  .iir-tarih { grid-area: tarih; align-items: flex-end; }
-  .iir-durum { grid-area: durum; align-items: flex-end; }
+  .iir-tarih { grid-area: tarih; }
+  .iir-aksiyon { grid-area: aksiyon; align-items: flex-end; }
   .iir-label { font-size: 9.5px; }
   .iir-value { font-size: 12.5px; }
-  .iir-kategori .iic-kategori { font-size: 10.5px; padding: 3px 7px; }
+  .iir-isletme-ad { font-size: 14.5px; }
 }
 @media (max-width: 400px) {
-  .iir-isletme, .iir-tarih { display: none; }  /* çok dar ekranda iki cell gizle */
+  .iir-tarih { display: none; }
 }
 
 /* Durum rozetleri (kullanıcı kendi ilanını gördüğünde) */
