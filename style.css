@@ -3843,30 +3843,59 @@ textarea#rwYorum:focus {
   margin: 0 auto;
 }
 
-/* İş ilanı compact row (v156 — anlık ilan .ilan-row pattern'ına benzer; v166: işletme adı vurgulu) */
+/* İş ilanı compact row (v167 — anlık ilan satırı kadar sıkı, çok ilan için optimize) */
 .is-ilan-row {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  padding: 12px 14px;
+  padding: 10px 14px;
   cursor: pointer;
-  transition: border-color .15s, box-shadow .15s;
+  transition: background .12s, border-color .12s, transform .08s;
   display: grid;
-  grid-template-columns: minmax(160px, 1.6fr) 1fr 1fr 1fr auto;
-  gap: 12px;
+  grid-template-columns: minmax(160px, 2fr) 1fr 0.9fr 0.9fr auto;
+  gap: 10px;
   align-items: center;
 }
-.iir-isletme-baslik {
-  min-width: 0;
-}
+.is-ilan-row:hover { background: #fff7ed; border-color: #fed7aa; }
+.is-ilan-row:active { transform: scale(0.998); }
+.iir-isletme-baslik { min-width: 0; }
 .iir-isletme-ad {
-  font-size: 15.5px;
+  font-size: 14.5px;
   font-weight: 700;
   color: #c2410c;
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.iir-ilce .cell-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.iir-maas-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: #047857;
+  font-variant-numeric: tabular-nums;
+}
+.iir-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: nowrap;
+}
+.iir-etiket-sayi {
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-weight: 600;
+  cursor: help;
 }
 .is-ilan-row:hover {
   border-color: var(--orange);
@@ -3925,23 +3954,24 @@ textarea#rwYorum:focus {
   color: #dc2626;
 }
 
-/* İş ilanı aksiyon butonları (v158) */
+/* İş ilanı aksiyon butonları (v158/v167 compact) */
 .iir-aksiyon {
-  align-items: flex-end;
-  gap: 4px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
 }
 .iir-act-row {
   display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
+  gap: 3px;
+  flex-wrap: nowrap;
 }
 .iir-act {
   background: transparent;
-  border: 1px solid #e5e7eb;
+  border: 1px solid transparent;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 4px 6px;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   color: #64748b;
   transition: background .15s, color .15s, border-color .15s;
 }
@@ -4019,28 +4049,26 @@ textarea#rwYorum:focus {
   margin-top: 14px;
 }
 
-/* Mobile: işletme adı üstte tam genişlikte, alt satırlar küçük (v166) */
+/* Mobile: 2 satır compact (v167) — anlık ilan ile aynı yoğunluk */
 @media (max-width: 600px) {
   .is-ilan-row {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr auto;
     grid-template-areas:
-      "isletme isletme"
-      "ilce maas"
-      "tarih aksiyon";
-    padding: 10px 12px;
-    gap: 6px 12px;
+      "isletme maas"
+      "ilce meta"
+      "aksiyon aksiyon";
+    padding: 8px 12px;
+    gap: 4px 10px;
   }
   .iir-isletme-baslik { grid-area: isletme; }
   .iir-ilce { grid-area: ilce; }
-  .iir-maas { grid-area: maas; }
-  .iir-tarih { grid-area: tarih; }
-  .iir-aksiyon { grid-area: aksiyon; align-items: flex-end; }
-  .iir-label { font-size: 9.5px; }
-  .iir-value { font-size: 12.5px; }
-  .iir-isletme-ad { font-size: 14.5px; }
-}
-@media (max-width: 400px) {
-  .iir-tarih { display: none; }
+  .iir-maas { grid-area: maas; justify-self: end; }
+  .iir-meta { grid-area: meta; justify-self: end; }
+  .iir-aksiyon { grid-area: aksiyon; justify-content: flex-end; margin-top: 2px; }
+  .iir-isletme-ad { font-size: 14px; }
+  .iir-ilce .cell-text { font-size: 12.5px; }
+  .iir-maas-val { font-size: 13px; }
+  .iir-act { font-size: 12px; padding: 3px 5px; }
 }
 
 /* Durum rozetleri (kullanıcı kendi ilanını gördüğünde) */

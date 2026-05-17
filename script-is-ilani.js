@@ -155,14 +155,10 @@
       ? `<div class="red-sebebi">❌ <strong>Red sebebi:</strong> ${window.escapeHtml(i.red_sebebi)}</div>`
       : "";
 
-    // Etiket chip'leri (kart üstünde küçük)
+    // Etiketler kart üstünde gösterilmez (compact için) — etiket sayısı varsa küçük rozet
     const etArr = Array.isArray(i.etiketler) ? i.etiketler : [];
-    const etiketHtml = etArr.length
-      ? `<div class="iir-etiketler">${etArr.map(k => {
-          const meta = IS_ILAN_ETIKETLER[k];
-          if (!meta) return "";
-          return `<span class="iir-etiket-chip">${meta.ico} ${meta.label}</span>`;
-        }).join("")}</div>`
+    const etiketRozet = etArr.length
+      ? `<span class="iir-etiket-sayi" title="${etArr.map(k => IS_ILAN_ETIKETLER[k]?.label || k).filter(Boolean).join(', ')}">🏷 ${etArr.length}</span>`
       : "";
 
     // Reaksiyon sayaçları (anlık ilan ile aynı kolon — DB seviyesinde paylaşılan)
@@ -186,30 +182,26 @@
       aksiyonlar.push(`<button class="iir-act iir-act-danger" data-iict="delete" data-id="${i.id}" title="Sil">🗑</button>`);
     }
 
-    // İlan başlığı = işletme adı (kategori rozeti kaldırıldı, sub-tab zaten gösteriyor)
+    // Compact tek satır (v167) — anlık ilan satırı pattern'ı, etiketler detayda
     return `
       <article class="is-ilan-row" data-id="${i.id}">
         <div class="iir-cell iir-isletme-baslik" title="${window.escapeHtml(turMeta.label)}">
           <span class="iir-isletme-ad">🏢 ${window.escapeHtml(isletme || "İlan")}</span>
         </div>
         <div class="iir-cell iir-ilce">
-          <span class="iir-label">İlçe</span>
-          <span class="iir-value">📍 ${window.escapeHtml(i.ilce)}</span>
+          <span class="cell-text">📍 ${window.escapeHtml(i.ilce)}</span>
         </div>
         <div class="iir-cell iir-maas">
-          <span class="iir-label">Maaş</span>
-          <span class="iir-value">💰 ${maas}</span>
+          <strong class="iir-maas-val">${maas}</strong>
         </div>
-        <div class="iir-cell iir-tarih">
-          <span class="iir-label">Tarih</span>
-          <span class="iir-value">${window.formatDateTime ? window.formatDateTime(i.created_at) : ""}</span>
-        </div>
-        <div class="iir-cell iir-aksiyon">
+        <div class="iir-cell iir-meta">
+          ${etiketRozet}
           ${netRozet}
           ${durumLabel}
+        </div>
+        <div class="iir-cell iir-aksiyon">
           <div class="iir-act-row">${aksiyonlar.join("")}</div>
         </div>
-        ${etiketHtml}
         ${redBlock}
       </article>
     `;
