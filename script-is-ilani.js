@@ -634,6 +634,26 @@
     }
   }
 
+  // Detay modal açıkken reaksiyon sayılarını ve aktif tipini canlı güncelle (v165)
+  function _updateDetailRxnCounts(ilanId, ilan, verilenTip) {
+    const modal = document.getElementById("isIlanDetailModal");
+    if (!modal || modal.classList.contains("hidden")) return;
+    // Doğru ilanın detayı mı açık?
+    const upBtn = modal.querySelector(`[data-iict="rxn-up"][data-id="${ilanId}"]`);
+    const downBtn = modal.querySelector(`[data-iict="rxn-down"][data-id="${ilanId}"]`);
+    if (!upBtn && !downBtn) return;  // farklı ilanın detayı açık veya butonlar yok
+    if (upBtn) {
+      const span = upBtn.querySelector("span");
+      if (span) span.textContent = ilan.begen_sayisi || 0;
+      if (verilenTip === "begen") upBtn.classList.add("active");
+    }
+    if (downBtn) {
+      const span = downBtn.querySelector("span");
+      if (span) span.textContent = ilan.begenmeme_sayisi || 0;
+      if (verilenTip === "begenmeme") downBtn.classList.add("active");
+    }
+  }
+
   // İş ilanı reaksiyon — TEK SEFERLİK (v164)
   // Manipülasyon önleme: bir kez verilen reaksiyon GERİ ALINAMAZ + DEĞİŞTİRİLEMEZ.
   // DB tarafında UPDATE/DELETE policy'leri kaldırıldı (sql/22), UNIQUE constraint
@@ -666,12 +686,13 @@
       // check başarısız olsa bile insert dene; UNIQUE constraint koruma sağlar
     }
 
-    // 2) Optimistic UI — sayacı anında artır
+    // 2) Optimistic UI — sayacı anında artır (liste + detay modal)
     const ilan = _isIlanlar.find(x => x.id === ilanId);
     if (ilan) {
       if (tip === "begen") ilan.begen_sayisi = (ilan.begen_sayisi || 0) + 1;
       else ilan.begenmeme_sayisi = (ilan.begenmeme_sayisi || 0) + 1;
       renderIsIlanlari();
+      _updateDetailRxnCounts(ilanId, ilan, tip);  // detay modal açıksa orayı da güncelle
     }
 
     // 3) DB'ye yaz (INSERT-only)
@@ -688,6 +709,7 @@
           if (tip === "begen") ilan.begen_sayisi = Math.max(0, (ilan.begen_sayisi || 1) - 1);
           else ilan.begenmeme_sayisi = Math.max(0, (ilan.begenmeme_sayisi || 1) - 1);
           renderIsIlanlari();
+          _updateDetailRxnCounts(ilanId, ilan, null);
         }
         if (text.includes("duplicate") || text.includes("unique")) {
           window.toast?.("Bu ilana zaten reaksiyon verdin. Geri alınamaz.", "info", 4500);
