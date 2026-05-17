@@ -138,24 +138,34 @@
       ? `<div class="red-sebebi">❌ <strong>Red sebebi:</strong> ${window.escapeHtml(i.red_sebebi)}</div>`
       : "";
 
+    // Anlık ilan compact-row pattern'a benzer 4 hücre satır (PC). Mobilde 2 satır.
     return `
-      <article class="is-ilan-card" data-id="${i.id}">
-        <div class="iic-top">
+      <article class="is-ilan-row" data-id="${i.id}" data-iict="detay">
+        <div class="iir-cell iir-kategori">
           <span class="iic-kategori">${turMeta.emoji} ${turMeta.label}</span>
-          ${durumLabel}
-          <span class="iic-tarih">${window.formatDateTime ? window.formatDateTime(i.created_at) : ""}</span>
         </div>
-        <h3 class="iic-baslik">${window.escapeHtml(i.baslik)}</h3>
-        <div class="iic-meta">
-          ${isletme ? `<span class="iic-isletme">🏢 ${window.escapeHtml(isletme)}</span>` : ""}
-          <span class="iic-ilce">📍 ${window.escapeHtml(i.ilce)}</span>
+        <div class="iir-cell iir-ilce">
+          <span class="iir-label">İlçe</span>
+          <span class="iir-value">📍 ${window.escapeHtml(i.ilce)}</span>
         </div>
-        <div class="iic-maas">💰 ${maas}</div>
+        <div class="iir-cell iir-maas">
+          <span class="iir-label">Maaş</span>
+          <span class="iir-value">💰 ${maas}</span>
+        </div>
+        <div class="iir-cell iir-isletme">
+          <span class="iir-label">İşletme</span>
+          <span class="iir-value">🏢 ${window.escapeHtml(isletme || "—")}</span>
+        </div>
+        <div class="iir-cell iir-tarih">
+          <span class="iir-label">Tarih</span>
+          <span class="iir-value">${window.formatDateTime ? window.formatDateTime(i.created_at) : ""}</span>
+        </div>
+        ${isOwn ? `
+          <div class="iir-cell iir-durum">
+            ${durumLabel}
+            <button class="iir-delete" data-iict="delete" data-id="${i.id}" title="İlanı sil">🗑</button>
+          </div>` : ""}
         ${redBlock}
-        <div class="iic-actions">
-          <button class="btn btn-primary btn-sm" data-iict="detay" data-id="${i.id}">Detay</button>
-          ${isOwn ? `<button class="btn btn-ghost btn-sm" data-iict="delete" data-id="${i.id}">🗑</button>` : ""}
-        </div>
       </article>
     `;
   }
@@ -359,25 +369,20 @@
     document.getElementById("isIlanVerBtn")?.addEventListener("click", _openIsIlanForm);
     // Form submit
     document.getElementById("isIlanForm")?.addEventListener("submit", _submitIsIlan);
-    // Card click delegasyonu
+    // Row click delegasyonu (compact row pattern — anlık ilan ile aynı)
     document.getElementById("isilanlariListings")?.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-iict]");
-      if (!btn) {
-        // Kart genel tıklaması → detay
-        const card = e.target.closest(".is-ilan-card");
-        if (card) {
-          const ilan = _isIlanlar.find(x => x.id === card.dataset.id);
-          if (ilan) openIsIlanDetail(ilan);
-        }
+      // Önce delete butonu kontrol (satır click'ini engelle)
+      const deleteBtn = e.target.closest('[data-iict="delete"]');
+      if (deleteBtn) {
+        e.stopPropagation();
+        _deleteIsIlan(deleteBtn.dataset.id);
         return;
       }
-      const id = btn.dataset.id;
-      const act = btn.dataset.iict;
-      if (act === "detay") {
-        const ilan = _isIlanlar.find(x => x.id === id);
+      // Satırın herhangi bir yerine tıklama → detay
+      const row = e.target.closest(".is-ilan-row");
+      if (row) {
+        const ilan = _isIlanlar.find(x => x.id === row.dataset.id);
         if (ilan) openIsIlanDetail(ilan);
-      } else if (act === "delete") {
-        _deleteIsIlan(id);
       }
     });
     // Kelime sayacı
