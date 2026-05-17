@@ -2507,8 +2507,12 @@ function formatRemaining(expIso) {
 
 districtSelect.addEventListener("change", () => {
   _updateBolgeBanner();
-  loadIlanlar();
-  if (typeof loadMusaitKuryeler === "function") loadMusaitKuryeler();
+  // v150 fix: sadece aktif sekmenin listesini yükle (iki listenin birden görünmesi bug'ı)
+  if (contentTab === "kuryeler") {
+    if (typeof loadMusaitKuryeler === "function") loadMusaitKuryeler();
+  } else {
+    loadIlanlar();
+  }
 });
 
 // =============== FİLTRELER (client-side) ===============
