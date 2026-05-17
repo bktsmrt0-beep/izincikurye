@@ -2590,13 +2590,17 @@ document.getElementById("ilanlarimBannerBack")?.addEventListener("click", () => 
   _setListingScope("all");
 });
 
-// Bölge banner'ı "Tüm Bölgeler →" butonu (v150)
+// Bölge banner'ı "Tüm Bölgeler →" butonu (v150 + v151 fix)
 document.getElementById("bolgeBannerBack")?.addEventListener("click", () => {
   if (!districtSelect) return;
   districtSelect.value = "all";
   _updateBolgeBanner();
-  loadIlanlar();
-  if (typeof loadMusaitKuryeler === "function") loadMusaitKuryeler();
+  // Sadece aktif sekmenin listesini yenile (iki listenin birden açılması bug'ı)
+  if (contentTab === "kuryeler") {
+    if (typeof loadMusaitKuryeler === "function") loadMusaitKuryeler();
+  } else {
+    loadIlanlar();
+  }
 });
 
 // =============== PROFİLİM YARDIMCILARI ===============
