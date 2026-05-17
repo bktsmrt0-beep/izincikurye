@@ -3717,3 +3717,61 @@ textarea#rwYorum:focus {
   .price-lbl { font-size: 10px; }
 }
 
+/* ===== AVATAR KIRPMA MODAL (v139) ===== */
+.avatar-crop-stage {
+  position: relative;
+  width: 320px;
+  height: 320px;
+  margin: 14px auto 0;
+  background: #0f172a;
+  border-radius: 12px;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+}
+.avatar-crop-stage:active { cursor: grabbing; }
+.avatar-crop-stage canvas {
+  display: block;
+  width: 320px;
+  height: 320px;
+}
+.avatar-crop-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* Dairesel görünür alan — dış kısım yarı saydam */
+  box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.55);
+  border-radius: 50%;
+  /* Hafif çerçeve */
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+#avatarCropZoom {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: #e5e7eb;
+  outline: none;
+}
+#avatarCropZoom::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--orange);
+  cursor: pointer;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+#avatarCropZoom::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--orange);
+  cursor: pointer;
+  border: 2px solid #fff;
+}
+

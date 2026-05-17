@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=138" />
+  <link rel="stylesheet" href="style.css?v=139" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -472,6 +472,28 @@
       </label>
 
       <button type="button" class="btn btn-primary btn-block" id="musaitOnayConfirm" disabled style="margin-top:14px">🟢 Müsait Ol</button>
+    </div>
+  </div>
+
+  <!-- ===== AVATAR KIRPMA MODAL (v139) ===== -->
+  <div class="modal hidden" id="avatarCropModal">
+    <div class="modal-card" style="max-width:420px">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>📷 Profil Fotoğrafını Ayarla</h2>
+      <p class="muted small">Fotoğrafı sürükleyerek konumlandır, yakınlaştırmak için kaydırıcıyı kullan.</p>
+
+      <div class="avatar-crop-stage" id="avatarCropStage">
+        <canvas id="avatarCropCanvas" width="320" height="320"></canvas>
+        <div class="avatar-crop-overlay" aria-hidden="true"></div>
+      </div>
+
+      <label class="form-label" style="margin-top:12px">Yakınlaştırma</label>
+      <input type="range" id="avatarCropZoom" min="1" max="3" step="0.01" value="1" style="width:100%" />
+
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button type="button" class="btn btn-ghost" data-close style="flex:1">Vazgeç</button>
+        <button type="button" class="btn btn-primary" id="avatarCropConfirm" style="flex:1">Kullan</button>
+      </div>
     </div>
   </div>
 
@@ -997,7 +1019,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=138"></script>
-  <script src="script.js?v=138"></script>
+  <script src="supabase-config.js?v=139"></script>
+  <script src="script.js?v=139"></script>
 </body>
 </html>

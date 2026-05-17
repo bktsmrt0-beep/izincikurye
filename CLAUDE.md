@@ -7,7 +7,9 @@
 - **Hosting:** Vercel (auto-deploy from `main`), domain: https://izincikurye.vercel.app
 - **Repo:** https://github.com/bktsmrt0-beep/izincikurye
 
-> **Not:** Her HTML/JS/CSS değişiminde `index.html` ve `admin.html`'de `?v=N` query parametresi artırılır. Commit + push → Vercel otomatik deploy ~30-60sn. Şu an `?v=124`.
+> **Not:** Her HTML/JS/CSS değişiminde `index.html` ve `admin.html`'de `?v=N` query parametresi artırılır. Commit + push → Vercel otomatik deploy ~30-60sn. Şu an `?v=138`.
+
+> **⚠️ Satır numarası uyarısı:** Bu dosyadaki satır numaraları v106 referansıyla yazılmıştır. v107-v138 arası yapılan eklemelerden sonra **gerçek satır numaraları 100-300 satır kaymış olabilir**. Tablodaki rakamları "yaklaşık" kabul et; emin olmak için `Grep -n` ile fonksiyon adını ara.
 
 > **Önemli:** script.js'in başında **YOL HARİTASI** yorum bloğu vardır (satır 3-95) — feature için doğrudan satır aralığına git, Grep tarama yapmadan. Bu CLAUDE.md o haritanın geniş açıklamasıdır.
 
@@ -214,6 +216,24 @@ Ek olarak `style.css?v=121` (her ikisi index.html ve admin.html'de).
 | `profileTumBolgeler` checkbox | index.html | "Her bölgede çalışabilirim" — açıkken `tercih_ilceler=[]`, kapalıyken chip seçimi aktif |
 | `profileTercihIlceler` div | index.html | `<button.ilce-chip>` container — JS ile 25 Ankara ilçesi chip olarak doluyor |
 
+### v123-v138 — Tutarlılık + Hesap Kapatma + Kurallar
+| Sembol | Konum | Amaç |
+|---|---|---|
+| `_enforceRememberMe()` | script.js (init IIFE üstü) | localStorage'dan `sb-*-auth-token` keylerini MANUEL siler — `sb.auth.signOut` ÇAĞRILMAZ (init takılma riski) |
+| `_setListingScope("all"\|"mine")` | script.js | Sidebar segment + #ilanlarimBanner senkron — scope değişince `loadIlanlar()` |
+| `_updateIlanlarimBanner()` | script.js | Banner görünürlüğü: `listingScope==="mine" && contentTab==="ilanlar"` |
+| `#ilanlarimBanner` | index.html | "Sadece kendi ilanların gösteriliyor" + "Tüm İlanlar →" butonu (v132) |
+| `#ilanKurallarOnay` checkbox | index.html (ilanForm) | İlan submit'te `required` — `kurallar_onay` kontrolü zorunlu (v133) |
+| `/ilan-kurallari.html` | standalone | 11 bölüm yumuşak dilli kurallar metni (v133+v136) |
+| `_commitMusait(yeni)` | script.js | Ham PATCH `profiles.musait/musait_at` + rollback + optimistic UI |
+| `_openMusaitOnay(onConfirm)` | script.js | `#musaitOnayModal` aç — tick verince callback (musaitToggle + kmbToggle ortak) |
+| `#musaitOnayModal` + `#musaitKurallarOnay` | index.html | Müsait olurken kurallar onay (v135) |
+| `#hesapKapatModal` | index.html | Yeni kapatma modalı — anket (5 chip + serbest metin) + onay tick (v138) |
+| `_hkSelectedSebep` | script.js | Tek seçimli chip state — `bulamadim/az_ilan/teknik/baska_uygulama/diger` |
+| `_showSilinecekBanner()` | script.js (window.) | `currentUser.silinmekUzereAt` doluysa sticky banner aç |
+| `#silinecekBanner` + `#silinmektenVazgecBtn` | index.html | "Hesabın X tarihinde silinecek — Hesabımı Geri Aç" (v138) |
+| `currentUser.silinmekUzereAt` | syncSession mapping | profile.silinmek_uzere_at → camelCase |
+
 ---
 
 ## DB Şeması
@@ -244,7 +264,19 @@ puan_ort        numeric(3,2)         -- 0.00-5.00 (yorumlardan denormalize)
 puan_sayisi     int DEFAULT 0
 arac_tipi       text CHECK in ('motosiklet','bisiklet','scooter','araba')  -- v108 sql/12
 arac_marka_model text                -- v108 sql/12 — kurye aracının marka/model'i (serbest)
+silinmek_uzere_at timestamptz         -- v138 sql/16 — soft-delete; doluysa 7 gün sonra pg_cron siler
 ```
+
+### `hesap_kapatma_geri_bildirim` tablosu (sql/16, v138)
+```
+id           uuid PK
+user_id      uuid FK auth.users(id) ON DELETE SET NULL  -- kullanıcı silinse de geri bildirim kalsın
+sebep        text                  -- chip key: bulamadim/az_ilan/teknik/baska_uygulama/diger
+aciklama     text                  -- opsiyonel serbest metin (max 500)
+email_snapshot text                 -- audit için, silindikten sonra hangi email'di
+created_at   timestamptz
+```
+RLS: kullanıcı kendi INSERT eder, sadece admin SELECT eder.
 
 ### `yorumlar` tablosu
 
@@ -347,6 +379,7 @@ RLS: kullanıcı kendi şikayetlerini görür, admin hepsini görür ve güncell
 | `13_ilan_sort_score.sql` | ilanlar.sort_score generated column (fiyat*2 + km*10 + begen*3 - begenmeme*3) + index |
 | `14_reaksiyon_rate_limit.sql` | reaksiyonlar before-insert trigger — kullanıcı 60sn'de max 10 reaksiyon |
 | `15_ilanlar_public_view_refresh.sql` | ilanlar_public view DROP+CREATE — yeni sütunları (sort_score, kalp/begen/begenmeme_sayisi, etiketler, kisa_id) dahil eder |
+| `16_hesap_kapatma.sql` | profiles.silinmek_uzere_at (soft-delete), hesap_kapatma_geri_bildirim tablosu (anket), cleanup_silinmek_uzere_hesaplar() + pg_cron günlük 03:30 — 7 gün dolan hesapları auth.users CASCADE ile siler |
 
 ### Storage
 
@@ -527,6 +560,15 @@ refreshProfileSaveBtn() // değişiklik yoksa Kaydet pasif
 47. **Boş durum mesajları davet edici tonda (v119+):** `İlanları/Müsait kuryeleri istediğiniz bölgede filtreleyebilirsiniz` — eski "X yok" tarzı negatif mesajlar yerine eylem öneren cümleler. Hem statik HTML (`#emptyState`, `#kuryeEmptyState`), hem `renderEmptyState` JS render.
 48. **🔴 KRİTİK: `sb.auth.signOut()` init'i bloklar (v123 fix):** `_enforceRememberMe` içinde `sb.auth.signOut({scope:'local'})` çağrılırsa supabase-js publishable key + lock mekanizmasıyla **promise asla resolve etmiyor** → tüm IIFE asılı kalıyor → loadIlanlar hiç başlamıyor → sayfa skeleton'da takılıyor. Yan etki olarak `SIGNED_OUT` event fire ediyor, listener `syncSession` çalıştırıp `storage check` logu basıyor (yanıltıcı). Çözüm: `localStorage`daki `sb-*-auth-token` keylerini MANUEL sil. **Kural:** Init path'inde HİÇBİR `sb.auth.*` veya `sb.from()` çağrısı yapma — hep raw bypass kullan.
 49. **ilanlar_public view sütun ekleme tuzağı (v15 sql/15):** View `SELECT * FROM ilanlar` ile oluşturulduysa, `*` view oluşma anında sabit sütun listesine çevrilir. Sonradan `ALTER TABLE ADD COLUMN` (sort_score, kalp_sayisi, vs.) view'a YANSIMAZ. Anon kullanıcı yeni sütunla sıralama isterse 400 alır. Çözüm: `DROP VIEW + CREATE VIEW` explicit kolon listesiyle (sql/15). Genel kural: yeni sütun → view recreate.
+50. **Form modal backdrop tıklama (v125):** `.modal-card` dışına tıklama default'ta `closeModals()` çağırır. İlan/profil/kayıt formlarında veri kaybı olmaması için `m.querySelector("form")` varsa backdrop click ignore edilir. Sadece × veya Esc ile bilinçli kapanır.
+51. **Modal × butonu viewport-fixed (v131+v137):** Genel `.modal-close` `position: fixed`, viewport top/right 14px, z=1010 (modal z=1000 üstünde). Uzun modal'da kaydırınca × kaybolmuyor. `#ilanDetailModal` ve `#kuryeDetailModal` aynı override'a sahip (v137).
+52. **Geri tuşu birleşik akış (v129-v130):** `openModal` history.pushState → popstate öncelik **modal → sidebar → tab**. `closeModals()` `history.back()` çağırır (state.modal varsa). `_closingFromPopstate`/`_closingSidebarFromPopstate`/`_switchingTabFromPopstate` flag'leri sonsuz döngüyü önler.
+53. **`formatTel` "90" prefix bug fix (v128):** Eski kod `length >= 12` ile sadece tam E.164 yapıştırmada `90` prefix'ini striplerdi. Düzenle butonu input'u boşaltır → focus pre-fill "+90 " → kullanıcı 1 hane yazınca `length=3` → strip yok → "+90 905" bug'ı. Çözüm: koşulsuz `if (d.startsWith("90")) d = d.slice(2)`.
+54. **Müsait olma onay akışı (v135):** `musaitToggle` change handler + `kmbToggle` click handler **ikisi de** açma yönünde `_openMusaitOnay(() => _commitMusait(true))` çağırır. `musaitToggle` change'te `e.target.checked = false` reset edilir (UI onay gelene kadar değişmiş gibi görünmesin). Kapatma yönü doğrudan `_commitMusait(false)`.
+55. **Hesap soft-delete akışı (v138 sql/16):** Eski hard-delete (`alert + prompt + auth.users DELETE`) yerine yeni akış: `#hesapKapatModal` → ilanlar DELETE + `profiles.silinmek_uzere_at = now()` PATCH + geri bildirim INSERT + localStorage temizle. **Kalıcı silme** pg_cron job (sql/16) ile 7 gün sonra `cleanup_silinmek_uzere_hesaplar()` → `auth.users DELETE CASCADE`. Kullanıcı 7 gün içinde login olursa `_showSilinecekBanner()` banner gösterir, "Hesabımı Geri Aç" → `silinmek_uzere_at=null` PATCH.
+56. **Geri bildirim user_id NULL CASCADE (sql/16):** `hesap_kapatma_geri_bildirim.user_id` FK `ON DELETE SET NULL` (CASCADE değil) — kullanıcı silindikten sonra anket cevabı kalsın diye. `email_snapshot` kolonu audit için kullanıcı e-postasını saklar.
+57. **pg_cron çakışmaması (sql/16):** `cleanup_silinmek_uzere_hesaplar` günlük **03:30 UTC** çalışır (sql/03 `cleanup_expired_ilanlar` 03:00 ile çakışmasın). pg_cron extension Supabase Database → Extensions altından MANUEL aktif edilmeli.
+58. **Sticky banner z-index sırası güncel (v138):** header(60) > **silinecekBanner(45)** > kurye müsait(40) > işletme yorum(40) > profil eksik(35). Silinecek banner kırmızı tema, top:56px (header altı).
 
 ---
 

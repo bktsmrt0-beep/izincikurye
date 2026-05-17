@@ -2941,45 +2941,174 @@ function setAvatarPreview(url) {
   }
 }
 
-document.getElementById("avatarFileInput").addEventListener("change", async e => {
+// =============== AVATAR KIRPMA (v139) ===============
+// Akış: dosya seçimi → modal'da canvas üzerinde kaydır+zoom → kare 512x512
+// JPEG olarak storage'a yükle. raw fetch ile profiles.avatar_url PATCH.
+const _crop = {
+  img: null,        // Image()
+  scale: 1,         // zoom (1-3)
+  offsetX: 0,
+  offsetY: 0,
+  dragging: false,
+  startX: 0,
+  startY: 0,
+  baseScale: 1      // image'i canvas'a sığdıracak min ölçek (cover)
+};
+
+function _drawCrop() {
+  const cv = document.getElementById("avatarCropCanvas");
+  if (!cv || !_crop.img) return;
+  const ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(0, 0, W, H);
+  const eff = _crop.baseScale * _crop.scale;
+  const drawW = _crop.img.width * eff;
+  const drawH = _crop.img.height * eff;
+  // Pan limiti — image canvas'ı her zaman tamamen kaplasın (overlay dairesi içine boşluk girmesin)
+  const maxX = Math.max(0, (drawW - W) / 2);
+  const maxY = Math.max(0, (drawH - H) / 2);
+  _crop.offsetX = Math.max(-maxX, Math.min(maxX, _crop.offsetX));
+  _crop.offsetY = Math.max(-maxY, Math.min(maxY, _crop.offsetY));
+  const dx = (W - drawW) / 2 + _crop.offsetX;
+  const dy = (H - drawH) / 2 + _crop.offsetY;
+  ctx.drawImage(_crop.img, dx, dy, drawW, drawH);
+}
+
+function _openAvatarCropModal(file) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const img = new Image();
+    img.onload = () => {
+      _crop.img = img;
+      _crop.scale = 1;
+      _crop.offsetX = 0;
+      _crop.offsetY = 0;
+      // cover: kısa kenar 320px'e tam otursun
+      const cv = document.getElementById("avatarCropCanvas");
+      _crop.baseScale = Math.max(cv.width / img.width, cv.height / img.height);
+      const zoom = document.getElementById("avatarCropZoom");
+      if (zoom) zoom.value = "1";
+      openModal("avatarCropModal");
+      _drawCrop();
+    };
+    img.onerror = () => toast("Görsel okunamadı", "error");
+    img.src = ev.target.result;
+  };
+  reader.onerror = () => toast("Dosya okunamadı", "error");
+  reader.readAsDataURL(file);
+}
+
+// Drag (pointer events — mouse + touch ortak)
+(() => {
+  const stage = document.getElementById("avatarCropStage");
+  if (!stage) return;
+  stage.addEventListener("pointerdown", e => {
+    _crop.dragging = true;
+    _crop.startX = e.clientX - _crop.offsetX;
+    _crop.startY = e.clientY - _crop.offsetY;
+    stage.setPointerCapture(e.pointerId);
+  });
+  stage.addEventListener("pointermove", e => {
+    if (!_crop.dragging) return;
+    _crop.offsetX = e.clientX - _crop.startX;
+    _crop.offsetY = e.clientY - _crop.startY;
+    _drawCrop();
+  });
+  const end = e => {
+    _crop.dragging = false;
+    try { stage.releasePointerCapture(e.pointerId); } catch {}
+  };
+  stage.addEventListener("pointerup", end);
+  stage.addEventListener("pointercancel", end);
+})();
+
+document.getElementById("avatarCropZoom")?.addEventListener("input", e => {
+  _crop.scale = parseFloat(e.target.value) || 1;
+  _drawCrop();
+});
+
+// Dosya seçimi → modal aç
+document.getElementById("avatarFileInput").addEventListener("change", e => {
   if (!currentUser) return;
   const file = e.target.files?.[0];
   if (!file) return;
-
   if (!file.type.startsWith("image/")) {
     setStatus("profileStatus", "error", "Sadece görsel dosyalar yüklenebilir.");
     e.target.value = "";
     return;
   }
-  if (file.size > 2 * 1024 * 1024) {
-    setStatus("profileStatus", "error", "Dosya 2 MB'dan büyük olamaz.");
+  if (file.size > 5 * 1024 * 1024) {
+    setStatus("profileStatus", "error", "Dosya 5 MB'dan büyük olamaz.");
     e.target.value = "";
     return;
   }
-
   clearStatus("profileStatus");
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-  const path = `${currentUser.id}/avatar.${ext}`;
+  _openAvatarCropModal(file);
+  e.target.value = "";  // Aynı dosyayı tekrar seçebilmek için reset
+});
 
-  // Yeni dosyayı yükle (üzerine yaz)
-  const { error: upErr } = await sb.storage.from("avatars").upload(path, file, {
-    cacheControl: "3600", upsert: true, contentType: file.type
-  });
-  if (upErr) {
-    setStatus("profileStatus", "error", "Yükleme başarısız: " + upErr.message);
+// "Kullan" → kırpılmış 512x512 JPEG'i yükle
+document.getElementById("avatarCropConfirm")?.addEventListener("click", async () => {
+  if (!currentUser || !_crop.img) return;
+  const btn = document.getElementById("avatarCropConfirm");
+  if (btn) { btn.disabled = true; btn.textContent = "Yükleniyor..."; }
+
+  // 512x512 output canvas — preview canvas içeriğini scale ile aynısı, daha yüksek çözünürlükte
+  const OUT = 512;
+  const cv = document.createElement("canvas");
+  cv.width = OUT; cv.height = OUT;
+  const ctx = cv.getContext("2d");
+  const eff = _crop.baseScale * _crop.scale * (OUT / 320);  // preview 320 → 512 oran
+  const drawW = _crop.img.width * eff;
+  const drawH = _crop.img.height * eff;
+  const dx = (OUT - drawW) / 2 + _crop.offsetX * (OUT / 320);
+  const dy = (OUT - drawH) / 2 + _crop.offsetY * (OUT / 320);
+  ctx.fillStyle = "#0f172a";
+  ctx.fillRect(0, 0, OUT, OUT);
+  ctx.drawImage(_crop.img, dx, dy, drawW, drawH);
+
+  const blob = await new Promise(res => cv.toBlob(res, "image/jpeg", 0.9));
+  if (!blob) {
+    toast("Görsel oluşturulamadı", "error");
+    if (btn) { btn.disabled = false; btn.textContent = "Kullan"; }
     return;
   }
 
-  // Public URL al + cache-bust için ?t= ekle
+  const path = `${currentUser.id}/avatar.jpg`;
+  const { error: upErr } = await sb.storage.from("avatars").upload(path, blob, {
+    cacheControl: "3600", upsert: true, contentType: "image/jpeg"
+  });
+  if (upErr) {
+    if (btn) { btn.disabled = false; btn.textContent = "Kullan"; }
+    toast("Yükleme başarısız: " + upErr.message, "error");
+    return;
+  }
   const { data: urlData } = sb.storage.from("avatars").getPublicUrl(path);
   const publicUrl = urlData.publicUrl + "?t=" + Date.now();
 
-  // profiles.avatar_url güncelle
-  const { error: dbErr } = await sb.from("profiles")
-    .update({ avatar_url: publicUrl })
-    .eq("id", currentUser.id);
-  if (dbErr) {
-    setStatus("profileStatus", "error", "Profil güncellenemedi: " + dbErr.message);
+  // profiles.avatar_url — raw PATCH (sb.from bypass, tutarlılık)
+  const session = readStoredSession();
+  if (!session?.access_token) {
+    if (btn) { btn.disabled = false; btn.textContent = "Kullan"; }
+    toast("Oturumun sona ermiş, tekrar giriş yap.", "error");
+    return;
+  }
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + session.access_token,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify({ avatar_url: publicUrl })
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status + " — " + (await r.text()));
+  } catch (e) {
+    if (btn) { btn.disabled = false; btn.textContent = "Kullan"; }
+    toast("Profil güncellenemedi: " + (e.message || e), "error");
     return;
   }
 
@@ -2987,9 +3116,9 @@ document.getElementById("avatarFileInput").addEventListener("change", async e =>
   setAvatarPreview(publicUrl);
   renderTopNav();
   refreshCompletion();
-  setStatus("profileStatus", "ok", "Profil fotoğrafın güncellendi.");
+  closeModals();
   toast("Profil fotoğrafın güncellendi", "ok");
-  e.target.value = "";
+  if (btn) { btn.disabled = false; btn.textContent = "Kullan"; }
 });
 
 document.getElementById("avatarRemoveBtn").addEventListener("click", async () => {
