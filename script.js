@@ -1811,15 +1811,17 @@ function openSidebar() {
 }
 let _closingSidebarFromPopstate = false;
 function closeSidebar() {
-  const wasOpen = document.getElementById("sidebarDrawer")?.classList.contains("open");
+  // Görsel-only kapat. history.back ÇAĞRILMAZ — race önleme (v140):
+  // Hamburger'da "İlan Ver" tıklanınca closeSidebar+openModal arka arkaya çağrılır.
+  // history.back() popstate'i ASYNC fire ederken openModal pushState SYNC çalışır
+  // → popstate handler modal AÇIKKEN tetiklenir → modal anında kapanır = bug.
+  // Çözüm: closeSidebar history'ye dokunmasın. Yeni pushState (modal/diğer)
+  // mevcut sidebar entry'sini overwrite eder; kullanıcı geri tuşuna basarsa
+  // popstate handler DOM'a bakar, sidebar zaten kapalı → no-op.
   document.getElementById("sidebarDrawer")?.classList.remove("open");
   document.getElementById("sidebarOverlay")?.classList.add("hidden");
   document.getElementById("hamburgerBtn")?.setAttribute("aria-expanded", "false");
   document.body.classList.remove("sidebar-open");
-  if (!wasOpen) return;
-  if (!_closingSidebarFromPopstate && history.state?.sidebar) {
-    history.back();
-  }
 }
 function toggleSidebar() {
   const open = document.getElementById("sidebarDrawer")?.classList.contains("open");
@@ -2095,6 +2097,14 @@ ilanVerBtn.addEventListener("click", () => {
     openModal("registerModal");
     return;
   }
+
+  // Açık başka bir modal varsa görsel-only kapat (history race önle, v140).
+  // Profilim modalı açıkken FAB ilan ver tıklanırsa iki modal üst üste açık olur;
+  // ayrıca history.back/pushState sırası popstate-modal-kapatma bug'ı doğurur.
+  // closeModals() yerine sadece DOM'dan hidden — yeni pushState (openModal aşağıda)
+  // mevcut state'i overwrite eder.
+  document.querySelectorAll(".modal:not(.hidden)").forEach(m => m.classList.add("hidden"));
+  document.body.classList.remove("modal-open");
 
   // Yeni ilan: edit modunu reset et
   resetIlanFormMode();
