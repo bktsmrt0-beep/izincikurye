@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=160" />
+  <link rel="stylesheet" href="style.css?v=161" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -596,17 +596,12 @@
           <input type="text" name="baslik" id="isIlanBaslik" required maxlength="80" minlength="3" placeholder="Örn: Çankaya'da Tam Zamanlı Motorlu Kurye Arıyoruz" />
         </label>
 
-        <label>İşyeri Adı <span class="req">*</span>
+        <label>İşyeri / Firma Adı <span class="req">*</span>
           <input type="text" name="isyeri_ad" id="isIlanIsyeriAd" required maxlength="80" placeholder="Örn: Kızılay Lokantası" />
           <p class="muted small ilan-edit-hint hidden" id="isIlanAdHint">Kayıtlı işletme adından otomatik dolduruldu. <a href="#" id="isIlanAdEditBtn" class="link-orange">Düzenle</a></p>
         </label>
 
-        <label>İşyeri Adresi <span class="req">*</span>
-          <input type="text" name="isyeri_adres" id="isIlanIsyeriAdres" required maxlength="160" placeholder="Cadde / sokak / no, mahalle" />
-          <p class="muted small ilan-edit-hint hidden" id="isIlanAdresHint">Kayıtlı iş adresinden otomatik dolduruldu. <a href="#" id="isIlanAdresEditBtn" class="link-orange">Düzenle</a></p>
-        </label>
-
-        <label>İlçe <span class="req">*</span>
+        <label>İşin Yapılacağı İlçe (Ankara) <span class="req">*</span>
           <select name="ilce" id="isIlanIlce" required>
             <option value="">Seçiniz...</option>
           </select>
@@ -1188,8 +1183,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=160"></script>
-  <script src="script.js?v=160"></script>
-  <script src="script-is-ilani.js?v=160"></script>
+  <script src="supabase-config.js?v=161"></script>
+  <script src="script.js?v=161"></script>
+  <script src="script-is-ilani.js?v=161"></script>
 </body>
 </html>
