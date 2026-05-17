@@ -174,7 +174,7 @@ for (let h = 1; h <= 6; h++) {
   bitSaat.appendChild(new Option(v, v));
 }
 basSaat.value = "09:00";
-bitSaat.value = "18:00";
+bitSaat.value = "07:00";  // v144: dropdown ilk değer 07:00 (vardiya/mesai sıralaması başlangıcı)
 
 // =============== TOAST ===============
 function toast(msg, type = "info", ms = 3000) {
@@ -2322,7 +2322,7 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   saatRange.value = 4;
   fiyatRange.value = 280; fiyatVal.textContent = "280";
   kmRange.value = 8; kmVal.textContent = "8";
-  basSaat.value = "09:00"; bitSaat.value = "18:00";
+  basSaat.value = "09:00"; bitSaat.value = "07:00";  // v144 default sıralama
   _updateSureOzeti();
   document.getElementById("ilanIletisimTel").value = "";
   document.getElementById("telEditHint")?.classList.add("hidden");
