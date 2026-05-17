@@ -157,10 +157,20 @@ ANKARA_ILCELERI.forEach(ilce => {
   districtSelect.appendChild(new Option(ilce, ilce));
   ilanIlceSelect.appendChild(new Option(ilce, ilce));
 });
-// Saat aralığı (00:00 - 23:00)
+// Başlangıç saati: 00:00 → 23:00 (standart)
 for (let h = 0; h < 24; h++) {
   const v = String(h).padStart(2, "0") + ":00";
   basSaat.appendChild(new Option(v, v));
+}
+// Bitiş saati: 07:00 → 23:00 → 24:00 (gece yarısı, DB'de "00:00") → 01:00 → 06:00 (ertesi gün)
+// Vardiya/mesai mantığı: kurye saat 07-06 arası bir aralıkta çalışır
+for (let h = 7; h <= 23; h++) {
+  const v = String(h).padStart(2, "0") + ":00";
+  bitSaat.appendChild(new Option(v, v));
+}
+bitSaat.appendChild(new Option("24:00", "00:00"));  // label=24:00, value=00:00 (mevcut render uyumu)
+for (let h = 1; h <= 6; h++) {
+  const v = String(h).padStart(2, "0") + ":00";
   bitSaat.appendChild(new Option(v, v));
 }
 basSaat.value = "09:00";
