@@ -2898,7 +2898,7 @@ function renderSmartCard({ isIsletme, isKurye, aktifIlan, bekleyen, pct }) {
     title.textContent = "İlk ilanını ver";
     text.textContent = "Kuryeler bekliyor — birkaç saniyede bir ilan yayınla, bölgendeki kuryelere bildirim git­sin.";
     cta.textContent = "+ İlan Ver";
-    cta.onclick = () => { closeModals(); document.getElementById("ilanVerBtn")?.click(); };
+    cta.onclick = () => { document.getElementById("ilanVerBtn")?.click(); };
     return;
   }
 
@@ -2931,7 +2931,7 @@ function renderSmartCard({ isIsletme, isKurye, aktifIlan, bekleyen, pct }) {
     text.textContent = "Profilin tamamlanmış görünüyor.";
   }
   cta.textContent = "Yeni İlan Ver";
-  cta.onclick = () => { closeModals(); document.getElementById("ilanVerBtn")?.click(); };
+  cta.onclick = () => { document.getElementById("ilanVerBtn")?.click(); };
   card.classList.add("tone-success");
 }
 
@@ -3314,7 +3314,8 @@ function _goToMyListings() {
   document.getElementById("listings")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 document.getElementById("pfTileYeniIlan")?.addEventListener("click", () => {
-  closeModals();
+  // closeModals() ÇAĞIRMA — ilanVerBtn handler zaten açık modalı görsel kapatır (v140).
+  // closeModals history.back yapardı → popstate race → modal anında kapanırdı.
   document.getElementById("ilanVerBtn")?.click();
 });
 document.getElementById("pfTileIlanlarim")?.addEventListener("click", _goToMyListings);
