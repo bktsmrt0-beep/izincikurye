@@ -634,9 +634,10 @@
     }
   }
 
-  // İş ilanı reaksiyon toggle — bağımsız (raw fetch, sb.from bypass)
-  // reaksiyonlar tablosu UNIQUE(user_id, ilan_id) — bir kullanıcı tek tip
-  // Toggle mantığı: aynı tip varsa sil, farklı tip varsa update, yoksa insert
+  // İş ilanı reaksiyon — TEK SEFERLİK (v164)
+  // Manipülasyon önleme: bir kez verilen reaksiyon GERİ ALINAMAZ + DEĞİŞTİRİLEMEZ.
+  // DB tarafında UPDATE/DELETE policy'leri kaldırıldı (sql/22), UNIQUE constraint
+  // duplicate'i engeller. JS tarafında ön kontrol + optimistic UI.
   async function _toggleIsIlanRxn(ilanId, tip) {
     const session = window.readStoredSession?.();
     if (!session?.access_token) {
@@ -650,37 +651,66 @@
       Authorization: "Bearer " + session.access_token,
       "Content-Type": "application/json"
     };
+
+    // 1) Önceden reaksiyon vermiş mi?
     try {
-      // Mevcut reaksiyon var mı?
       const checkRes = await fetch(`${base}?user_id=eq.${userId}&ilan_id=eq.${ilanId}&select=tip`, { headers });
       const existing = checkRes.ok ? await checkRes.json() : [];
-      const mevcut = existing[0]?.tip;
-
-      if (mevcut === tip) {
-        // Aynı reaksiyon → kaldır (toggle off)
-        await fetch(`${base}?user_id=eq.${userId}&ilan_id=eq.${ilanId}`, { method: "DELETE", headers });
-      } else if (mevcut) {
-        // Farklı tip → güncelle (begen ↔ begenmeme)
-        await fetch(`${base}?user_id=eq.${userId}&ilan_id=eq.${ilanId}`, {
-          method: "PATCH", headers,
-          body: JSON.stringify({ tip })
-        });
-      } else {
-        // Yeni reaksiyon
-        await fetch(base, {
-          method: "POST", headers: { ...headers, Prefer: "return=minimal" },
-          body: JSON.stringify({ user_id: userId, ilan_id: ilanId, tip })
-        });
+      if (existing.length > 0) {
+        const mevcut = existing[0].tip;
+        const label = mevcut === "begen" ? "👍 Beğendin" : "👎 Beğenmedin";
+        window.toast?.(`Bu ilana zaten reaksiyon verdin (${label}). Geri alınamaz.`, "info", 4500);
+        return;
       }
-      // Reload — DB trigger (bump_reaksiyon_sayilar) ilanlar.begen_sayisi/begenmeme_sayisi'ni güncelledi
+    } catch (e) {
+      // check başarısız olsa bile insert dene; UNIQUE constraint koruma sağlar
+    }
+
+    // 2) Optimistic UI — sayacı anında artır
+    const ilan = _isIlanlar.find(x => x.id === ilanId);
+    if (ilan) {
+      if (tip === "begen") ilan.begen_sayisi = (ilan.begen_sayisi || 0) + 1;
+      else ilan.begenmeme_sayisi = (ilan.begenmeme_sayisi || 0) + 1;
+      renderIsIlanlari();
+    }
+
+    // 3) DB'ye yaz (INSERT-only)
+    try {
+      const res = await fetch(base, {
+        method: "POST",
+        headers: { ...headers, Prefer: "return=minimal" },
+        body: JSON.stringify({ user_id: userId, ilan_id: ilanId, tip })
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        // Optimistic geri al
+        if (ilan) {
+          if (tip === "begen") ilan.begen_sayisi = Math.max(0, (ilan.begen_sayisi || 1) - 1);
+          else ilan.begenmeme_sayisi = Math.max(0, (ilan.begenmeme_sayisi || 1) - 1);
+          renderIsIlanlari();
+        }
+        if (text.includes("duplicate") || text.includes("unique")) {
+          window.toast?.("Bu ilana zaten reaksiyon verdin. Geri alınamaz.", "info", 4500);
+        } else if (text.includes("REAKSIYON_HIZ_LIMITI")) {
+          window.toast?.("⏱ Çok hızlı reaksiyon — biraz yavaşla.", "error", 5000);
+        } else {
+          window.toast?.("Reaksiyon kaydedilemedi: " + text.slice(0, 100), "error");
+        }
+        return;
+      }
+      // Başarılı — kullanıcıya bilgi
+      const ikon = tip === "begen" ? "👍" : "👎";
+      window.toast?.(`${ikon} Reaksiyonun kaydedildi. (Geri alınamaz)`, "ok", 3000);
+      // Gerçek sayıları DB'den senkronize et
       await loadIsIlanlari();
     } catch (e) {
-      const msg = e.message || String(e);
-      if (msg.includes("REAKSIYON_HIZ_LIMITI")) {
-        window.toast?.("⏱ Çok hızlı reaksiyon — biraz yavaşla.", "error", 5000);
-      } else {
-        window.toast?.("Reaksiyon kaydedilemedi: " + msg, "error");
+      // Optimistic geri al
+      if (ilan) {
+        if (tip === "begen") ilan.begen_sayisi = Math.max(0, (ilan.begen_sayisi || 1) - 1);
+        else ilan.begenmeme_sayisi = Math.max(0, (ilan.begenmeme_sayisi || 1) - 1);
+        renderIsIlanlari();
       }
+      window.toast?.("Bağlantı hatası: " + (e.message || e), "error");
     }
   }
 

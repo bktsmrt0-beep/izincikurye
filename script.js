@@ -918,7 +918,10 @@ async function loadFavoriler() {
   } catch (e) { console.warn("[loadFavoriler throw]", e); }
 }
 
-// Reaksiyon (begen/begenmeme) — Reddit/YT tarzı: birbirini iter
+// Reaksiyon (begen/begenmeme) — TEK SEFERLİK (v164)
+// Manipülasyon önleme: bir kez verilen reaksiyon GERİ ALINAMAZ + DEĞİŞTİRİLEMEZ.
+// DB tarafında UPDATE/DELETE policy'leri kaldırıldı (sql/22), UNIQUE(user_id, ilan_id)
+// duplicate'i engeller. JS: ön kontrol + optimistic UI + INSERT.
 async function toggleReaksiyon(ilanId, tip) {
   if (!currentUser) { openModal("registerModal"); return; }
   const session = readStoredSession();
@@ -926,63 +929,43 @@ async function toggleReaksiyon(ilanId, tip) {
   const ilan = ilanlar.find(x => x.id === ilanId);
   if (!ilan) return;
 
-  const current = userReaksiyonlar.get(ilanId); // "begen" | "begenmeme" | undefined
-  // Optimistic UI değişiklikleri
-  const prev = { current, begen: ilan.begen_sayisi || 0, begenmeme: ilan.begenmeme_sayisi || 0 };
-
-  if (current === tip) {
-    // Toggle off: bu reaksiyonu sil
-    userReaksiyonlar.delete(ilanId);
-    if (tip === "begen") ilan.begen_sayisi = Math.max(0, (ilan.begen_sayisi || 0) - 1);
-    else ilan.begenmeme_sayisi = Math.max(0, (ilan.begenmeme_sayisi || 0) - 1);
-  } else if (current) {
-    // Swap: diğerinden bu tarafa al
-    userReaksiyonlar.set(ilanId, tip);
-    if (current === "begen") {
-      ilan.begen_sayisi = Math.max(0, (ilan.begen_sayisi || 0) - 1);
-      ilan.begenmeme_sayisi = (ilan.begenmeme_sayisi || 0) + 1;
-    } else {
-      ilan.begenmeme_sayisi = Math.max(0, (ilan.begenmeme_sayisi || 0) - 1);
-      ilan.begen_sayisi = (ilan.begen_sayisi || 0) + 1;
-    }
-  } else {
-    // Yeni reaksiyon
-    userReaksiyonlar.set(ilanId, tip);
-    if (tip === "begen") ilan.begen_sayisi = (ilan.begen_sayisi || 0) + 1;
-    else ilan.begenmeme_sayisi = (ilan.begenmeme_sayisi || 0) + 1;
+  // Mevcut reaksiyon varsa — geri alma yok
+  const current = userReaksiyonlar.get(ilanId);
+  if (current) {
+    const label = current === "begen" ? "👍 Beğendin" : "👎 Beğenmedin";
+    toast(`Bu ilana zaten reaksiyon verdin (${label}). Geri alınamaz.`, "info", 4500);
+    return;
   }
+
+  // Optimistic UI — sayacı anında artır + map'e ekle
+  const prev = { begen: ilan.begen_sayisi || 0, begenmeme: ilan.begenmeme_sayisi || 0 };
+  userReaksiyonlar.set(ilanId, tip);
+  if (tip === "begen") ilan.begen_sayisi = (ilan.begen_sayisi || 0) + 1;
+  else ilan.begenmeme_sayisi = (ilan.begenmeme_sayisi || 0) + 1;
   _refreshRxnBtns(ilanId);
 
-  // Backend: önce DELETE (varsa), sonra INSERT (toggle off değilse)
+  // Backend: INSERT-only (UPDATE/DELETE policy yok artık)
   try {
-    if (current) {
-      // Mevcut reaksiyonu sil
-      const delUrl = `${SUPABASE_URL}/rest/v1/reaksiyonlar?user_id=eq.${currentUser.id}&ilan_id=eq.${ilanId}`;
-      const r = await fetch(delUrl, {
-        method: "DELETE",
-        headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + session.access_token }
-      });
-      if (!r.ok) throw new Error("DELETE " + r.status);
-    }
-    if (current !== tip) {
-      // Yeni reaksiyon ekle
-      const { error } = await rawInsert(
-        "reaksiyonlar",
-        { user_id: currentUser.id, ilan_id: ilanId, tip },
-        session.access_token
-      );
-      if (error) throw new Error(error.message);
-    }
+    const { error } = await rawInsert(
+      "reaksiyonlar",
+      { user_id: currentUser.id, ilan_id: ilanId, tip },
+      session.access_token
+    );
+    if (error) throw new Error(error.message);
+    const ikon = tip === "begen" ? "👍" : "👎";
+    toast(`${ikon} Reaksiyonun kaydedildi. (Geri alınamaz)`, "ok", 3000);
   } catch (e) {
     // Rollback
-    if (prev.current) userReaksiyonlar.set(ilanId, prev.current);
-    else userReaksiyonlar.delete(ilanId);
+    userReaksiyonlar.delete(ilanId);
     ilan.begen_sayisi = prev.begen;
     ilan.begenmeme_sayisi = prev.begenmeme;
     _refreshRxnBtns(ilanId);
-    // Rate limit hatası özel mesaj (sql/14)
     const msg = (e.message || String(e));
-    if (msg.includes("REAKSIYON_HIZ_LIMITI") || msg.includes("hızlı reaksiyon")) {
+    if (msg.includes("duplicate") || msg.includes("unique")) {
+      toast("Bu ilana zaten reaksiyon verdin. Geri alınamaz.", "info", 4500);
+      // userReaksiyonlar Map'i tekrar yükle (DB ile sync)
+      loadFavoriler();
+    } else if (msg.includes("REAKSIYON_HIZ_LIMITI") || msg.includes("hızlı reaksiyon")) {
       toast("⏱ Çok hızlı reaksiyon yapıyorsun. Lütfen 1 dakika bekle.", "error", 5000);
     } else {
       toast("Reaksiyon kaydedilemedi: " + msg, "error");
