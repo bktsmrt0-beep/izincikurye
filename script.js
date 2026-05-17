@@ -2199,6 +2199,24 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
     document.getElementById("ilanKurallarOnay")?.scrollIntoView({ behavior: "smooth", block: "center" });
     return;
   }
+  // İçerik filtresi — başlık ve açıklama için (v142, _validateIcerik)
+  const baslikErr = _validateIcerik(baslik, "Başlık");
+  if (baslikErr) {
+    toast(baslikErr, "error", 6000);
+    const el = document.querySelector('#ilanForm [name="baslik"]');
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    el?.focus();
+    return;
+  }
+  const aciklamaRaw = (fd.get("aciklama") || "").trim();
+  const aciklamaErr = _validateIcerik(aciklamaRaw, "Açıklama");
+  if (aciklamaErr) {
+    toast(aciklamaErr, "error", 6000);
+    const el = document.querySelector('#ilanForm [name="aciklama"]');
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    el?.focus();
+    return;
+  }
   const iletisim_tel_e164 = _phoneToE164(iletisim_tel_raw);
   if (bas_saat === bit_saat) {
     toast("Başlangıç ve bitiş saati aynı olamaz.", "error"); return;
@@ -2303,6 +2321,55 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
 });
 
 // =============== YARDIMCI ===============
+
+// İlan başlık/açıklama içerik filtresi (v142)
+// Kötüye kullanım önleme — kütüphanesiz, client-side guard rail.
+// Yakalama hedefi: telefon, e-posta, URL/link, yaygın Türkçe küfür.
+// Bypass kolay (boşluklu numara, eğri harf vs.) — ana güvence değil,
+// kurallar onayı + şikayet sistemi + reaktif moderasyon ile birlikte çalışır.
+function _validateIcerik(text, alanAdi = "Metin") {
+  if (!text) return null;
+  const t = text.toString();
+
+  // Telefon: tüm boşluk/tire/parantez/nokta temizlenince 10+ ardışık rakam
+  const tDigits = t.replace(/[\s\-\(\)\.\/]/g, "");
+  if (/\d{10,}/.test(tDigits)) {
+    return `${alanAdi} bölümüne telefon numarası yazılamaz — İletişim Cep Telefonu alanını kullan.`;
+  }
+
+  // E-posta
+  if (/[\w.+-]+@[\w-]+\.\w{2,}/.test(t)) {
+    return `${alanAdi} bölümüne e-posta yazılamaz — kuryeler buraya ulaşmamalı.`;
+  }
+
+  // URL/link — açık link veya yaygın TLD
+  if (/(https?:\/\/|www\.)/i.test(t) ||
+      /\.(com|net|org|info|io|tr|co|me|biz|app|dev|xyz)(\b|\/)/i.test(t)) {
+    return `${alanAdi} bölümüne web bağlantısı yazılamaz.`;
+  }
+
+  // Küfür/hakaret — iki katmanlı:
+  // (a) substring güvenli: uzun/açık kelimeler, false positive yok
+  // (b) word-boundary: kısa kelimeler "götür", "amaca" gibi içermeli yakalanmasın
+  const tLower = t.toLocaleLowerCase("tr");
+  const kufurSubstrings = [
+    "amına", "amına koy", "ananı sik", "anasını sik",
+    "orospu", "piç", "siktir", "sikim", "sikiyim", "yarrak", "yarak", "dalyarak",
+    "götlek", "godoş", "godos", "ibne", "iibne", "kahpe", "kaltak", "yarrağım"
+  ];
+  for (const k of kufurSubstrings) {
+    if (tLower.includes(k)) {
+      return `${alanAdi} bölümünde uygunsuz ifade tespit edildi — lütfen nazik bir dil kullan.`;
+    }
+  }
+  // Kısa kelimeler word-boundary ile (Türkçe harfler için ASCII \b kullanılmıyor — manuel sınır)
+  const kufurStandalone = /(?:^|[^a-zçğıöşüâîû0-9])(?:amk|göt|got|ibn(?:e|i)?)(?=[^a-zçğıöşüâîû0-9]|$)/i;
+  if (kufurStandalone.test(tLower)) {
+    return `${alanAdi} bölümünde uygunsuz ifade tespit edildi — lütfen nazik bir dil kullan.`;
+  }
+
+  return null;  // temiz
+}
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c =>
     ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])

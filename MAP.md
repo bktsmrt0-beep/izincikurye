@@ -38,6 +38,7 @@ _switchingTabFromPopstate| script.js:4205 | sekme popstate döngüsü flag
 _telDigits               | script.js:2456 | (s||"").replace(/\D/g,"")
 _updateAktifSayaclar     | script.js:2325 | .ilan-aktif-sayac elemanlarını günceller (setInterval 1sn)
 _updateIlanlarimBanner   | script.js:2396 | banner görünürlüğü scope+tab kombosuna göre
+_validateIcerik          | script.js:~2307 | başlık/açıklama içerik filtresi (telefon/email/link/küfür)
 _updateSureOzeti         | script.js:2077 | ilan formu süre özeti güncelle
 _withTimeout             | script.js:196  | promise + timeout wrapper
 activeFilterCount        | script.js:492  | aktif filtre adedi

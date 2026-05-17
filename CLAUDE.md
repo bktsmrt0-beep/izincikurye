@@ -569,6 +569,7 @@ refreshProfileSaveBtn() // değişiklik yoksa Kaydet pasif
 56. **Geri bildirim user_id NULL CASCADE (sql/16):** `hesap_kapatma_geri_bildirim.user_id` FK `ON DELETE SET NULL` (CASCADE değil) — kullanıcı silindikten sonra anket cevabı kalsın diye. `email_snapshot` kolonu audit için kullanıcı e-postasını saklar.
 57. **pg_cron çakışmaması (sql/16):** `cleanup_silinmek_uzere_hesaplar` günlük **03:30 UTC** çalışır (sql/03 `cleanup_expired_ilanlar` 03:00 ile çakışmasın). pg_cron extension Supabase Database → Extensions altından MANUEL aktif edilmeli.
 58. **Sticky banner z-index sırası güncel (v138):** header(60) > **silinecekBanner(45)** > kurye müsait(40) > işletme yorum(40) > profil eksik(35). Silinecek banner kırmızı tema, top:56px (header altı).
+59. **İçerik filtresi guard rail (v142):** `_validateIcerik(text, alanAdi)` (script.js:~2307) — başlık/açıklama submit'inde telefon (10+ ardışık rakam), e-posta, URL/yaygın TLD ve dar Türkçe küfür listesi tespit eder. **Kalkan değil rehber**: bypass kolay (boşluklu rakam, eğri harf). Kurallar onayı + şikayet sistemi ile birlikte çalışır. Küfür listesinde "göt/got/amk/ibne" kısa kelimeler **word-boundary** regex'le, diğerleri substring ile yakalanır (false positive azaltma). Yeni serbest metin alanı eklediğinde bu fonksiyonu çağır.
 
 ---
 
