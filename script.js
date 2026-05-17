@@ -132,7 +132,8 @@ const ETIKET_LABELS = {
   buyuk_kutu_sart:      { ico: "📦", label: "Büyük Kutu Şart" },
   bolgeyi_bilmesi_sart: { ico: "🧭", label: "Bölgeyi Bilmesi Şart" },
   kisa_mesafe:          { ico: "📍", label: "Kısa Mesafe" },
-  uzun_mesafe:          { ico: "🛣", label: "Uzun Mesafe" }
+  uzun_mesafe:          { ico: "🛣", label: "Uzun Mesafe" },
+  navigasyon_calisir:   { ico: "🗺", label: "Navigasyon ile Çalışabilir" }
 };
 
 // Araç tipi→ikon+etiket eşleştirme (kurye profili)
