@@ -129,7 +129,8 @@
 
   function buildIsIlanCardHTML(i) {
     const turMeta = IS_ILAN_TURLERI[i.tur] || { label: i.tur, emoji: "💼" };
-    const isletme = i.profile?.isletme_adi || (i.profile ? (i.profile.ad + " " + i.profile.soyad).trim() : "");
+    // İşyeri adı: ilan.isyeri_ad öncelikli, yoksa profile fallback
+    const isletme = i.isyeri_ad || i.profile?.isletme_adi || (i.profile ? (i.profile.ad + " " + i.profile.soyad).trim() : "");
     const maas = _formatMaasAralik(i.maas_min, i.maas_max);
     const isOwn = window.currentUser && i.user_id === window.currentUser.id;
     const durumLabel = isOwn ? _durumRozet(i.durum) : "";
@@ -175,12 +176,15 @@
     const body = document.getElementById("isIlanDetailBody");
     if (!body) return;
     const turMeta = IS_ILAN_TURLERI[ilan.tur] || { label: ilan.tur, emoji: "💼" };
-    const isletme = ilan.profile?.isletme_adi || (ilan.profile ? (ilan.profile.ad + " " + ilan.profile.soyad).trim() : "");
+    // İşyeri adı: ilan.isyeri_ad öncelikli (form'dan), yoksa profile.isletme_adi fallback
+    const isyeriAdi = ilan.isyeri_ad || ilan.profile?.isletme_adi || (ilan.profile ? (ilan.profile.ad + " " + ilan.profile.soyad).trim() : "");
+    const isyeriAdres = ilan.isyeri_adres || "";
     const tel = ilan.iletisim_tel || ilan.profile?.tel;
     const telDisplay = tel ? (window._displayPhone?.(tel) || tel) : "";
     const telE164 = tel ? (window._phoneToE164?.(tel) || tel) : "";
     const isMobil = tel && window._isMobileTr?.(tel);
 
+    const isAnonim = !window.currentUser;
     const isOwn = window.currentUser && ilan.user_id === window.currentUser.id;
     const durumBlock = isOwn ? _durumRozet(ilan.durum) : "";
     const redBlock = (isOwn && ilan.durum === "reddedildi" && ilan.red_sebebi)
@@ -189,6 +193,29 @@
     const bekleyenBlock = (isOwn && ilan.durum === "beklemede")
       ? `<div class="iid-beklemede">⏳ Bu ilan moderatör incelemesinde. Onaylanınca yayına çıkacak (genelde 4 saat içinde).</div>`
       : "";
+
+    // İletişim bölümü: anonim → Kayıt Ol CTA, kayıtlı → Ara + WhatsApp
+    let iletisimBlock = "";
+    if (ilan.durum === "onayli") {
+      if (isAnonim) {
+        iletisimBlock = `
+          <div class="iid-iletisim iid-anonim-block">
+            <div class="iid-anonim-notice">
+              🔒 <strong>İletişim bilgilerini görmek için giriş yap.</strong><br>
+              <span class="muted small">Telefon ve WhatsApp ile ulaşabilmen için önce kayıtlı olman gerekiyor.</span>
+            </div>
+            <button type="button" class="btn btn-primary btn-block" id="iidGirisYapBtn" style="margin-top:10px">Giriş Yap / Kayıt Ol</button>
+          </div>
+        `;
+      } else if (tel) {
+        iletisimBlock = `
+          <div class="iid-iletisim">
+            <a href="tel:${telE164}" class="btn btn-primary btn-block">📞 ${window.escapeHtml(telDisplay)}</a>
+            ${isMobil ? `<a href="https://wa.me/${telE164.replace("+", "")}" target="_blank" class="btn btn-success btn-block" style="margin-top:8px">💬 WhatsApp ile Yaz</a>` : ""}
+          </div>
+        `;
+      }
+    }
 
     body.innerHTML = `
       <div class="iid-header">
@@ -199,19 +226,21 @@
       ${bekleyenBlock}
       ${redBlock}
       <div class="iid-meta">
-        ${isletme ? `<div>🏢 <strong>${window.escapeHtml(isletme)}</strong></div>` : ""}
+        ${isyeriAdi ? `<div>🏢 <strong>${window.escapeHtml(isyeriAdi)}</strong></div>` : ""}
+        ${isyeriAdres ? `<div>📌 ${window.escapeHtml(isyeriAdres)}</div>` : ""}
         <div>📍 ${window.escapeHtml(ilan.ilce)}</div>
         <div>💰 ${_formatMaasAralik(ilan.maas_min, ilan.maas_max)}</div>
       </div>
       ${ilan.aciklama ? `<div class="iid-aciklama">${window.escapeHtml(ilan.aciklama).replace(/\n/g, "<br>")}</div>` : ""}
-      ${tel && ilan.durum === "onayli" ? `
-        <div class="iid-iletisim">
-          <a href="tel:${telE164}" class="btn btn-primary btn-block">📞 ${window.escapeHtml(telDisplay)}</a>
-          ${isMobil ? `<a href="https://wa.me/${telE164.replace("+", "")}" target="_blank" class="btn btn-success btn-block" style="margin-top:8px">💬 WhatsApp ile Yaz</a>` : ""}
-        </div>
-      ` : ""}
+      ${iletisimBlock}
     `;
     window.openModal?.("isIlanDetailModal");
+
+    // Anonim için Giriş Yap butonu
+    document.getElementById("iidGirisYapBtn")?.addEventListener("click", () => {
+      window.closeModals?.();
+      setTimeout(() => window.openModal?.("loginModal"), 100);
+    });
   }
 
   // ============== SUB-TAB ==============
@@ -245,24 +274,75 @@
     }
     const form = document.getElementById("isIlanForm");
     if (form) form.reset();
-    // İlçe select doldur
+
+    // İlçe select doldur (ilk açılışta)
     const ilceSel = document.getElementById("isIlanIlce");
     if (ilceSel && ilceSel.options.length <= 1 && Array.isArray(window.ANKARA_ILCELERI)) {
       ilceSel.innerHTML = `<option value="">Seçiniz...</option>` +
         window.ANKARA_ILCELERI.map(i => `<option value="${i}">${i}</option>`).join("");
     }
+
     // Kategori default: aktif sub-tab
     const turSel = document.getElementById("isIlanTur");
     if (turSel) turSel.value = _isIlanAltTur;
-    // Tel ön doldur
+
+    // İşyeri Adı — currentUser.isletmeAdi'den otomatik doldur + hint
+    const adInput = document.getElementById("isIlanIsyeriAd");
+    const adHint = document.getElementById("isIlanAdHint");
+    if (adInput && window.currentUser.isletmeAdi) {
+      adInput.value = window.currentUser.isletmeAdi;
+      adHint?.classList.remove("hidden");
+    } else {
+      adHint?.classList.add("hidden");
+    }
+
+    // İşyeri Adresi — currentUser.isAdresi'den otomatik doldur + hint
+    const adresInput = document.getElementById("isIlanIsyeriAdres");
+    const adresHint = document.getElementById("isIlanAdresHint");
+    if (adresInput && window.currentUser.isAdresi) {
+      adresInput.value = window.currentUser.isAdresi;
+      adresHint?.classList.remove("hidden");
+    } else {
+      adresHint?.classList.add("hidden");
+    }
+
+    // İletişim cep telefonu — currentUser.tel'den otomatik doldur + hint
     const telInput = document.getElementById("isIlanTel");
+    const telHint = document.getElementById("isIlanTelHint");
     if (telInput && window.currentUser.tel) {
       telInput.value = window.formatTel?.(window.currentUser.tel) || window.currentUser.tel;
+      telHint?.classList.remove("hidden");
+    } else {
+      telHint?.classList.add("hidden");
     }
+
     // Kelime sayacı sıfırla
     const counter = document.getElementById("isIlanKelimeSayac");
     if (counter) counter.textContent = "0 / 300 kelime";
+
     window.openModal?.("isIlanFormModal");
+  }
+
+  // "Düzenle" linkleri — alanı temizle ve focus ver (anlık ilan pattern)
+  function _bindEditHints() {
+    document.getElementById("isIlanAdEditBtn")?.addEventListener("click", e => {
+      e.preventDefault();
+      const input = document.getElementById("isIlanIsyeriAd");
+      if (input) { input.value = ""; input.focus(); }
+      document.getElementById("isIlanAdHint")?.classList.add("hidden");
+    });
+    document.getElementById("isIlanAdresEditBtn")?.addEventListener("click", e => {
+      e.preventDefault();
+      const input = document.getElementById("isIlanIsyeriAdres");
+      if (input) { input.value = ""; input.focus(); }
+      document.getElementById("isIlanAdresHint")?.classList.add("hidden");
+    });
+    document.getElementById("isIlanTelEditBtn")?.addEventListener("click", e => {
+      e.preventDefault();
+      const input = document.getElementById("isIlanTel");
+      if (input) { input.value = ""; input.focus(); }
+      document.getElementById("isIlanTelHint")?.classList.add("hidden");
+    });
   }
 
   async function _submitIsIlan(e) {
@@ -276,6 +356,8 @@
     const fd = new FormData(e.target);
     const tur = fd.get("tur");
     const baslik = (fd.get("baslik") || "").trim();
+    const isyeri_ad = (fd.get("isyeri_ad") || "").trim();
+    const isyeri_adres = (fd.get("isyeri_adres") || "").trim();
     const ilce = fd.get("ilce");
     const aciklama = (fd.get("aciklama") || "").trim();
     const maas_min = parseInt(fd.get("maas_min"), 10);
@@ -287,12 +369,16 @@
     if (!IS_ILAN_TURLERI[tur]) return window.toast?.("Kategori seç.", "error");
     if (!baslik || baslik.length < 3) return window.toast?.("Başlık en az 3 karakter olmalı.", "error");
     if (baslik.length > 80) return window.toast?.("Başlık 80 karakteri geçemez.", "error");
+    if (!isyeri_ad || isyeri_ad.length < 2) return window.toast?.("İşyeri adı zorunlu.", "error");
+    if (!isyeri_adres || isyeri_adres.length < 5) return window.toast?.("İşyeri adresi zorunlu (en az 5 karakter).", "error");
     if (!ilce) return window.toast?.("İlçe seç.", "error");
     if (!aciklama || aciklama.length < 20) return window.toast?.("Açıklama en az 20 karakter olmalı.", "error");
     const aciklamaErr = _validateUzunForm(aciklama, "Açıklama");
     if (aciklamaErr) return window.toast?.(aciklamaErr, "error", 6000);
     const baslikErr = window._validateIcerik?.(baslik, "Başlık");
     if (baslikErr) return window.toast?.(baslikErr, "error", 6000);
+    const isyeriAdErr = window._validateIcerik?.(isyeri_ad, "İşyeri adı");
+    if (isyeriAdErr) return window.toast?.(isyeriAdErr, "error", 6000);
     if (!isNaN(maas_min) && !isNaN(maas_max) && maas_min > maas_max) {
       return window.toast?.("Maaş alt sınırı üst sınırdan büyük olamaz.", "error");
     }
@@ -310,6 +396,8 @@
       user_id: window.currentUser.id,
       tur,
       baslik,
+      isyeri_ad,
+      isyeri_adres,
       ilce,
       aciklama,
       maas_min: isNaN(maas_min) ? null : maas_min,
@@ -369,6 +457,8 @@
     document.getElementById("isIlanVerBtn")?.addEventListener("click", _openIsIlanForm);
     // Form submit
     document.getElementById("isIlanForm")?.addEventListener("submit", _submitIsIlan);
+    // "Düzenle" hint linkleri
+    _bindEditHints();
     // Row click delegasyonu (compact row pattern — anlık ilan ile aynı)
     document.getElementById("isilanlariListings")?.addEventListener("click", (e) => {
       // Önce delete butonu kontrol (satır click'ini engelle)

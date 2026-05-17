@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=156" />
+  <link rel="stylesheet" href="style.css?v=157" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -593,6 +593,16 @@
           <input type="text" name="baslik" id="isIlanBaslik" required maxlength="80" minlength="3" placeholder="Örn: Çankaya'da Tam Zamanlı Motorlu Kurye Arıyoruz" />
         </label>
 
+        <label>İşyeri Adı <span class="req">*</span>
+          <input type="text" name="isyeri_ad" id="isIlanIsyeriAd" required maxlength="80" placeholder="Örn: Kızılay Lokantası" />
+          <p class="muted small ilan-edit-hint hidden" id="isIlanAdHint">Kayıtlı işletme adından otomatik dolduruldu. <a href="#" id="isIlanAdEditBtn" class="link-orange">Düzenle</a></p>
+        </label>
+
+        <label>İşyeri Adresi <span class="req">*</span>
+          <input type="text" name="isyeri_adres" id="isIlanIsyeriAdres" required maxlength="160" placeholder="Cadde / sokak / no, mahalle" />
+          <p class="muted small ilan-edit-hint hidden" id="isIlanAdresHint">Kayıtlı iş adresinden otomatik dolduruldu. <a href="#" id="isIlanAdresEditBtn" class="link-orange">Düzenle</a></p>
+        </label>
+
         <label>İlçe <span class="req">*</span>
           <select name="ilce" id="isIlanIlce" required>
             <option value="">Seçiniz...</option>
@@ -615,7 +625,8 @@
 
         <label>İletişim Cep Telefonu <span class="req">*</span>
           <input type="tel" name="iletisim_tel" id="isIlanTel" required inputmode="numeric" maxlength="20" placeholder="+90 532 123 45 67" />
-          <small class="muted">Cep numarası olmalı (WhatsApp için).</small>
+          <p class="muted small ilan-edit-hint hidden" id="isIlanTelHint">Kayıtlı cep numarandan otomatik dolduruldu. Başkası aransın istiyorsan <a href="#" id="isIlanTelEditBtn" class="link-orange">Düzenle</a>.</p>
+          <small class="muted">Cep numarası olmalı (WhatsApp için). <strong>Kayıtsız kullanıcılara gösterilmez</strong>.</small>
         </label>
 
         <label class="consent" style="margin-top:8px">
@@ -1160,8 +1171,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=156"></script>
-  <script src="script.js?v=156"></script>
-  <script src="script-is-ilani.js?v=156"></script>
+  <script src="supabase-config.js?v=157"></script>
+  <script src="script.js?v=157"></script>
+  <script src="script-is-ilani.js?v=157"></script>
 </body>
 </html>

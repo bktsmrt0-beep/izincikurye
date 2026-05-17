@@ -3985,6 +3985,18 @@ textarea#rwYorum:focus {
   border-top: 1px solid #e5e7eb;
   padding-top: 14px;
 }
+.iid-anonim-block {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 10px;
+  padding: 14px 16px;
+  border-top: 0;
+}
+.iid-anonim-notice {
+  color: #7c2d12;
+  font-size: 14px;
+  line-height: 1.5;
+}
 .iid-red-sebebi {
   background: #fee2e2;
   border: 1px solid #fecaca;
