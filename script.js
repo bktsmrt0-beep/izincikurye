@@ -4419,18 +4419,17 @@ document.querySelectorAll(".content-tab").forEach(btn => {
     const newTab = btn.dataset.contentTab;
     if (newTab === contentTab) return;  // zaten bu sekmedeyiz
 
-    // History yönetimi: geri tuşu sekme arasında gezsin, siteden çıkmasın
+    // History yönetimi (v160 — basit replaceState):
+    // Eski push/back mantığı 4 tab'da kırılıyordu (back öncekı state'e gidip
+    // istenen tab'a değil eski tab'a dönerken). Şimdi her geçiş tek bir
+    // state slotu — geri tuşu siteden çıkarır (zaten kullanıcı bilinçli geçti).
     if (!_switchingTabFromPopstate) {
       try {
         const isDefault = (newTab === "ilanlar");
-        const wasDefault = (history.state?.tab || "ilanlar") === "ilanlar";
-        if (isDefault && !wasDefault) {
-          // Müsait Kuryeler → Aktif İlanlar: state.tab'i geri al
-          history.back();
-          return;  // popstate handler tab'ı zaten değiştirecek
-        } else if (!isDefault) {
-          // Aktif İlanlar → Müsait Kuryeler: yeni state push
-          history.pushState({ tab: newTab }, "", window.location.href);
+        if (isDefault) {
+          history.replaceState(null, "", window.location.href);
+        } else {
+          history.replaceState({ tab: newTab }, "", window.location.href);
         }
       } catch {}
     }
