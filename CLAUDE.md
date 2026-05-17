@@ -7,7 +7,7 @@
 - **Hosting:** Vercel (auto-deploy from `main`), domain: https://izincikurye.vercel.app
 - **Repo:** https://github.com/bktsmrt0-beep/izincikurye
 
-> **Not:** Her HTML/JS/CSS değişiminde `index.html` ve `admin.html`'de `?v=N` query parametresi artırılır. Commit + push → Vercel otomatik deploy ~30-60sn. Şu an `?v=138`.
+> **Not:** Her HTML/JS/CSS değişiminde `index.html` ve `admin.html`'de `?v=N` query parametresi artırılır. Commit + push → Vercel otomatik deploy ~30-60sn. Şu an `?v=153`.
 
 > **⚠️ Satır numarası uyarısı:** Bu dosyadaki satır numaraları v106 referansıyla yazılmıştır. v107-v138 arası yapılan eklemelerden sonra **gerçek satır numaraları 100-300 satır kaymış olabilir**. Tablodaki rakamları "yaklaşık" kabul et; emin olmak için `Grep -n` ile fonksiyon adını ara.
 
@@ -391,6 +391,7 @@ RLS: kullanıcı kendi şikayetlerini görür, admin hepsini görür ve güncell
 | `15_ilanlar_public_view_refresh.sql` | ilanlar_public view DROP+CREATE — yeni sütunları (sort_score, kalp/begen/begenmeme_sayisi, etiketler, kisa_id) dahil eder |
 | `16_hesap_kapatma.sql` | profiles.silinmek_uzere_at (soft-delete), hesap_kapatma_geri_bildirim tablosu (anket), cleanup_silinmek_uzere_hesaplar() + pg_cron günlük 03:30 — 7 gün dolan hesapları auth.users CASCADE ile siler |
 | `17_ilan_bildirim_takip.sql` | ilan_bildirim_takip tablosu (user_id, ilce, UNIQUE) + RLS (own select/insert/delete + admin select). Edge Function deploy edildiğinde notify_new_ilan_webhook bu tabloyu join'le abone email listesi çekecek |
+| `18_ilanlar_faz2.sql` | ilanlar.tur (anlik_kurye/tam_zamanli/esnaf_kurye/arabali_kurye CHECK) + maas_min/max + durum (beklemede/onayli/reddedildi CHECK) + red_sebebi. Anlık ilan alanları (saat/fiyat/km/bas/bit/iletisim_tel) NOT NULL kaldırıldı. ilanlar_public view yeniden oluşturuldu (anlık: expires_at + durum=onayli, iş: durum=onayli) |
 
 ### Storage
 
@@ -582,6 +583,7 @@ refreshProfileSaveBtn() // değişiklik yoksa Kaydet pasif
 58. **Sticky banner z-index sırası güncel (v138):** header(60) > **silinecekBanner(45)** > kurye müsait(40) > işletme yorum(40) > profil eksik(35). Silinecek banner kırmızı tema, top:56px (header altı).
 59. **İçerik filtresi guard rail (v142):** `_validateIcerik(text, alanAdi)` (script.js:~2307) — başlık/açıklama submit'inde telefon (10+ ardışık rakam), e-posta, URL/yaygın TLD ve dar Türkçe küfür listesi tespit eder. **Kalkan değil rehber**: bypass kolay (boşluklu rakam, eğri harf). Kurallar onayı + şikayet sistemi ile birlikte çalışır. Küfür listesinde "göt/got/amk/ibne" kısa kelimeler **word-boundary** regex'le, diğerleri substring ile yakalanır (false positive azaltma). Yeni serbest metin alanı eklediğinde bu fonksiyonu çağır.
 60. **İlan bildirim aboneliği (v149, sql/17):** Empty state CTA → `#ilanBildirimAboneModal` → `ilan_bildirim_takip` tablosuna kayıt (rawInsert). **Mail teslim henüz aktif değil** — sadece tercih kaydı. Modal içinde "altyapı hazırlanıyor" bilgilendirmesi var; kullanıcı yanıltılmamalı. Edge Function deploy edildiğinde, sql/04 trigger'ı bu tabloyu `WHERE ilce = NEW.ilce` ile join'leyip email batch çekecek. **Anonim kullanıcı** abone olmaya çalışırsa registerModal'a yönlendirilir. **"all" ilçesi yasak** (spam önleme; UI sadece spesifik ilçede CTA gösterir). Abonelikten çıkış UI'ı şu an yok — RLS DELETE policy hazır, profilim sekmesi sonraki fazda.
+61. **Faz 2A — İş İlanları modülü (v153, sql/18, script-is-ilani.js):** Mevcut script.js'e dokunmadan **ayrı modül** olarak yüklenir. Script tag sırası: supabase-config → script.js → script-is-ilani.js. Bağımlılıklar (rawSelect/openModal/toast/escapeHtml/_validateIcerik/currentUser vb.) `window.*` ile script.js'ten alınır. Public API: `window.izIsIlani.{load,openForm,openDetail,setAltTur,setScope}`. **Tab handler genişletildi:** content-tab değişiminde 4 panel görünürlüğü (ilanlar/kuryeler/isilanlari/pazaryeri) tek yerden yönetilir. **Pazaryeri sekmesi placeholder** ("Yakında" mesajı) — Faz 2B'de doldurulur. **Veri modeli:** anlık ilanlar `tur='anlik_kurye' durum='onayli'` default ile DOKUNULMAZ, iş ilanları `tur='tam_zamanli/esnaf_kurye/arabali_kurye' durum='beklemede'`. `ilanlar_public` view OR koşulu ile her ikisini de listeler. **Moderatör onayı:** admin.html "Bekleyen İlanlar" sekmesi (4 saat SLA, kırmızı satır işareti); admin.js `loadBekleyen` + onayla/reddet handler (sb.from update durum + red_sebebi prompt). **Kullanıcı görünümü:** "İlanlarım" scope'unda durum rozeti (⏳/✅/❌) + reddedildi durumunda kart içinde `.red-sebebi` bloğu + detay modalda `.iid-red-sebebi`/`.iid-beklemede` bloğu. Sticky banner şu an yok (bilinçli — detay modal yeterli). **Açıklama 300 kelime sınırı:** `_validateUzunForm` `_validateIcerik` üstüne wrapper, kelime sayacı canlı (`#isIlanKelimeSayac`). **Yalnız `kullanici_tipi='isletme'` iş ilanı verebilir** (kayıt akışında ek pazaryeri tipi sorgusu yok — Faz 2B'de eklenir).
 
 ---
 

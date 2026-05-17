@@ -54,13 +54,85 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 
     loadingEl.classList.add("hidden");
     contentEl.classList.remove("hidden");
-    await Promise.all([loadIlanlar(), loadUsers()]);
+    await Promise.all([loadBekleyen(), loadIlanlar(), loadUsers()]);
   } catch (e) {
     console.error("[admin init]", e);
     loadingEl.classList.add("hidden");
     showError("Admin paneli yüklenemedi: " + (e.message || e));
   }
 })();
+
+// Bekleyen iş ilanları (v153 — durum='beklemede')
+const KATEGORI_LABEL = {
+  tam_zamanli:   "💼 Tam Zamanlı",
+  esnaf_kurye:   "🏪 Esnaf Kurye",
+  arabali_kurye: "🚗 Arabalı"
+};
+
+function _bekleyenSure(createdAt) {
+  if (!createdAt) return { text: "—", late: false };
+  const ms = Date.now() - new Date(createdAt).getTime();
+  const dk = Math.floor(ms / 60000);
+  const sa = Math.floor(dk / 60);
+  const text = sa > 0 ? `${sa} sa ${dk % 60} dk` : `${dk} dk`;
+  return { text, late: sa >= 4 };  // 4 saatten uzun → SLA aşımı
+}
+
+async function loadBekleyen() {
+  try {
+    const { data: ilanlar, error } = await sb.from("ilanlar")
+      .select("*")
+      .eq("durum", "beklemede")
+      .order("created_at", { ascending: true });
+    if (error) throw error;
+
+    const list = ilanlar || [];
+    document.getElementById("bekleyenCount").textContent = `(${list.length})`;
+
+    const userIds = [...new Set(list.map(i => i.user_id))];
+    let profileMap = {};
+    if (userIds.length) {
+      const { data: profiles } = await sb.from("profiles")
+        .select("id, ad, soyad, isletme_adi, tel")
+        .in("id", userIds);
+      profileMap = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+    }
+
+    const tbody = document.querySelector("#bekleyenTable tbody");
+    tbody.innerHTML = "";
+    if (!list.length) {
+      tbody.innerHTML = `<tr><td colspan="7" class="muted" style="text-align:center;padding:24px">Bekleyen ilan yok 👍</td></tr>`;
+      return;
+    }
+    list.forEach(i => {
+      const owner = profileMap[i.user_id];
+      const ownerName = owner?.isletme_adi || (owner ? `${owner.ad} ${owner.soyad}` : "—");
+      const { text: sureText, late } = _bekleyenSure(i.created_at);
+      const maasText = (i.maas_min || i.maas_max)
+        ? `${i.maas_min ? i.maas_min + " ₺" : ""}${i.maas_min && i.maas_max ? " — " : ""}${i.maas_max ? i.maas_max + " ₺" : ""}`
+        : "—";
+      const tr = document.createElement("tr");
+      if (late) tr.style.background = "#fee2e2";
+      tr.innerHTML = `
+        <td><strong>${sureText}</strong>${late ? " ⚠" : ""}</td>
+        <td>${KATEGORI_LABEL[i.tur] || i.tur}</td>
+        <td>${escapeHtml(i.baslik)}</td>
+        <td>${escapeHtml(i.ilce)}</td>
+        <td>${maasText}</td>
+        <td>${escapeHtml(ownerName)}<br><span class="muted small">${escapeHtml(owner?.tel || "")}</span></td>
+        <td>
+          <button class="toggle-btn" data-act="onayla-ilan" data-id="${i.id}" style="background:#10b981;color:white">✓ Onayla</button>
+          <button class="danger-btn" data-act="reddet-ilan" data-id="${i.id}">✗ Reddet</button>
+          <button class="toggle-btn" data-act="detay-ilan" data-id="${i.id}" style="margin-top:4px;font-size:11px">Detay</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (e) {
+    console.error("[loadBekleyen]", e);
+    showError("Bekleyen ilanlar yüklenemedi: " + (e.message || e));
+  }
+}
 
 async function loadIlanlar() {
   try {
@@ -154,6 +226,39 @@ document.addEventListener("click", async e => {
     const { error } = await sb.from("ilanlar").delete().eq("id", id);
     if (error) return alert("Silme hatası: " + error.message);
     await loadIlanlar();
+  }
+  else if (act === "onayla-ilan") {
+    if (!confirm("Bu ilanı onaylamak istediğinden emin misin?")) return;
+    const { error } = await sb.from("ilanlar")
+      .update({ durum: "onayli", red_sebebi: null })
+      .eq("id", id);
+    if (error) return alert("Onaylama hatası: " + error.message);
+    await loadBekleyen();
+    await loadIlanlar();
+  }
+  else if (act === "reddet-ilan") {
+    const sebep = prompt("Red sebebini yaz (kullanıcıya gösterilecek):");
+    if (sebep === null) return;  // iptal
+    const trimmed = sebep.trim();
+    if (trimmed.length < 5) return alert("Red sebebi en az 5 karakter olmalı.");
+    const { error } = await sb.from("ilanlar")
+      .update({ durum: "reddedildi", red_sebebi: trimmed })
+      .eq("id", id);
+    if (error) return alert("Reddetme hatası: " + error.message);
+    await loadBekleyen();
+    await loadIlanlar();
+  }
+  else if (act === "detay-ilan") {
+    const { data, error } = await sb.from("ilanlar").select("*").eq("id", id).maybeSingle();
+    if (error || !data) return alert("Detay alınamadı");
+    alert(
+      `Kategori: ${KATEGORI_LABEL[data.tur] || data.tur}\n` +
+      `Başlık: ${data.baslik}\n` +
+      `İlçe: ${data.ilce}\n` +
+      `Maaş: ${data.maas_min || "—"} – ${data.maas_max || "—"} ₺\n` +
+      `Telefon: ${data.iletisim_tel || "—"}\n\n` +
+      `Açıklama:\n${data.aciklama || "(yok)"}`
+    );
   }
   else if (act === "promote" || act === "demote") {
     const yeniRol = act === "promote" ? "admin" : "user";

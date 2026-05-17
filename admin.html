@@ -6,8 +6,8 @@
   <title>Admin Paneli — izincikurye</title>
   <meta name="robots" content="noindex,nofollow" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23ff7a00'/%3E%3Ctext x='50%25' y='54%25' text-anchor='middle' font-family='Arial,sans-serif' font-size='34' font-weight='700' fill='white'%3EiK%3C/text%3E%3C/svg%3E" />
-  <link rel="stylesheet" href="style.css?v=134" />
-  <link rel="stylesheet" href="admin.css?v=134" />
+  <link rel="stylesheet" href="style.css?v=153" />
+  <link rel="stylesheet" href="admin.css?v=153" />
 </head>
 <body>
   <header class="site-header">
@@ -36,6 +36,27 @@
         <div class="stat"><span class="stat-num" id="statKul">0</span><span class="stat-lbl">Toplam üye</span></div>
         <div class="stat"><span class="stat-num" id="statAdmin">0</span><span class="stat-lbl">Admin</span></div>
       </div>
+
+      <section class="admin-section">
+        <h2>⏳ Bekleyen İlanlar <span id="bekleyenCount" class="muted small">(0)</span></h2>
+        <p class="muted small" style="margin-bottom:10px">İş ilanları moderatör onayı gerektirir. <strong>4 saat içinde</strong> incelenmeli — geç kalanlar kırmızı işaretlenir.</p>
+        <div class="table-wrap">
+          <table class="admin-table" id="bekleyenTable">
+            <thead>
+              <tr>
+                <th>Bekleme</th>
+                <th>Kategori</th>
+                <th>Başlık</th>
+                <th>İlçe</th>
+                <th>Maaş</th>
+                <th>Sahibi</th>
+                <th>İşlem</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
 
       <section class="admin-section">
         <h2>📋 Tüm İlanlar</h2>
@@ -79,7 +100,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=41"></script>
-  <script src="admin.js?v=41"></script>
+  <script src="supabase-config.js?v=153"></script>
+  <script src="admin.js?v=153"></script>
 </body>
 </html>

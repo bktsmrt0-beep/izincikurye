@@ -4423,24 +4423,36 @@ document.querySelectorAll(".content-tab").forEach(btn => {
 
     contentTab = newTab;
     document.querySelectorAll(".content-tab").forEach(b => b.classList.toggle("active", b === btn));
-    const showK = contentTab === "kuryeler";
-    listingsEl.classList.toggle("hidden", showK);
-    emptyEl.classList.toggle("hidden", showK);
-    document.getElementById("myListingsPanel")?.classList.toggle("hidden", showK || !currentUser);
-    _updateIlanlarimBanner();  // sekme değişince banner görünürlüğünü güncelle
-    if (showK) {
-      if (!currentUser) {
-        kuryeListingsEl.classList.add("hidden");
-        kuryeEmptyEl.classList.add("hidden");
-        kuryeGuestNoticeEl?.classList.remove("hidden");
-      } else {
-        await loadMusaitKuryeler();
-      }
-    } else {
-      kuryeListingsEl.classList.add("hidden");
-      kuryeEmptyEl.classList.add("hidden");
-      kuryeGuestNoticeEl?.classList.add("hidden");
-      // Aktif İlanlar'a dönerken empty/listing durumunu yeniden uygula
+
+    const showIlanlar    = contentTab === "ilanlar";
+    const showKuryeler   = contentTab === "kuryeler";
+    const showIsIlani    = contentTab === "isilanlari";
+    const showPazaryeri  = contentTab === "pazaryeri";
+
+    // Anlık ilan paneli
+    listingsEl.classList.toggle("hidden", !showIlanlar);
+    emptyEl.classList.toggle("hidden", !showIlanlar);
+    document.getElementById("myListingsPanel")?.classList.toggle("hidden", !showIlanlar || !currentUser);
+    _updateIlanlarimBanner();
+
+    // Müsait kuryeler paneli
+    kuryeListingsEl.classList.toggle("hidden", !showKuryeler);
+    kuryeEmptyEl.classList.toggle("hidden", !showKuryeler);
+    kuryeGuestNoticeEl?.classList.toggle("hidden", !(showKuryeler && !currentUser));
+
+    // İş İlanları paneli (Faz 2A — v153)
+    document.getElementById("isilanlariPanel")?.classList.toggle("hidden", !showIsIlani);
+
+    // Pazaryeri paneli (Faz 2B — şimdilik placeholder)
+    document.getElementById("pazaryeriPanel")?.classList.toggle("hidden", !showPazaryeri);
+
+    // Sekme bazlı yükleme
+    if (showKuryeler) {
+      if (currentUser) await loadMusaitKuryeler();
+    } else if (showIsIlani) {
+      // script-is-ilani.js modülü kendi içinde yükler (tab click event listener)
+      window.izIsIlani?.load?.();
+    } else if (showIlanlar) {
       if (ilanlar.length === 0) emptyEl.classList.remove("hidden");
     }
   });

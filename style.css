@@ -3784,3 +3784,218 @@ textarea#rwYorum:focus {
   border: 2px solid #fff;
 }
 
+/* ===== İŞ İLANLARI PANELİ (v153, Faz 2A) ===== */
+
+/* Sub-tabs (sub-kategori switcher) */
+.sub-tabs {
+  display: flex;
+  gap: 6px;
+  margin: 14px 0 12px;
+  border-bottom: 1px solid #e5e7eb;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.sub-tab {
+  background: transparent;
+  border: 0;
+  padding: 9px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.sub-tab:hover { color: #334155; }
+.sub-tab.active {
+  color: var(--orange-dark);
+  border-bottom-color: var(--orange);
+}
+
+/* Toolbar (scope segment + ilan ver butonu) */
+.isilanlari-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+/* İş ilanı liste container */
+.is-ilan-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+/* İş ilanı kartı */
+.is-ilan-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px 16px;
+  transition: border-color .15s, box-shadow .15s;
+  cursor: pointer;
+}
+.is-ilan-card:hover {
+  border-color: var(--orange);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.iic-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.iic-kategori {
+  background: #fff7ed;
+  color: #c2410c;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 11.5px;
+}
+.iic-tarih { color: #94a3b8; margin-left: auto; font-size: 11px; }
+.iic-baslik {
+  margin: 4px 0 6px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.35;
+}
+.iic-meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  color: #475569;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+.iic-isletme strong, .iic-ilce strong { color: #1e293b; }
+.iic-maas {
+  display: inline-block;
+  background: #ecfdf5;
+  color: #047857;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 13.5px;
+  margin-bottom: 8px;
+}
+.iic-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* Durum rozetleri (kullanıcı kendi ilanını gördüğünde) */
+.durum-rozet {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.durum-bekleme { background: #fef3c7; color: #78350f; }
+.durum-onay    { background: #ecfdf5; color: #047857; }
+.durum-red     { background: #fee2e2; color: #991b1b; }
+
+/* Kelime sayacı */
+#isIlanKelimeSayac { display: block; margin-top: 4px; font-size: 12px; }
+#isIlanKelimeSayac.over-limit { color: #dc2626; font-weight: 600; }
+
+/* İş ilanı detay modal */
+#isIlanDetailModal .modal-card { max-width: 720px; }
+.iid-header { margin-bottom: 8px; }
+.iid-kategori {
+  display: inline-block;
+  background: #fff7ed;
+  color: #c2410c;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 12px;
+}
+.iid-baslik {
+  margin: 8px 0 12px;
+  font-size: 22px;
+  line-height: 1.3;
+  color: #111;
+}
+.iid-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: #f8fafc;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  font-size: 14px;
+  color: #334155;
+}
+.iid-aciklama {
+  font-size: 15px;
+  line-height: 1.65;
+  color: #1e293b;
+  white-space: pre-wrap;
+  margin-bottom: 16px;
+  padding: 4px 2px;
+}
+.iid-iletisim {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 14px;
+}
+.iid-red-sebebi {
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  color: #991b1b;
+  padding: 12px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+.iid-beklemede {
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #78350f;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  font-size: 13.5px;
+}
+.red-sebebi {
+  background: #fef2f2;
+  border-left: 3px solid #dc2626;
+  color: #7f1d1d;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 6px 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+/* Mobile */
+@media (max-width: 520px) {
+  .sub-tab { padding: 8px 10px; font-size: 13px; }
+  .isilanlari-toolbar { flex-direction: column; align-items: stretch; }
+  .isilanlari-toolbar #isIlanVerBtn { width: 100%; }
+  .iic-baslik { font-size: 14.5px; }
+  .iic-meta { font-size: 12.5px; gap: 10px; }
+  .iic-maas { font-size: 13px; }
+  .iid-baslik { font-size: 18px; }
+}
+
+/* Content tabs mobilde sığsın */
+.content-tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+@media (max-width: 520px) {
+  .content-tab { font-size: 13px; padding: 8px 10px; white-space: nowrap; }
+}
+

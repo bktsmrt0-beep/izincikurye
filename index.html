@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=152" />
+  <link rel="stylesheet" href="style.css?v=153" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -196,6 +196,8 @@
       <div class="content-tabs" role="tablist">
         <button type="button" class="content-tab active" data-content-tab="ilanlar" role="tab">📋 Aktif İlanlar</button>
         <button type="button" class="content-tab" data-content-tab="kuryeler" role="tab">🏍️ Müsait Kuryeler</button>
+        <button type="button" class="content-tab" data-content-tab="isilanlari" role="tab">💼 İş İlanları</button>
+        <button type="button" class="content-tab" data-content-tab="pazaryeri" role="tab">🛒 Pazaryeri</button>
       </div>
 
       <!-- "İlanlarım" modu banner'ı (sadece o moddayken görünür) -->
@@ -222,6 +224,35 @@
 
       <div id="kuryeListings" class="kurye-listings hidden"></div>
       <div id="kuryeEmptyState" class="empty hidden">Şu an bu bölgede müsait kurye görünmüyor.</div>
+
+      <!-- ===== İŞ İLANLARI PANELİ (Faz 2A, v153) ===== -->
+      <div id="isilanlariPanel" class="hidden">
+        <div id="isilanlariSubTabs" class="sub-tabs">
+          <button type="button" class="sub-tab active" data-sub="tam_zamanli">💼 Tam Zamanlı</button>
+          <button type="button" class="sub-tab" data-sub="esnaf_kurye">🏪 Esnaf Kurye</button>
+          <button type="button" class="sub-tab" data-sub="arabali_kurye">🚗 Arabalı</button>
+        </div>
+
+        <div class="isilanlari-toolbar">
+          <div id="isilanlariScope" class="seg-group" role="tablist" aria-label="Görünüm">
+            <button type="button" class="seg-btn active" data-scope="all">Tüm İlanlar</button>
+            <button type="button" class="seg-btn" data-scope="mine">İlanlarım</button>
+          </div>
+          <button type="button" class="btn btn-primary btn-sm" id="isIlanVerBtn">+ İş İlanı Ver</button>
+        </div>
+
+        <div id="isilanlariListings" class="is-ilan-list"></div>
+        <div id="isilanlariEmpty" class="empty hidden"></div>
+      </div>
+
+      <!-- ===== PAZARYERİ PANELİ (Faz 2B placeholder) ===== -->
+      <div id="pazaryeriPanel" class="hidden">
+        <div class="empty" style="padding:60px 24px;text-align:center;">
+          <div class="empty-icon">🚧</div>
+          <h3>Pazaryeri Yakında</h3>
+          <p>Müsait çekiciler, açık tamir işletmeleri, motor alım-satım, kiralık motor ve muhasebe hizmetleri burada olacak.</p>
+        </div>
+      </div>
       <p id="kuryeGuestNotice" class="muted small hidden" style="text-align:center;margin-top:12px">Müsait kuryeleri görmek için <a href="#" id="kuryeGuestLink" class="link-orange">giriş yap</a>.</p>
     </main>
   </div>
@@ -539,6 +570,71 @@
         <button type="button" class="btn btn-ghost" data-close style="flex:1">Vazgeç</button>
         <button type="button" class="btn btn-primary" id="ibAboneOlBtn" style="flex:1">🔔 Abone Ol</button>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== İŞ İLANI VER MODAL (v153, Faz 2A) ===== -->
+  <div class="modal hidden" id="isIlanFormModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>💼 İş İlanı Ver</h2>
+      <p class="muted small">Kalıcı kurye personeli arıyorsan buradan ilan paylaşabilirsin. İlanın <strong>moderatör onayından</strong> sonra yayına çıkar (genelde 4 saat içinde).</p>
+
+      <form id="isIlanForm" class="form" novalidate>
+        <label>Kategori <span class="req">*</span>
+          <select name="tur" id="isIlanTur" required>
+            <option value="tam_zamanli">💼 Tam Zamanlı Kurye</option>
+            <option value="esnaf_kurye">🏪 Esnaf Kurye</option>
+            <option value="arabali_kurye">🚗 Arabalı Kurye</option>
+          </select>
+        </label>
+
+        <label>İlan Başlığı <span class="req">*</span>
+          <input type="text" name="baslik" id="isIlanBaslik" required maxlength="80" minlength="3" placeholder="Örn: Çankaya'da Tam Zamanlı Motorlu Kurye Arıyoruz" />
+        </label>
+
+        <label>İlçe <span class="req">*</span>
+          <select name="ilce" id="isIlanIlce" required>
+            <option value="">Seçiniz...</option>
+          </select>
+        </label>
+
+        <div class="row-2">
+          <label>Maaş Alt Sınır (₺)
+            <input type="number" name="maas_min" id="isIlanMaasMin" min="0" max="999999" placeholder="Örn: 25000" />
+          </label>
+          <label>Maaş Üst Sınır (₺)
+            <input type="number" name="maas_max" id="isIlanMaasMax" min="0" max="999999" placeholder="Örn: 45000" />
+          </label>
+        </div>
+
+        <label>İlan Açıklaması <span class="req">*</span>
+          <textarea name="aciklama" id="isIlanAciklama" rows="8" required minlength="20" placeholder="İşin detaylarını yaz: çalışma şekli, beklentiler, sağlanan haklar (yemek/yol/sigorta), iş yeri özellikleri..."></textarea>
+          <small class="muted" id="isIlanKelimeSayac">0 / 300 kelime</small>
+        </label>
+
+        <label>İletişim Cep Telefonu <span class="req">*</span>
+          <input type="tel" name="iletisim_tel" id="isIlanTel" required inputmode="numeric" maxlength="20" placeholder="+90 532 123 45 67" />
+          <small class="muted">Cep numarası olmalı (WhatsApp için).</small>
+        </label>
+
+        <label class="consent" style="margin-top:8px">
+          <input type="checkbox" id="isIlanKurallarOnay" required />
+          <span>
+            <a href="/ilan-kurallari.html" target="_blank" rel="noopener">İlan Verme Kuralları</a>'nı okudum ve ilanımın bu kurallarla uyumlu olduğunu onaylıyorum. <span class="req">*</span>
+          </span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:12px">Yayınla</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== İŞ İLANI DETAY MODAL (v153) ===== -->
+  <div class="modal hidden" id="isIlanDetailModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <div id="isIlanDetailBody"></div>
     </div>
   </div>
 
@@ -1064,7 +1160,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=152"></script>
-  <script src="script.js?v=152"></script>
+  <script src="supabase-config.js?v=153"></script>
+  <script src="script.js?v=153"></script>
+  <script src="script-is-ilani.js?v=153"></script>
 </body>
 </html>

@@ -165,6 +165,8 @@ MÜSAİT ONAY MODAL (v135)     | index.html:~443   | #musaitOnayModal + #musaitK
 AVATAR KIRPMA MODAL (v139)   | index.html:~469   | #avatarCropModal + #avatarCropCanvas + #avatarCropZoom
 HESABI KAPAT MODAL (v138)    | index.html:~493   | #hesapKapatModal + #hkSebepPicker + #hkOnay
 İLAN BİLDİRİM ABONE (v149)   | index.html:~478   | #ilanBildirimAboneModal + #ibIlceLabel + #ibAboneOlBtn
+İŞ İLANI VER MODAL (v153)    | index.html:~?     | #isIlanFormModal + #isIlanForm + #isIlanKelimeSayac + #isIlanKurallarOnay
+İŞ İLANI DETAY MODAL (v153)  | index.html:~?     | #isIlanDetailModal + #isIlanDetailBody
 ŞİKAYET MODAL                | index.html:~531   | #sikayetModal
 İLAN KALDIRMA MODAL          | index.html:~640   | #deleteIlanModal + #deleteIlanSkip (Atla yolu)
 YORUM LİSTE MODAL            | index.html:~?     | #reviewListModal (sekmeli pending/done)
@@ -183,6 +185,37 @@ kuryeMusaitBanner            | z=40  | top:56px, kurye girişli
 isletmeYorumBanner           | z=40  | top:56px, bekleyen yorum
 profilEksikBanner            | z=35  | top:56px, işletme bilgileri eksik
 ilanlarimBanner (v132)       | z=?   | content içinde, "Sadece kendi ilanların"
+```
+
+---
+
+## script-is-ilani.js — Faz 2A modülü (v153, IIFE)
+
+```
+loadIsIlanlari           | script-is-ilani.js | rawSelect ile iş ilanları çek (alt-tur + scope filtreli)
+renderIsIlanlari         | script-is-ilani.js | compact kart listesi render
+buildIsIlanCardHTML      | script-is-ilani.js | tek iş ilanı kartı HTML
+openIsIlanDetail         | script-is-ilani.js | detay modal aç (#isIlanDetailModal)
+_setIsIlanAltTur         | script-is-ilani.js | sub-tab değişimi (tam_zamanli/esnaf_kurye/arabali_kurye)
+_setIsIlanScope          | script-is-ilani.js | scope değişimi (all/mine)
+_openIsIlanForm          | script-is-ilani.js | form modal aç (#isIlanFormModal) + ilçe doldur + tel ön-doldur
+_submitIsIlan            | script-is-ilani.js | rawInsert ilanlar (durum='beklemede')
+_deleteIsIlan            | script-is-ilani.js | raw DELETE iş ilanı
+_validateUzunForm        | script-is-ilani.js | _validateIcerik + 300 kelime kontrolü
+_durumRozet              | script-is-ilani.js | ⏳ İncelemede / ✅ Onaylı / ❌ Reddedildi rozet HTML
+_formatMaasAralik        | script-is-ilani.js | "25.000 ₺ — 45.000 ₺" formatı
+window.izIsIlani         | script-is-ilani.js | Public API: load/setAltTur/setScope/openForm/openDetail
+```
+
+---
+
+## admin.js — Faz 2A genişlemesi
+
+```
+loadBekleyen             | admin.js | durum='beklemede' iş ilanları listesi + SLA (4 saat) renk uyarısı
+_bekleyenSure            | admin.js | "X sa Y dk" + late flag
+KATEGORI_LABEL           | admin.js | tam_zamanli/esnaf_kurye/arabali_kurye → emoji+label
+onayla-ilan / reddet-ilan handler | admin.js | sb.from update durum + red_sebebi prompt
 ```
 
 ---
@@ -246,6 +279,7 @@ Avatar kırpma (v139)         | style.css:~3720
 15_ilanlar_public_view_refresh  | view DROP+CREATE explicit kolon listesi
 16_hesap_kapatma                | soft-delete + geri bildirim tablosu + pg_cron
 17_ilan_bildirim_takip          | ilçe bazlı bildirim aboneliği tablosu + RLS
+18_ilanlar_faz2                 | ilanlar.tur + maas_min/max + durum + red_sebebi; iş ilanları için NOT NULL'lar gevşetildi; ilanlar_public view recreate
 ```
 
 ---
