@@ -846,11 +846,16 @@ function renderEmptyState() {
       document.getElementById("filterResetBtn")?.click();
     });
   } else if (selectedIlce !== "all") {
-    // Belirli ilçede ilan yok → davet edici, başka bölgeleri öner
+    // Belirli ilçede ilan yok → bildirim CTA + yakın ilçe önerileri (v149)
+    const escIlce = escapeHtml(selectedIlce);
     emptyEl.innerHTML = `
       <div class="empty-icon">🔍</div>
-      <h3>İlanları istediğiniz bölgede filtreleyebilirsiniz</h3>
-      <p>${escapeHtml(selectedIlce)} bölgesinde şu an ilan yok. Aşağıdan farklı bölge seçebilirsin:</p>
+      <h3>${escIlce} bölgesinde şu an aktif ilan görünmüyor</h3>
+      <p>Yakındaki ilçeleri kontrol edebilir veya bu bölgede yeni ilan paylaşıldığında haberdar olmak için abone olabilirsin.</p>
+      <div class="empty-actions">
+        <button class="btn btn-primary btn-sm" id="emptyAboneBtn" data-ilce="${escIlce}">🔔 Bu Bölge İçin Bildirim Al</button>
+      </div>
+      <p class="muted small" style="margin-top:14px">Yakındaki ilçeleri dene:</p>
       <div class="empty-chips">
         <button class="chip" data-ilce="all">Tüm İlçeler</button>
         ${ANKARA_ILCELERI.filter(i => i !== selectedIlce).slice(0, 6).map(i =>
@@ -864,11 +869,14 @@ function renderEmptyState() {
         loadIlanlar();
       });
     });
+    document.getElementById("emptyAboneBtn")?.addEventListener("click", () => {
+      _openBildirimAboneModal(selectedIlce);
+    });
   } else {
     emptyEl.innerHTML = `
       <div class="empty-icon">⏳</div>
-      <h3>İlanları istediğiniz bölgede filtreleyebilirsiniz</h3>
-      <p>Şu an aktif ilan yok. Üst menüden ilçe seçerek arama yapabilirsin — yeni ilanlar genelde sabah ve öğle saatlerinde yayınlanır.</p>
+      <h3>Şu an aktif ilan bulunmuyor</h3>
+      <p>Yeni ilanlar gün boyunca yayınlanmaya devam eder. Üst menüden bir ilçe seçerek o bölgede ilan paylaşıldığında bildirim almak için abone olabilirsin.</p>
     `;
   }
   emptyEl.classList.remove("hidden");
@@ -2390,6 +2398,59 @@ function _validateIcerik(text, alanAdi = "Metin") {
 
   return null;  // temiz
 }
+
+// İlçe bazlı bildirim aboneliği modal aç (v149)
+// Empty state CTA'sından çağrılır. Mail teslim altyapısı henüz aktif değil;
+// bu fazda sadece tercih kaydı (ilan_bildirim_takip tablosu).
+function _openBildirimAboneModal(ilce) {
+  if (!currentUser) {
+    toast("Bildirim almak için önce kayıt ol / giriş yap.", "info", 4000);
+    openModal("registerModal");
+    return;
+  }
+  const label = document.getElementById("ibIlceLabel");
+  if (label) label.textContent = ilce;
+  const btn = document.getElementById("ibAboneOlBtn");
+  if (btn) {
+    btn.dataset.ilce = ilce;
+    btn.disabled = false;
+    btn.textContent = "🔔 Abone Ol";
+  }
+  openModal("ilanBildirimAboneModal");
+}
+
+document.getElementById("ibAboneOlBtn")?.addEventListener("click", async () => {
+  if (!currentUser) return;
+  const btn = document.getElementById("ibAboneOlBtn");
+  const ilce = btn?.dataset.ilce;
+  if (!ilce) return;
+  const session = readStoredSession();
+  if (!session?.access_token) {
+    toast("Oturumun sona ermiş, tekrar giriş yap.", "error");
+    return;
+  }
+  btn.disabled = true;
+  btn.textContent = "Kaydediliyor...";
+  const { error } = await rawInsert("ilan_bildirim_takip", {
+    user_id: currentUser.id,
+    ilce
+  }, session.access_token);
+  if (error) {
+    // UNIQUE violation → zaten abone (PostgREST 409 + "duplicate")
+    if ((error.message || "").includes("duplicate") || error.status === 409) {
+      closeModals();
+      toast(`Zaten ${ilce} bölgesi için abonesin.`, "info", 4000);
+      return;
+    }
+    btn.disabled = false;
+    btn.textContent = "🔔 Abone Ol";
+    toast("Abone olunamadı: " + error.message, "error");
+    return;
+  }
+  closeModals();
+  toast(`${ilce} için bildirim tercihin kaydedildi. Sistem hazırlanınca e-postayla haberin olacak.`, "ok", 5000);
+});
+
 function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, c =>
     ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])

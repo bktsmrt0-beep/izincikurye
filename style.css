@@ -3717,6 +3717,15 @@ textarea#rwYorum:focus {
   .price-lbl { font-size: 10px; }
 }
 
+/* ===== EMPTY STATE CTA (v149) ===== */
+.empty-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 /* ===== AVATAR KIRPMA MODAL (v139) ===== */
 .avatar-crop-stage {
   position: relative;

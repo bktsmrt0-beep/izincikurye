@@ -25,6 +25,7 @@ _hkSelectedSebep         | script.js:3622 | hesap kapatma sebep chip state
 _isHemenBasla            | script.js:1121 | bas_saat ±2sa içinde mi (Hemen Başla rozeti)
 _isMobileTr              | script.js:2474 | son 10 hanenin ilki 5 mi (cep kontrol)
 _openAvatarCropModal     | script.js:2978 | dosya seçince crop modalı aç
+_openBildirimAboneModal  | script.js:~2402 | ilçe bazlı bildirim aboneliği modalı aç (empty state CTA'sından)
 _openKebab               | script.js:1016 | mobil ⋮ dropdown aç
 _openMusaitOnay          | script.js:3543 | müsait olma kurallar onay modalı aç
 _phoneRaw10              | script.js:1560 | telefon → son 10 hane (0/90 prefix kırp)
@@ -163,6 +164,7 @@ PROFİLİM MODAL               | index.html:~304   | #profileModal (sekmeli: gen
 MÜSAİT ONAY MODAL (v135)     | index.html:~443   | #musaitOnayModal + #musaitKurallarOnay
 AVATAR KIRPMA MODAL (v139)   | index.html:~469   | #avatarCropModal + #avatarCropCanvas + #avatarCropZoom
 HESABI KAPAT MODAL (v138)    | index.html:~493   | #hesapKapatModal + #hkSebepPicker + #hkOnay
+İLAN BİLDİRİM ABONE (v149)   | index.html:~478   | #ilanBildirimAboneModal + #ibIlceLabel + #ibAboneOlBtn
 ŞİKAYET MODAL                | index.html:~531   | #sikayetModal
 İLAN KALDIRMA MODAL          | index.html:~640   | #deleteIlanModal + #deleteIlanSkip (Atla yolu)
 YORUM LİSTE MODAL            | index.html:~?     | #reviewListModal (sekmeli pending/done)
@@ -243,6 +245,7 @@ Avatar kırpma (v139)         | style.css:~3720
 14_reaksiyon_rate_limit         | 60sn/10 reaksiyon trigger
 15_ilanlar_public_view_refresh  | view DROP+CREATE explicit kolon listesi
 16_hesap_kapatma                | soft-delete + geri bildirim tablosu + pg_cron
+17_ilan_bildirim_takip          | ilçe bazlı bildirim aboneliği tablosu + RLS
 ```
 
 ---

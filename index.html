@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=148" />
+  <link rel="stylesheet" href="style.css?v=149" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -211,10 +211,10 @@
       </div>
 
       <div id="listings" class="listings"></div>
-      <div id="emptyState" class="empty hidden">İlanları istediğiniz bölgede filtreleyebilirsiniz.</div>
+      <div id="emptyState" class="empty hidden">Şu an aktif ilan bulunmuyor.</div>
 
       <div id="kuryeListings" class="kurye-listings hidden"></div>
-      <div id="kuryeEmptyState" class="empty hidden">Müsait kuryeleri istediğiniz bölgede filtreleyebilirsiniz.</div>
+      <div id="kuryeEmptyState" class="empty hidden">Şu an bu bölgede müsait kurye görünmüyor.</div>
       <p id="kuryeGuestNotice" class="muted small hidden" style="text-align:center;margin-top:12px">Müsait kuryeleri görmek için <a href="#" id="kuryeGuestLink" class="link-orange">giriş yap</a>.</p>
     </main>
   </div>
@@ -513,6 +513,24 @@
       <div style="display:flex;gap:8px;margin-top:14px;">
         <button type="button" class="btn btn-ghost" data-close style="flex:1">Vazgeç</button>
         <button type="button" class="btn btn-primary" id="avatarCropConfirm" style="flex:1">Kullan</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== İLAN BİLDİRİM ABONE MODAL (v149) ===== -->
+  <div class="modal hidden" id="ilanBildirimAboneModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>🔔 Yeni İlan Bildirimi</h2>
+      <p class="muted"><strong id="ibIlceLabel">—</strong> bölgesinde yeni bir ilan paylaşıldığında e-postayla seni bilgilendirelim.</p>
+
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin:14px 0;font-size:13px;color:#1e40af;line-height:1.5;">
+        ℹ️ E-posta bildirim altyapısı hazırlanma aşamasında. Tercihin <strong>şimdi kaydedilir</strong>; sistem hazır olduğunda otomatik aktif olur. Bekleme süresinde sana bildirim gönderilmez.
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:14px;">
+        <button type="button" class="btn btn-ghost" data-close style="flex:1">Vazgeç</button>
+        <button type="button" class="btn btn-primary" id="ibAboneOlBtn" style="flex:1">🔔 Abone Ol</button>
       </div>
     </div>
   </div>
@@ -1039,7 +1057,7 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=148"></script>
-  <script src="script.js?v=148"></script>
+  <script src="supabase-config.js?v=149"></script>
+  <script src="script.js?v=149"></script>
 </body>
 </html>
