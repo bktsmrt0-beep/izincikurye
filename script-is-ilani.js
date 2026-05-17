@@ -257,8 +257,8 @@
       } else if (tel) {
         iletisimBlock = `
           <div class="iid-iletisim">
-            <a href="tel:${telE164}" class="btn btn-primary btn-block">📞 ${window.escapeHtml(telDisplay)}</a>
-            ${isMobil ? `<a href="https://wa.me/${telE164.replace("+", "")}" target="_blank" class="btn btn-success btn-block" style="margin-top:8px">💬 WhatsApp ile Yaz</a>` : ""}
+            <a href="tel:${telE164}" class="btn btn-primary btn-block">📞 Ara</a>
+            ${isMobil ? `<a href="https://wa.me/${telE164.replace("+", "")}" target="_blank" class="btn btn-wa btn-block" style="margin-top:8px">💬 WhatsApp ile Yaz</a>` : ""}
           </div>
         `;
       }

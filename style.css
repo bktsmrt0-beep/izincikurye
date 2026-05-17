@@ -3717,6 +3717,17 @@ textarea#rwYorum:focus {
   .price-lbl { font-size: 10px; }
 }
 
+/* WhatsApp butonu — yeşil tema (v163) */
+.btn-wa {
+  background: #25D366;
+  color: #fff;
+  border: 0;
+  font-weight: 700;
+  transition: background .15s, transform .12s;
+}
+.btn-wa:hover { background: #1ebe5c; color: #fff; }
+.btn-wa:active { transform: scale(0.98); }
+
 /* ===== EMPTY STATE CTA (v149) ===== */
 .empty-actions {
   margin-top: 16px;
