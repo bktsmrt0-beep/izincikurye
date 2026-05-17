@@ -157,13 +157,18 @@ ANKARA_ILCELERI.forEach(ilce => {
   districtSelect.appendChild(new Option(ilce, ilce));
   ilanIlceSelect.appendChild(new Option(ilce, ilce));
 });
-// Başlangıç saati: 00:00 → 23:00 (standart)
-for (let h = 0; h < 24; h++) {
-  const v = String(h).padStart(2, "0") + ":00";
-  basSaat.appendChild(new Option(v, v));
-}
-// Bitiş saati: 07:00 → 23:00 → 24:00 (gece yarısı, DB'de "00:00") → 01:00 → 06:00 (ertesi gün)
-// Vardiya/mesai mantığı: kurye saat 07-06 arası bir aralıkta çalışır
+// Saat aralığı: 07:00 → 23:00 → (bitiş için 24:00) → 00:00/01:00 → 06:00 (ertesi gün)
+// Vardiya/mesai mantığı: kurye 07-06 arası bir aralıkta çalışır.
+// basSaat: "24:00" yok (başlangıç olarak anlamsız); bitSaat: "24:00" label var (gece yarısı bitiş).
+const _saatlerForward = [];
+for (let h = 7; h <= 23; h++) _saatlerForward.push(String(h).padStart(2, "0") + ":00");
+_saatlerForward.push("00:00");  // basSaat için: ertesi gün başlangıcı
+for (let h = 1; h <= 6; h++) _saatlerForward.push(String(h).padStart(2, "0") + ":00");
+
+// basSaat: 07, 08, ..., 23, 00, 01, ..., 06
+_saatlerForward.forEach(v => basSaat.appendChild(new Option(v, v)));
+
+// bitSaat: 07, 08, ..., 23, 24 (label, value=00:00), 01, ..., 06
 for (let h = 7; h <= 23; h++) {
   const v = String(h).padStart(2, "0") + ":00";
   bitSaat.appendChild(new Option(v, v));
@@ -173,8 +178,8 @@ for (let h = 1; h <= 6; h++) {
   const v = String(h).padStart(2, "0") + ":00";
   bitSaat.appendChild(new Option(v, v));
 }
-basSaat.value = "09:00";
-bitSaat.value = "07:00";  // v144: dropdown ilk değer 07:00 (vardiya/mesai sıralaması başlangıcı)
+basSaat.value = "07:00";
+bitSaat.value = "07:00";
 
 // =============== TOAST ===============
 function toast(msg, type = "info", ms = 3000) {
@@ -2322,7 +2327,7 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   saatRange.value = 4;
   fiyatRange.value = 280; fiyatVal.textContent = "280";
   kmRange.value = 8; kmVal.textContent = "8";
-  basSaat.value = "09:00"; bitSaat.value = "07:00";  // v144 default sıralama
+  basSaat.value = "07:00"; bitSaat.value = "07:00";  // v145 vardiya başlangıcı default
   _updateSureOzeti();
   document.getElementById("ilanIletisimTel").value = "";
   document.getElementById("telEditHint")?.classList.add("hidden");
