@@ -15,6 +15,7 @@
   // ============== STATE ==============
   const IS_ILAN_TURLERI = {
     tam_zamanli:   { label: "Tam Zamanlı Kurye", emoji: "💼" },
+    part_time:     { label: "Part Time Kurye",   emoji: "⏰" },
     esnaf_kurye:   { label: "Esnaf Kurye",       emoji: "🏪" },
     arabali_kurye: { label: "Arabalı Kurye",     emoji: "🚗" }
   };
@@ -419,12 +420,19 @@
       } else {
         adHint?.classList.add("hidden");
       }
+      // Tel otomatik doldur — önce cep (tel), boşsa iş tel (isTelefonu) fallback
       const telInput = document.getElementById("isIlanTel");
       const telHint = document.getElementById("isIlanTelHint");
-      if (telInput && window.currentUser.tel) {
-        telInput.value = window.formatTel?.(window.currentUser.tel) || window.currentUser.tel;
+      const userTel = window.currentUser?.tel || window.currentUser?.isTelefonu || "";
+      if (telInput && userTel) {
+        try {
+          telInput.value = (typeof window.formatTel === "function") ? window.formatTel(userTel) : userTel;
+        } catch (e) {
+          telInput.value = userTel;
+        }
         telHint?.classList.remove("hidden");
       } else {
+        if (telInput) telInput.value = "";
         telHint?.classList.add("hidden");
       }
       // Etiketler temiz
@@ -622,24 +630,85 @@
         return;
       }
       const tip = act === "rxn-up" ? "begen" : "begenmeme";
-      if (typeof window.toggleReaksiyon === "function") {
-        // Anlık ilan reaksiyon sistemi — `reaksiyonlar` tablosu, ilan_id FK ilanlar(id)
-        window.toggleReaksiyon(id, tip).then(() => loadIsIlanlari());
+      _toggleIsIlanRxn(id, tip);
+    }
+  }
+
+  // İş ilanı reaksiyon toggle — bağımsız (raw fetch, sb.from bypass)
+  // reaksiyonlar tablosu UNIQUE(user_id, ilan_id) — bir kullanıcı tek tip
+  // Toggle mantığı: aynı tip varsa sil, farklı tip varsa update, yoksa insert
+  async function _toggleIsIlanRxn(ilanId, tip) {
+    const session = window.readStoredSession?.();
+    if (!session?.access_token) {
+      window.toast?.("Oturumun sona ermiş.", "error");
+      return;
+    }
+    const userId = window.currentUser.id;
+    const base = `${window.SUPABASE_URL}/rest/v1/reaksiyonlar`;
+    const headers = {
+      apikey: window.SUPABASE_KEY,
+      Authorization: "Bearer " + session.access_token,
+      "Content-Type": "application/json"
+    };
+    try {
+      // Mevcut reaksiyon var mı?
+      const checkRes = await fetch(`${base}?user_id=eq.${userId}&ilan_id=eq.${ilanId}&select=tip`, { headers });
+      const existing = checkRes.ok ? await checkRes.json() : [];
+      const mevcut = existing[0]?.tip;
+
+      if (mevcut === tip) {
+        // Aynı reaksiyon → kaldır (toggle off)
+        await fetch(`${base}?user_id=eq.${userId}&ilan_id=eq.${ilanId}`, { method: "DELETE", headers });
+      } else if (mevcut) {
+        // Farklı tip → güncelle (begen ↔ begenmeme)
+        await fetch(`${base}?user_id=eq.${userId}&ilan_id=eq.${ilanId}`, {
+          method: "PATCH", headers,
+          body: JSON.stringify({ tip })
+        });
       } else {
-        window.toast?.("Reaksiyon sistemi şu an kullanılamıyor.", "error");
+        // Yeni reaksiyon
+        await fetch(base, {
+          method: "POST", headers: { ...headers, Prefer: "return=minimal" },
+          body: JSON.stringify({ user_id: userId, ilan_id: ilanId, tip })
+        });
+      }
+      // Reload — DB trigger (bump_reaksiyon_sayilar) ilanlar.begen_sayisi/begenmeme_sayisi'ni güncelledi
+      await loadIsIlanlari();
+    } catch (e) {
+      const msg = e.message || String(e);
+      if (msg.includes("REAKSIYON_HIZ_LIMITI")) {
+        window.toast?.("⏱ Çok hızlı reaksiyon — biraz yavaşla.", "error", 5000);
+      } else {
+        window.toast?.("Reaksiyon kaydedilemedi: " + msg, "error");
       }
     }
   }
 
-  // Paylaş linki kopyala — /ilan/<id> formatı (anlık ilanla aynı URL şeması)
+  // Paylaş — mobilde native share sheet (WhatsApp/Telegram/SMS vs), desktop'ta clipboard
   async function _copyIsIlanLink(ilanId) {
+    const ilan = _isIlanlar.find(x => x.id === ilanId);
     const url = `${window.location.origin}/ilan/${ilanId}`;
+    const title = ilan ? `İş İlanı: ${ilan.baslik}` : "İzinci Kurye İş İlanı";
+    const text = ilan
+      ? `${ilan.baslik}\n📍 ${ilan.ilce} · 💰 ${_formatMaasAralik(ilan.maas_min, ilan.maas_max)}\n${url}`
+      : url;
+
+    // 1) Önce native share API (mobilde WhatsApp/Telegram/SMS listesi açar)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title, text, url });
+        return;  // Başarılı, kullanıcı paylaştı veya iptal etti
+      } catch (e) {
+        // AbortError = kullanıcı iptal etti, başka error fallback'e geç
+        if (e?.name === "AbortError") return;
+      }
+    }
+    // 2) Fallback: clipboard kopyala
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(url);
         window.toast?.("🔗 İlan bağlantısı kopyalandı.", "ok", 3000);
       } else {
-        // Fallback
         const ta = document.createElement("textarea");
         ta.value = url; ta.style.position = "fixed"; ta.style.left = "-9999px";
         document.body.appendChild(ta); ta.select();
