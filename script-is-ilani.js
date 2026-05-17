@@ -19,9 +19,23 @@
     arabali_kurye: { label: "Arabalı Kurye",     emoji: "🚗" }
   };
 
-  let _isIlanAltTur = "tam_zamanli";   // aktif sub-tab
-  let _isIlanlar = [];                  // yüklenen ilanlar
-  let _isIlanScope = "all";             // "all" | "mine"
+  // İş ilanı etiketleri (v158) — anlık ilan etiketlerinden bağımsız set
+  const IS_ILAN_ETIKETLER = {
+    yemek_dahil:        { ico: "🍽", label: "Yemek dahil" },
+    yol_servis:         { ico: "🚌", label: "Yol/Servis var" },
+    sgk_sigorta:        { ico: "📋", label: "SGK + Sigorta" },
+    acil_alim:          { ico: "🆘", label: "Acil işe alım" },
+    tecrube_gerekmez:   { ico: "🎓", label: "Tecrübe gerekmez" },
+    esnek_saat:         { ico: "⏰", label: "Esnek saat" },
+    prim_bahsis:        { ico: "💰", label: "Prim/Bahşiş" },
+    hafta_sonu_izin:    { ico: "📅", label: "Hafta sonu izinli" }
+  };
+
+  let _isIlanAltTur = "tam_zamanli";    // aktif sub-tab
+  let _isIlanlar = [];                   // yüklenen ilanlar
+  let _isIlanScope = "all";              // "all" | "mine"
+  let _isIlanIlce = "all";               // ilçe filtresi
+  let _editingIsIlanId = null;           // düzenleme modunda mı?
 
   // ============== HELPERS ==============
   // 300 kelime kontrolü — _validateIcerik üstüne wrapper
@@ -75,6 +89,7 @@
     params.set("select", "*");
     params.set("tur", "eq." + _isIlanAltTur);
     if (isMine) params.set("user_id", "eq." + window.currentUser.id);
+    if (_isIlanIlce !== "all") params.set("ilce", "eq." + _isIlanIlce);
     params.set("order", "created_at.desc");
     params.set("limit", "50");
 
@@ -129,19 +144,49 @@
 
   function buildIsIlanCardHTML(i) {
     const turMeta = IS_ILAN_TURLERI[i.tur] || { label: i.tur, emoji: "💼" };
-    // İşyeri adı: ilan.isyeri_ad öncelikli, yoksa profile fallback
     const isletme = i.isyeri_ad || i.profile?.isletme_adi || (i.profile ? (i.profile.ad + " " + i.profile.soyad).trim() : "");
     const maas = _formatMaasAralik(i.maas_min, i.maas_max);
     const isOwn = window.currentUser && i.user_id === window.currentUser.id;
+    const isAnonim = !window.currentUser;
     const durumLabel = isOwn ? _durumRozet(i.durum) : "";
 
     const redBlock = (isOwn && i.durum === "reddedildi" && i.red_sebebi)
       ? `<div class="red-sebebi">❌ <strong>Red sebebi:</strong> ${window.escapeHtml(i.red_sebebi)}</div>`
       : "";
 
-    // Anlık ilan compact-row pattern'a benzer 4 hücre satır (PC). Mobilde 2 satır.
+    // Etiket chip'leri (kart üstünde küçük)
+    const etArr = Array.isArray(i.etiketler) ? i.etiketler : [];
+    const etiketHtml = etArr.length
+      ? `<div class="iir-etiketler">${etArr.map(k => {
+          const meta = IS_ILAN_ETIKETLER[k];
+          if (!meta) return "";
+          return `<span class="iir-etiket-chip">${meta.ico} ${meta.label}</span>`;
+        }).join("")}</div>`
+      : "";
+
+    // Reaksiyon sayaçları (anlık ilan ile aynı kolon — DB seviyesinde paylaşılan)
+    const begen = i.begen_sayisi || 0;
+    const begenmeme = i.begenmeme_sayisi || 0;
+    const net = begen - begenmeme;
+    const netRozet = net > 0
+      ? `<span class="net-rxn-pos">👍 +${net}</span>`
+      : net < 0 ? `<span class="net-rxn-neg">👎 ${net}</span>` : "";
+
+    // Aksiyon butonları satırı (Paylaş + Bildir + Düzenle + Sil)
+    const aksiyonlar = [];
+    aksiyonlar.push(`<button class="iir-act" data-iict="share" data-id="${i.id}" title="Paylaş">🔗</button>`);
+    if (!isAnonim && !isOwn) {
+      aksiyonlar.push(`<button class="iir-act" data-iict="rxn-up" data-id="${i.id}" title="Beğen">👍</button>`);
+      aksiyonlar.push(`<button class="iir-act" data-iict="rxn-down" data-id="${i.id}" title="Beğenmeme">👎</button>`);
+      aksiyonlar.push(`<button class="iir-act" data-iict="report" data-id="${i.id}" title="Sorun Bildir">⚠</button>`);
+    }
+    if (isOwn) {
+      aksiyonlar.push(`<button class="iir-act" data-iict="edit" data-id="${i.id}" title="Düzenle">✏</button>`);
+      aksiyonlar.push(`<button class="iir-act iir-act-danger" data-iict="delete" data-id="${i.id}" title="Sil">🗑</button>`);
+    }
+
     return `
-      <article class="is-ilan-row" data-id="${i.id}" data-iict="detay">
+      <article class="is-ilan-row" data-id="${i.id}">
         <div class="iir-cell iir-kategori">
           <span class="iic-kategori">${turMeta.emoji} ${turMeta.label}</span>
         </div>
@@ -161,11 +206,12 @@
           <span class="iir-label">Tarih</span>
           <span class="iir-value">${window.formatDateTime ? window.formatDateTime(i.created_at) : ""}</span>
         </div>
-        ${isOwn ? `
-          <div class="iir-cell iir-durum">
-            ${durumLabel}
-            <button class="iir-delete" data-iict="delete" data-id="${i.id}" title="İlanı sil">🗑</button>
-          </div>` : ""}
+        <div class="iir-cell iir-aksiyon">
+          ${netRozet}
+          ${durumLabel}
+          <div class="iir-act-row">${aksiyonlar.join("")}</div>
+        </div>
+        ${etiketHtml}
         ${redBlock}
       </article>
     `;
@@ -217,6 +263,42 @@
       }
     }
 
+    // Etiketler
+    const etArr = Array.isArray(ilan.etiketler) ? ilan.etiketler : [];
+    const etiketBlock = etArr.length
+      ? `<div class="iid-etiketler">${etArr.map(k => {
+          const meta = IS_ILAN_ETIKETLER[k];
+          if (!meta) return "";
+          return `<span class="iid-etiket-chip">${meta.ico} ${meta.label}</span>`;
+        }).join("")}</div>`
+      : "";
+
+    // Reaksiyon butonları (kayıtlı kullanıcı + sahibi olmayan)
+    const begen = ilan.begen_sayisi || 0;
+    const begenmeme = ilan.begenmeme_sayisi || 0;
+    let reaksiyonBlock = "";
+    if (!isAnonim && !isOwn && ilan.durum === "onayli") {
+      const userRxn = window.userReaksiyonlar?.get?.(ilan.id);  // anlık ilan ile aynı Map
+      reaksiyonBlock = `
+        <div class="iid-rxn-row">
+          <button class="iid-rxn-btn ${userRxn === 'begen' ? 'active' : ''}" data-iict="rxn-up" data-id="${ilan.id}">👍 <span>${begen}</span></button>
+          <button class="iid-rxn-btn ${userRxn === 'begenmeme' ? 'active' : ''}" data-iict="rxn-down" data-id="${ilan.id}">👎 <span>${begenmeme}</span></button>
+        </div>
+      `;
+    } else if (isOwn) {
+      reaksiyonBlock = `<div class="iid-rxn-info muted small">👍 ${begen} · 👎 ${begenmeme}</div>`;
+    }
+
+    // Paylaş + Bildir butonları
+    const ekstraAksiyon = [];
+    ekstraAksiyon.push(`<button type="button" class="btn btn-ghost btn-sm" data-iict="share" data-id="${ilan.id}">🔗 Paylaş</button>`);
+    if (!isAnonim && !isOwn) {
+      ekstraAksiyon.push(`<button type="button" class="btn btn-ghost btn-sm" data-iict="report" data-id="${ilan.id}">⚠ Sorun Bildir</button>`);
+    }
+    if (isOwn) {
+      ekstraAksiyon.push(`<button type="button" class="btn btn-ghost btn-sm" data-iict="edit" data-id="${ilan.id}">✏ Düzenle</button>`);
+    }
+
     body.innerHTML = `
       <div class="iid-header">
         <span class="iid-kategori">${turMeta.emoji} ${turMeta.label}</span>
@@ -225,6 +307,7 @@
       <h2 class="iid-baslik">${window.escapeHtml(ilan.baslik)}</h2>
       ${bekleyenBlock}
       ${redBlock}
+      ${etiketBlock}
       <div class="iid-meta">
         ${isyeriAdi ? `<div>🏢 <strong>${window.escapeHtml(isyeriAdi)}</strong></div>` : ""}
         ${isyeriAdres ? `<div>📌 ${window.escapeHtml(isyeriAdres)}</div>` : ""}
@@ -232,7 +315,9 @@
         <div>💰 ${_formatMaasAralik(ilan.maas_min, ilan.maas_max)}</div>
       </div>
       ${ilan.aciklama ? `<div class="iid-aciklama">${window.escapeHtml(ilan.aciklama).replace(/\n/g, "<br>")}</div>` : ""}
+      ${reaksiyonBlock}
       ${iletisimBlock}
+      <div class="iid-ekstra-aksiyon">${ekstraAksiyon.join("")}</div>
     `;
     window.openModal?.("isIlanDetailModal");
 
@@ -262,7 +347,7 @@
   }
 
   // ============== FORM ==============
-  function _openIsIlanForm() {
+  function _openIsIlanForm(editIlan = null) {
     if (!window.currentUser) {
       window.toast?.("İlan vermek için önce giriş yap.", "info", 4000);
       window.openModal?.("registerModal");
@@ -272,8 +357,21 @@
       window.toast?.("İş ilanı verebilmek için işletme hesabı gerekir.", "error", 5000);
       return;
     }
+
+    _editingIsIlanId = editIlan ? editIlan.id : null;
     const form = document.getElementById("isIlanForm");
     if (form) form.reset();
+
+    // Modal başlık + buton metni — edit modunda
+    const title = document.querySelector("#isIlanFormModal h2");
+    const submitBtn = form?.querySelector('button[type="submit"]');
+    if (editIlan) {
+      if (title) title.textContent = "✏ İş İlanını Düzenle";
+      if (submitBtn) submitBtn.textContent = "Güncelle";
+    } else {
+      if (title) title.textContent = "💼 İş İlanı Ver";
+      if (submitBtn) submitBtn.textContent = "Yayınla";
+    }
 
     // İlçe select doldur (ilk açılışta)
     const ilceSel = document.getElementById("isIlanIlce");
@@ -282,43 +380,70 @@
         window.ANKARA_ILCELERI.map(i => `<option value="${i}">${i}</option>`).join("");
     }
 
-    // Kategori default: aktif sub-tab
+    // Kategori
     const turSel = document.getElementById("isIlanTur");
-    if (turSel) turSel.value = _isIlanAltTur;
+    if (turSel) turSel.value = editIlan ? editIlan.tur : _isIlanAltTur;
 
-    // İşyeri Adı — currentUser.isletmeAdi'den otomatik doldur + hint
-    const adInput = document.getElementById("isIlanIsyeriAd");
-    const adHint = document.getElementById("isIlanAdHint");
-    if (adInput && window.currentUser.isletmeAdi) {
-      adInput.value = window.currentUser.isletmeAdi;
-      adHint?.classList.remove("hidden");
+    if (editIlan) {
+      // EDIT — mevcut değerleri yükle
+      const baslikInput = document.querySelector("#isIlanForm [name=baslik]");
+      if (baslikInput) baslikInput.value = editIlan.baslik || "";
+      const adInput = document.getElementById("isIlanIsyeriAd");
+      if (adInput) adInput.value = editIlan.isyeri_ad || "";
+      const adresInput = document.getElementById("isIlanIsyeriAdres");
+      if (adresInput) adresInput.value = editIlan.isyeri_adres || "";
+      if (ilceSel) ilceSel.value = editIlan.ilce || "";
+      const maasMin = document.getElementById("isIlanMaasMin");
+      if (maasMin) maasMin.value = editIlan.maas_min ?? "";
+      const maasMax = document.getElementById("isIlanMaasMax");
+      if (maasMax) maasMax.value = editIlan.maas_max ?? "";
+      const aciklamaTa = document.getElementById("isIlanAciklama");
+      if (aciklamaTa) aciklamaTa.value = editIlan.aciklama || "";
+      const telInput = document.getElementById("isIlanTel");
+      if (telInput) telInput.value = window.formatTel?.(editIlan.iletisim_tel) || editIlan.iletisim_tel || "";
+      // Etiket checkbox'larını işaretle
+      const etArr = Array.isArray(editIlan.etiketler) ? editIlan.etiketler : [];
+      document.querySelectorAll('#isIlanForm input[name=isilan_etiket]').forEach(cb => {
+        cb.checked = etArr.includes(cb.value);
+      });
+      // Hint'leri gizle (edit modunda kullanıcı zaten farkında)
+      ["isIlanAdHint","isIlanAdresHint","isIlanTelHint"].forEach(id => document.getElementById(id)?.classList.add("hidden"));
+      // Kelime sayacı güncelle
+      const counter = document.getElementById("isIlanKelimeSayac");
+      const n = (editIlan.aciklama || "").trim().split(/\s+/).filter(Boolean).length;
+      if (counter) counter.textContent = `${n} / 300 kelime`;
     } else {
-      adHint?.classList.add("hidden");
+      // YENİ — otomatik doldurma (anlık ilan pattern)
+      const adInput = document.getElementById("isIlanIsyeriAd");
+      const adHint = document.getElementById("isIlanAdHint");
+      if (adInput && window.currentUser.isletmeAdi) {
+        adInput.value = window.currentUser.isletmeAdi;
+        adHint?.classList.remove("hidden");
+      } else {
+        adHint?.classList.add("hidden");
+      }
+      const adresInput = document.getElementById("isIlanIsyeriAdres");
+      const adresHint = document.getElementById("isIlanAdresHint");
+      if (adresInput && window.currentUser.isAdresi) {
+        adresInput.value = window.currentUser.isAdresi;
+        adresHint?.classList.remove("hidden");
+      } else {
+        adresHint?.classList.add("hidden");
+      }
+      const telInput = document.getElementById("isIlanTel");
+      const telHint = document.getElementById("isIlanTelHint");
+      if (telInput && window.currentUser.tel) {
+        telInput.value = window.formatTel?.(window.currentUser.tel) || window.currentUser.tel;
+        telHint?.classList.remove("hidden");
+      } else {
+        telHint?.classList.add("hidden");
+      }
+      // Etiketler temiz
+      document.querySelectorAll('#isIlanForm input[name=isilan_etiket]').forEach(cb => { cb.checked = false; });
+      // Kelime sayacı sıfırla
+      const counter = document.getElementById("isIlanKelimeSayac");
+      if (counter) counter.textContent = "0 / 300 kelime";
     }
-
-    // İşyeri Adresi — currentUser.isAdresi'den otomatik doldur + hint
-    const adresInput = document.getElementById("isIlanIsyeriAdres");
-    const adresHint = document.getElementById("isIlanAdresHint");
-    if (adresInput && window.currentUser.isAdresi) {
-      adresInput.value = window.currentUser.isAdresi;
-      adresHint?.classList.remove("hidden");
-    } else {
-      adresHint?.classList.add("hidden");
-    }
-
-    // İletişim cep telefonu — currentUser.tel'den otomatik doldur + hint
-    const telInput = document.getElementById("isIlanTel");
-    const telHint = document.getElementById("isIlanTelHint");
-    if (telInput && window.currentUser.tel) {
-      telInput.value = window.formatTel?.(window.currentUser.tel) || window.currentUser.tel;
-      telHint?.classList.remove("hidden");
-    } else {
-      telHint?.classList.add("hidden");
-    }
-
-    // Kelime sayacı sıfırla
-    const counter = document.getElementById("isIlanKelimeSayac");
-    if (counter) counter.textContent = "0 / 300 kelime";
 
     window.openModal?.("isIlanFormModal");
   }
@@ -389,11 +514,16 @@
       return window.toast?.("İlan Verme Kuralları'nı okuyup onaylamalısın.", "error");
     }
 
+    // Seçili etiketler
+    const etiketler = Array.from(
+      document.querySelectorAll('#isIlanForm input[name=isilan_etiket]:checked')
+    ).map(cb => cb.value);
+
     const submitBtn = e.target.querySelector('button[type="submit"]');
-    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Gönderiliyor..."; }
+    const submitBtnText = _editingIsIlanId ? "Güncelle" : "Yayınla";
+    if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = _editingIsIlanId ? "Güncelleniyor..." : "Gönderiliyor..."; }
 
     const payload = {
-      user_id: window.currentUser.id,
       tur,
       baslik,
       isyeri_ad,
@@ -403,18 +533,48 @@
       maas_min: isNaN(maas_min) ? null : maas_min,
       maas_max: isNaN(maas_max) ? null : maas_max,
       iletisim_tel: window._phoneToE164?.(tel_raw) || tel_raw,
-      durum: "beklemede"
+      etiketler,
+      durum: "beklemede",      // edit sonrası tekrar incelemeye gider
+      red_sebebi: null
     };
 
-    const { error } = await window.rawInsert("ilanlar", payload, session.access_token);
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Yayınla"; }
+    let error = null;
+    if (_editingIsIlanId) {
+      // PATCH — raw fetch (sb.from bypass)
+      try {
+        const r = await fetch(`${window.SUPABASE_URL}/rest/v1/ilanlar?id=eq.${_editingIsIlanId}&user_id=eq.${window.currentUser.id}`, {
+          method: "PATCH",
+          headers: {
+            apikey: window.SUPABASE_KEY,
+            Authorization: "Bearer " + session.access_token,
+            "Content-Type": "application/json",
+            Prefer: "return=minimal"
+          },
+          body: JSON.stringify(payload)
+        });
+        if (!r.ok) error = { message: "HTTP " + r.status + " — " + (await r.text()) };
+      } catch (e) { error = { message: e.message || String(e) }; }
+    } else {
+      // INSERT
+      payload.user_id = window.currentUser.id;
+      const result = await window.rawInsert("ilanlar", payload, session.access_token);
+      error = result.error;
+    }
+
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = submitBtnText; }
     if (error) {
-      window.toast?.("İlan gönderilemedi: " + error.message, "error", 6000);
+      window.toast?.((_editingIsIlanId ? "Güncellenemedi: " : "İlan gönderilemedi: ") + error.message, "error", 6000);
       return;
     }
+    const wasEditing = !!_editingIsIlanId;
+    _editingIsIlanId = null;
     window.closeModals?.();
-    window.toast?.("✅ İlanın incelemeye gönderildi. Onaylanınca yayına çıkacak (genelde 4 saat içinde).", "ok", 6000);
-    if (_isIlanScope === "mine") loadIsIlanlari();
+    window.toast?.(wasEditing
+      ? "✅ İlanın güncellendi — değişiklik nedeniyle tekrar moderatör incelemesinde."
+      : "✅ İlanın incelemeye gönderildi. Onaylanınca yayına çıkacak (genelde 4 saat içinde).",
+      "ok", 6000
+    );
+    loadIsIlanlari();
   }
 
   // ============== DELETE ==============
@@ -443,6 +603,74 @@
     }
   }
 
+  // ============== ACTION DISPATCHER ==============
+  // Tüm aksiyon butonları (kart + detay modal) buradan yönetilir
+  function _handleIsIlanAction(act, id) {
+    if (!id) return;
+    const ilan = _isIlanlar.find(x => x.id === id);
+
+    if (act === "detay") {
+      if (ilan) openIsIlanDetail(ilan);
+    }
+    else if (act === "delete") {
+      _deleteIsIlan(id);
+    }
+    else if (act === "edit") {
+      if (!ilan) return;
+      _openIsIlanForm(ilan);
+    }
+    else if (act === "share") {
+      _copyIsIlanLink(id);
+    }
+    else if (act === "report") {
+      if (!window.currentUser) {
+        window.toast?.("Sorun bildirmek için giriş yap.", "info", 4000);
+        window.openModal?.("loginModal");
+        return;
+      }
+      if (typeof window.openSikayetModal === "function") {
+        window.openSikayetModal(id);
+      } else {
+        window.toast?.("Şikayet sistemi şu an kullanılamıyor.", "error");
+      }
+    }
+    else if (act === "rxn-up" || act === "rxn-down") {
+      if (!window.currentUser) {
+        window.toast?.("Reaksiyon vermek için giriş yap.", "info", 4000);
+        window.openModal?.("loginModal");
+        return;
+      }
+      const tip = act === "rxn-up" ? "begen" : "begenmeme";
+      if (typeof window.toggleReaksiyon === "function") {
+        // Anlık ilan reaksiyon sistemi — `reaksiyonlar` tablosu, ilan_id FK ilanlar(id)
+        window.toggleReaksiyon(id, tip).then(() => loadIsIlanlari());
+      } else {
+        window.toast?.("Reaksiyon sistemi şu an kullanılamıyor.", "error");
+      }
+    }
+  }
+
+  // Paylaş linki kopyala — /ilan/<id> formatı (anlık ilanla aynı URL şeması)
+  async function _copyIsIlanLink(ilanId) {
+    const url = `${window.location.origin}/ilan/${ilanId}`;
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        window.toast?.("🔗 İlan bağlantısı kopyalandı.", "ok", 3000);
+      } else {
+        // Fallback
+        const ta = document.createElement("textarea");
+        ta.value = url; ta.style.position = "fixed"; ta.style.left = "-9999px";
+        document.body.appendChild(ta); ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+        window.toast?.("🔗 Bağlantı kopyalandı.", "ok", 3000);
+      }
+    } catch (e) {
+      window.toast?.("Kopyalanamadı: " + url, "info", 5000);
+    }
+  }
+
   // ============== EVENT BINDING ==============
   function _bindEvents() {
     // Sub-tab geçişi
@@ -461,11 +689,13 @@
     _bindEditHints();
     // Row click delegasyonu (compact row pattern — anlık ilan ile aynı)
     document.getElementById("isilanlariListings")?.addEventListener("click", (e) => {
-      // Önce delete butonu kontrol (satır click'ini engelle)
-      const deleteBtn = e.target.closest('[data-iict="delete"]');
-      if (deleteBtn) {
+      // Önce aksiyon butonları kontrol (satır click'ini engelle)
+      const actBtn = e.target.closest("[data-iict]");
+      if (actBtn) {
         e.stopPropagation();
-        _deleteIsIlan(deleteBtn.dataset.id);
+        const id = actBtn.dataset.id;
+        const act = actBtn.dataset.iict;
+        _handleIsIlanAction(act, id);
         return;
       }
       // Satırın herhangi bir yerine tıklama → detay
@@ -474,6 +704,20 @@
         const ilan = _isIlanlar.find(x => x.id === row.dataset.id);
         if (ilan) openIsIlanDetail(ilan);
       }
+    });
+
+    // Detay modal click delegasyonu (paylaş/bildir/düzenle/reaksiyon butonları)
+    document.getElementById("isIlanDetailBody")?.addEventListener("click", (e) => {
+      const actBtn = e.target.closest("[data-iict]");
+      if (!actBtn) return;
+      e.stopPropagation();
+      _handleIsIlanAction(actBtn.dataset.iict, actBtn.dataset.id);
+    });
+
+    // İlçe filtresi
+    document.getElementById("isilanlariIlceFilter")?.addEventListener("change", (e) => {
+      _isIlanIlce = e.target.value || "all";
+      loadIsIlanlari();
     });
     // Kelime sayacı
     document.getElementById("isIlanAciklama")?.addEventListener("input", (e) => {
@@ -499,6 +743,13 @@
   // ============== INIT ==============
   function _init() {
     _bindEvents();
+    // İlçe filtresi dropdown'ı doldur
+    const ilceFilter = document.getElementById("isilanlariIlceFilter");
+    if (ilceFilter && ilceFilter.options.length <= 1 && Array.isArray(window.ANKARA_ILCELERI)) {
+      window.ANKARA_ILCELERI.forEach(i => {
+        ilceFilter.appendChild(new Option(i, i));
+      });
+    }
     // Eğer sayfa açılışında isilanlari tab'ı zaten aktifse yükle (deep link)
     if (document.querySelector('.content-tab.active[data-content-tab="isilanlari"]')) {
       loadIsIlanlari();

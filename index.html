@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=157" />
+  <link rel="stylesheet" href="style.css?v=158" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -238,6 +238,9 @@
             <button type="button" class="seg-btn active" data-scope="all">Tüm İlanlar</button>
             <button type="button" class="seg-btn" data-scope="mine">İlanlarım</button>
           </div>
+          <select id="isilanlariIlceFilter" class="select" style="max-width:180px">
+            <option value="all">Tüm Bölgeler</option>
+          </select>
           <button type="button" class="btn btn-primary btn-sm" id="isIlanVerBtn">+ İş İlanı Ver</button>
         </div>
 
@@ -628,6 +631,20 @@
           <p class="muted small ilan-edit-hint hidden" id="isIlanTelHint">Kayıtlı cep numarandan otomatik dolduruldu. Başkası aransın istiyorsan <a href="#" id="isIlanTelEditBtn" class="link-orange">Düzenle</a>.</p>
           <small class="muted">Cep numarası olmalı (WhatsApp için). <strong>Kayıtsız kullanıcılara gösterilmez</strong>.</small>
         </label>
+
+        <fieldset class="etiket-fieldset">
+          <legend>Etiketler <small class="muted">(opsiyonel — kuryelere hızlı ipucu)</small></legend>
+          <div class="etiket-checks">
+            <label class="etiket-check"><input type="checkbox" name="isilan_etiket" value="yemek_dahil" /><span class="etiket-chip-form">🍽 Yemek dahil</span></label>
+            <label class="etiket-check"><input type="checkbox" name="isilan_etiket" value="yol_servis" /><span class="etiket-chip-form">🚌 Yol/Servis var</span></label>
+            <label class="etiket-check"><input type="checkbox" name="isilan_etiket" value="sgk_sigorta" /><span class="etiket-chip-form">📋 SGK + Sigorta</span></label>
+            <label class="etiket-check"><input type="checkbox" name="isilan_etiket" value="acil_alim" /><span class="etiket-chip-form">🆘 Acil işe alım</span></label>
+            <label class="etiket-check"><input type="checkbox" name="isilan_etiket" value="tecrube_gerekmez" /><span class="etiket-chip-form">🎓 Tecrübe gerekmez</span></label>
+            <label class="etiket-check"><input type="checkbox" name="isilan_etiket" value="esnek_saat" /><span class="etiket-chip-form">⏰ Esnek saat</span></label>
+            <label class="etiket-check"><input type="checkbox" name="isilan_etiket" value="prim_bahsis" /><span class="etiket-chip-form">💰 Prim/Bahşiş</span></label>
+            <label class="etiket-check"><input type="checkbox" name="isilan_etiket" value="hafta_sonu_izin" /><span class="etiket-chip-form">📅 Hafta sonu izinli</span></label>
+          </div>
+        </fieldset>
 
         <label class="consent" style="margin-top:8px">
           <input type="checkbox" id="isIlanKurallarOnay" required />
@@ -1171,8 +1188,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=157"></script>
-  <script src="script.js?v=157"></script>
-  <script src="script-is-ilani.js?v=157"></script>
+  <script src="supabase-config.js?v=158"></script>
+  <script src="script.js?v=158"></script>
+  <script src="script-is-ilani.js?v=158"></script>
 </body>
 </html>

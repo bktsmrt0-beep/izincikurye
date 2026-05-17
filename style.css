@@ -3902,6 +3902,100 @@ textarea#rwYorum:focus {
   color: #dc2626;
 }
 
+/* İş ilanı aksiyon butonları (v158) */
+.iir-aksiyon {
+  align-items: flex-end;
+  gap: 4px;
+}
+.iir-act-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+.iir-act {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #64748b;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.iir-act:hover {
+  background: #fff7ed;
+  color: #c2410c;
+  border-color: #fed7aa;
+}
+.iir-act.iir-act-danger:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+/* İş ilanı etiket chip'leri (v158) */
+.iir-etiketler {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.iir-etiket-chip {
+  background: #ecfdf5;
+  color: #047857;
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+/* İş ilanı detay etiket chip'leri */
+.iid-etiketler {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 14px;
+}
+.iid-etiket-chip {
+  background: #ecfdf5;
+  color: #047857;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* İş ilanı detay reaksiyon butonları (v158) */
+.iid-rxn-row {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0;
+}
+.iid-rxn-btn {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+}
+.iid-rxn-btn:hover { background: #fff; border-color: #cbd5e1; }
+.iid-rxn-btn.active { background: #fff7ed; border-color: var(--orange); color: var(--orange-dark); }
+.iid-rxn-info { text-align: center; margin: 8px 0; }
+.iid-ekstra-aksiyon {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 14px;
+  margin-top: 14px;
+}
+
 /* Mobile: 2 satıra dön (anlık ilan pattern ile aynı) */
 @media (max-width: 600px) {
   .is-ilan-row {
