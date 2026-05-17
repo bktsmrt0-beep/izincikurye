@@ -109,9 +109,21 @@ const ANKARA_ILCELERI = [
   "Keçiören","Kızılcahamam","Mamak","Nallıhan","Polatlı","Pursaklar","Sincan",
   "Şereflikoçhisar","Yenimahalle"
 ];
+// Modül erişimi için window'a yansıt (script-is-ilani.js ve gelecek modüller için)
+window.ANKARA_ILCELERI = ANKARA_ILCELERI;
+window.SUPABASE_URL = SUPABASE_URL;
+window.SUPABASE_KEY = SUPABASE_KEY;
 
 // =============== DURUM ===============
 let currentUser = null;   // { id, email, ad, soyad, tel }
+// Modüller (script-is-ilani.js vb.) için dinamik window.currentUser senkronu
+// — let değişkenleri otomatik window'a eklenmediği için getter ile bağlıyoruz.
+try {
+  Object.defineProperty(window, "currentUser", {
+    get: () => currentUser,
+    configurable: true
+  });
+} catch (e) { console.warn("[window.currentUser bind]", e); }
 let ilanlar = [];
 let listingScope = "all"; // "all" | "mine"
 let contentTab = "ilanlar"; // "ilanlar" | "kuryeler"
