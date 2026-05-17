@@ -178,8 +178,8 @@ for (let h = 1; h <= 6; h++) {
   const v = String(h).padStart(2, "0") + ":00";
   bitSaat.appendChild(new Option(v, v));
 }
-basSaat.value = "07:00";
-bitSaat.value = "07:00";
+basSaat.value = "12:00";  // v146: en çok aranan saat aralığı default'u
+bitSaat.value = "22:00";
 
 // =============== TOAST ===============
 function toast(msg, type = "info", ms = 3000) {
@@ -2327,7 +2327,7 @@ document.getElementById("ilanForm").addEventListener("submit", async e => {
   saatRange.value = 4;
   fiyatRange.value = 280; fiyatVal.textContent = "280";
   kmRange.value = 8; kmVal.textContent = "8";
-  basSaat.value = "07:00"; bitSaat.value = "07:00";  // v145 vardiya başlangıcı default
+  basSaat.value = "12:00"; bitSaat.value = "22:00";  // v146 en çok aranan saat aralığı
   _updateSureOzeti();
   document.getElementById("ilanIletisimTel").value = "";
   document.getElementById("telEditHint")?.classList.add("hidden");
