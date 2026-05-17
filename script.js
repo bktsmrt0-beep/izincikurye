@@ -344,6 +344,8 @@ async function loadIlanlar({ append = false } = {}) {
     const params = new URLSearchParams();
     params.set("select", "*");
     params.set("order", "sort_score.desc,created_at.desc");
+    // Sadece anlık izinci ilanları — iş ilanları kendi sekmesinde (v159 fix)
+    params.set("tur", "eq.anlik_kurye");
     if (filter !== "all") params.set("ilce", "eq." + filter);
     if (listingScope === "mine" && currentUser) params.set("user_id", "eq." + currentUser.id);
     if (tableOrView === "ilanlar") params.set("expires_at", "gt." + new Date().toISOString());
