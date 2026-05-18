@@ -4265,11 +4265,100 @@ textarea#rwYorum:focus {
 }
 
 /* Pazaryeri toolbar — iki dropdown yan yana ortalanır */
-#pzrCekiciPanel .isilanlari-toolbar {
+#pzrCekiciPanel .isilanlari-toolbar,
+#pzrTamirPanel .isilanlari-toolbar,
+#pzrSatisPanel .isilanlari-toolbar,
+#pzrMuhasebePanel .isilanlari-toolbar {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
   align-items: center;
   margin: 14px 0;
+}
+
+/* ===== v192 Tamir/Satış/Muhasebe servis renkleri ===== */
+.kurye-musait-banner.banner-tamir {
+  background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%);
+}
+.kurye-musait-banner.banner-tamir.active {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+.kurye-musait-banner.banner-satis {
+  background: linear-gradient(135deg, #c084fc 0%, #9333ea 100%);
+}
+.kurye-musait-banner.banner-satis.active {
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+.kurye-musait-banner.banner-muhasebe {
+  background: linear-gradient(135deg, #4ade80 0%, #16a34a 100%);
+}
+.kurye-musait-banner.banner-muhasebe.active {
+  background: linear-gradient(135deg, #15803d 0%, #14532d 100%);
+}
+
+/* Profilim sekmeleri için tema wrapper'ları */
+#profileTamirDetayWrap {
+  padding: 14px;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+#profileSatisDetayWrap {
+  padding: 14px;
+  background: #faf5ff;
+  border: 1px solid #d8b4fe;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+#profileMuhasebeDetayWrap {
+  padding: 14px;
+  background: #f0fdf4;
+  border: 1px solid #86efac;
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+/* Servis bazlı satır vurgu — ad rengi */
+.pzr-tamir-row .cell-ad strong { color: #1d4ed8; }
+.pzr-satis-row .cell-ad strong { color: #6b21a8; }
+.pzr-muhasebe-row .cell-ad strong { color: #15803d; }
+.pzr-tamir-row:hover { background: #eff6ff; }
+.pzr-satis-row:hover { background: #faf5ff; }
+.pzr-muhasebe-row:hover { background: #f0fdf4; }
+
+/* Detay modal aynı override (3 yeni modal) */
+#tamirDetailModal .modal-card,
+#satisDetailModal .modal-card,
+#muhasebeDetailModal .modal-card {
+  padding: 0;
+  max-width: 640px;
+  width: 100%;
+  overflow: visible;
+  background: transparent;
+  box-shadow: none;
+  box-sizing: border-box;
+}
+#tamirDetailModal .modal-close,
+#satisDetailModal .modal-close,
+#muhasebeDetailModal .modal-close {
+  position: fixed;
+  top: 14px; right: 14px;
+  z-index: 1010;
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  width: 38px; height: 38px;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+  display: flex; align-items: center; justify-content: center;
+  padding: 0; font-size: 24px; color: var(--gray-700); cursor: pointer;
+}
+@media (max-width: 520px) {
+  #tamirDetailModal, #satisDetailModal, #muhasebeDetailModal { padding: 8px; box-sizing: border-box; }
+  #tamirDetailModal .modal-card,
+  #satisDetailModal .modal-card,
+  #muhasebeDetailModal .modal-card { max-width: 100%; }
 }
 

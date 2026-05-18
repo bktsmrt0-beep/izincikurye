@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=191" />
+  <link rel="stylesheet" href="style.css?v=192" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -295,27 +295,94 @@
           <p id="pzrCekiciGuestNotice" class="muted small hidden" style="text-align:center;margin-top:12px">Müsait çekicileri görmek için <a href="#" id="pzrCekiciGuestLink" class="link-orange">giriş yap</a>.</p>
         </div>
 
-        <!-- Diğer alt-paneller placeholder -->
+        <!-- TAMIR alt-paneli -->
         <div id="pzrTamirPanel" class="hidden">
-          <div class="empty" style="padding:60px 24px;text-align:center;">
-            <div class="empty-icon">🔧</div>
-            <h3>Açık Tamir Yerleri — Yakında</h3>
-            <p>Geç saatte/hafta sonu açık olan motor tamir, lastik, oto elektrik servisleri burada listelenecek.</p>
+          <section id="tamirMusaitBanner" class="kurye-musait-banner banner-tamir hidden" aria-live="polite">
+            <button type="button" class="kmb-btn" id="tamirMusaitBtn" aria-pressed="false">
+              <span class="kmb-icon" id="tamirMusaitIcon">🟠</span>
+              <span class="kmb-text">
+                <strong id="tamirMusaitTitle">MEŞGUL DURUMDASIN</strong>
+                <small id="tamirMusaitHint">Tek tıkla <b>Müsait</b> ol — müşteriler seni görür</small>
+              </span>
+              <span class="kmb-action" id="tamirMusaitAction">MÜSAİT OL</span>
+            </button>
+          </section>
+          <div id="tamirProfilEksikBanner" class="hidden" style="background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;padding:12px 16px;margin-bottom:14px;color:#1e3a8a;font-size:14px;line-height:1.5;">
+            🔧 <strong>Tamir hizmeti veriyorsan</strong> profilini doldur. <a href="#" class="link-orange profil-ac-link" data-svc="tamir">Profilim → Tamir sekmesi</a>
           </div>
+          <div class="isilanlari-toolbar">
+            <select id="pzrTamirIlceFilter" class="select" style="max-width:200px"><option value="all">Tüm Bölgeler</option></select>
+            <select id="pzrTamirHizmetFilter" class="select" style="max-width:200px">
+              <option value="all">Tüm Hizmetler</option>
+              <option value="motor">🏍 Motor</option>
+              <option value="arac">🚗 Araç</option>
+              <option value="her_ikisi">🚛 Her ikisi</option>
+              <option value="elektrik">⚡ Oto elektrik</option>
+              <option value="lastik">🛞 Lastik</option>
+            </select>
+          </div>
+          <div id="pzrTamirListings" class="kurye-listings"></div>
+          <div id="pzrTamirEmpty" class="empty hidden"></div>
         </div>
+
+        <!-- SATIŞ alt-paneli -->
         <div id="pzrSatisPanel" class="hidden">
-          <div class="empty" style="padding:60px 24px;text-align:center;">
-            <div class="empty-icon">🏍</div>
-            <h3>Motor Alım-Satım — Yakında</h3>
-            <p>İkinci el motor/scooter, kasko, ekipman ilanları burada olacak.</p>
+          <section id="satisMusaitBanner" class="kurye-musait-banner banner-satis hidden" aria-live="polite">
+            <button type="button" class="kmb-btn" id="satisMusaitBtn" aria-pressed="false">
+              <span class="kmb-icon" id="satisMusaitIcon">🟠</span>
+              <span class="kmb-text">
+                <strong id="satisMusaitTitle">İLAN PASİF</strong>
+                <small id="satisMusaitHint">Tek tıkla <b>satışı aktif et</b> — alıcılar görür</small>
+              </span>
+              <span class="kmb-action" id="satisMusaitAction">SATIŞA AÇ</span>
+            </button>
+          </section>
+          <div id="satisProfilEksikBanner" class="hidden" style="background:#f3e8ff;border:1px solid #d8b4fe;border-radius:10px;padding:12px 16px;margin-bottom:14px;color:#581c87;font-size:14px;line-height:1.5;">
+            🏍 <strong>Satılık ürünün varsa</strong> profilini doldur. <a href="#" class="link-orange profil-ac-link" data-svc="satis">Profilim → Satış sekmesi</a>
           </div>
+          <div class="isilanlari-toolbar">
+            <select id="pzrSatisIlceFilter" class="select" style="max-width:200px"><option value="all">Tüm Bölgeler</option></select>
+            <select id="pzrSatisKategoriFilter" class="select" style="max-width:200px">
+              <option value="all">Tüm Kategoriler</option>
+              <option value="motor">🏍 Motor</option>
+              <option value="scooter">🛴 Scooter</option>
+              <option value="bisiklet">🚲 Bisiklet</option>
+              <option value="ekipman">🎒 Ekipman</option>
+              <option value="parca">🔩 Yedek Parça</option>
+            </select>
+          </div>
+          <div id="pzrSatisListings" class="kurye-listings"></div>
+          <div id="pzrSatisEmpty" class="empty hidden"></div>
         </div>
+
+        <!-- MUHASEBE alt-paneli -->
         <div id="pzrMuhasebePanel" class="hidden">
-          <div class="empty" style="padding:60px 24px;text-align:center;">
-            <div class="empty-icon">📊</div>
-            <h3>Muhasebe / Danışmanlık — Yakında</h3>
-            <p>Esnaf kuryelere yönelik muhasebe, vergi, sigorta hizmeti veren firmalar burada toplanacak.</p>
+          <section id="muhasebeMusaitBanner" class="kurye-musait-banner banner-muhasebe hidden" aria-live="polite">
+            <button type="button" class="kmb-btn" id="muhasebeMusaitBtn" aria-pressed="false">
+              <span class="kmb-icon" id="muhasebeMusaitIcon">🟠</span>
+              <span class="kmb-text">
+                <strong id="muhasebeMusaitTitle">MEŞGUL DURUMDASIN</strong>
+                <small id="muhasebeMusaitHint">Tek tıkla <b>Müsait</b> ol — müşteriler seni görür</small>
+              </span>
+              <span class="kmb-action" id="muhasebeMusaitAction">MÜSAİT OL</span>
+            </button>
+          </section>
+          <div id="muhasebeProfilEksikBanner" class="hidden" style="background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:12px 16px;margin-bottom:14px;color:#14532d;font-size:14px;line-height:1.5;">
+            📊 <strong>Muhasebe / Danışmanlık veriyorsan</strong> profilini doldur. <a href="#" class="link-orange profil-ac-link" data-svc="muhasebe">Profilim → Muhasebe sekmesi</a>
           </div>
+          <div class="isilanlari-toolbar">
+            <select id="pzrMuhasebeIlceFilter" class="select" style="max-width:200px"><option value="all">Tüm Bölgeler</option></select>
+            <select id="pzrMuhasebeHizmetFilter" class="select" style="max-width:200px">
+              <option value="all">Tüm Hizmetler</option>
+              <option value="vergi">📑 Vergi</option>
+              <option value="sgk">🛡 SGK</option>
+              <option value="sirket_kurulum">🏢 Şirket Kurulum</option>
+              <option value="genel">📋 Genel</option>
+              <option value="diger">📊 Diğer</option>
+            </select>
+          </div>
+          <div id="pzrMuhasebeListings" class="kurye-listings"></div>
+          <div id="pzrMuhasebeEmpty" class="empty hidden"></div>
         </div>
       </div>
       <p id="kuryeGuestNotice" class="muted small hidden" style="text-align:center;margin-top:12px">Müsait kuryeleri görmek için <a href="#" id="kuryeGuestLink" class="link-orange">giriş yap</a>.</p>
@@ -841,6 +908,72 @@
     </div>
   </div>
 
+  <!-- ===== TAMIR DETAY MODAL (v192) ===== -->
+  <div class="modal hidden" id="tamirDetailModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <div id="tamirDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== SATIŞ DETAY MODAL (v192) ===== -->
+  <div class="modal hidden" id="satisDetailModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <div id="satisDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== MUHASEBE DETAY MODAL (v192) ===== -->
+  <div class="modal hidden" id="muhasebeDetailModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <div id="muhasebeDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== TAMIR MÜSAİT ONAY MODAL (v192) ===== -->
+  <div class="modal hidden" id="tamirMusaitOnayModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>🔧 Tamir Müsait Olarak İşaretleneceksin</h2>
+      <p>Müsait olduğunda <strong>Açık Tamir Yerleri</strong> listesinde görünürsün.</p>
+      <label class="consent" style="margin-top:10px">
+        <input type="checkbox" id="tamirMusaitKurallarOnay" required />
+        <span><a href="/ilan-kurallari.html" target="_blank" rel="noopener">İlan Verme Kuralları</a>'nı okudum ve hizmetimin kurallara uygun olduğunu onaylıyorum.</span>
+      </label>
+      <button type="button" id="tamirMusaitOnayBtn" class="btn btn-primary btn-block" style="margin-top:12px" disabled>Müsait Ol</button>
+    </div>
+  </div>
+
+  <!-- ===== SATIŞ MÜSAİT ONAY MODAL (v192) ===== -->
+  <div class="modal hidden" id="satisMusaitOnayModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>🏍 Satış İlanını Aktif Etmek Üzeresin</h2>
+      <p>İlanın <strong>Alım-Satım</strong> listesinde herkesçe görünür olacak.</p>
+      <label class="consent" style="margin-top:10px">
+        <input type="checkbox" id="satisMusaitKurallarOnay" required />
+        <span><a href="/ilan-kurallari.html" target="_blank" rel="noopener">İlan Verme Kuralları</a>'nı okudum. Sahte/yanıltıcı ilan vermediğimi onaylıyorum.</span>
+      </label>
+      <button type="button" id="satisMusaitOnayBtn" class="btn btn-primary btn-block" style="margin-top:12px" disabled>Satışa Aç</button>
+    </div>
+  </div>
+
+  <!-- ===== MUHASEBE MÜSAİT ONAY MODAL (v192) ===== -->
+  <div class="modal hidden" id="muhasebeMusaitOnayModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>📊 Muhasebe Müsait Olarak İşaretleneceksin</h2>
+      <p>Müsait olduğunda <strong>Muhasebe</strong> listesinde görünürsün.</p>
+      <label class="consent" style="margin-top:10px">
+        <input type="checkbox" id="muhasebeMusaitKurallarOnay" required />
+        <span><a href="/ilan-kurallari.html" target="_blank" rel="noopener">İlan Verme Kuralları</a>'nı okudum ve hizmetimin kurallara uygun olduğunu onaylıyorum.</span>
+      </label>
+      <button type="button" id="muhasebeMusaitOnayBtn" class="btn btn-primary btn-block" style="margin-top:12px" disabled>Müsait Ol</button>
+    </div>
+  </div>
+
   <!-- ===== Çekici Müsait Onay Modal (kurye musaitOnayModal benzeri) ===== -->
   <div class="modal hidden" id="cekiciMusaitOnayModal">
     <div class="modal-card">
@@ -1105,6 +1238,9 @@
         <button type="button" class="tab-btn" data-tab="profil" role="tab">Profil</button>
         <button type="button" class="tab-btn hidden" data-tab="isletme" role="tab" id="profileTabIsletme">🏪 İşletme</button>
         <button type="button" class="tab-btn hidden" data-tab="cekici" role="tab" id="profileTabCekici">🚛 Çekici</button>
+        <button type="button" class="tab-btn hidden" data-tab="tamir" role="tab" id="profileTabTamir">🔧 Tamir</button>
+        <button type="button" class="tab-btn hidden" data-tab="satis" role="tab" id="profileTabSatis">🏍 Satış</button>
+        <button type="button" class="tab-btn hidden" data-tab="muhasebe" role="tab" id="profileTabMuhasebe">📊 Muhasebe</button>
         <button type="button" class="tab-btn" data-tab="bildirim" role="tab">Bildirimler</button>
         <button type="button" class="tab-btn" data-tab="guvenlik" role="tab">Güvenlik</button>
       </div>
@@ -1386,6 +1522,153 @@
           </div>
         </div>
 
+        <!-- TAMIR alanları (sadece işletme, v192) -->
+        <div data-tab-section="tamir" class="hidden">
+          <p class="muted small" style="margin-bottom:10px">🔧 <strong>Tamir/Servis hizmeti veriyorsan</strong> aşağıyı doldur — Açık Tamir Yerleri listesinde görünmek için.</p>
+          <label class="toggle-row" style="margin:4px 0 10px;cursor:pointer">
+            <input type="checkbox" id="profileTamirAktif" />
+            <span>🔧 <strong>Tamir hizmeti veriyorum</strong></span>
+          </label>
+          <div id="profileTamirDetayWrap" class="hidden">
+            <label>Hizmet Tipi
+              <select id="profileTamirHizmetTipi">
+                <option value="">— Seçiniz —</option>
+                <option value="motor">🏍 Motor tamiri</option>
+                <option value="arac">🚗 Araç tamiri</option>
+                <option value="her_ikisi">🚛 Her ikisi</option>
+                <option value="elektrik">⚡ Oto elektrik</option>
+                <option value="lastik">🛞 Lastik / Balans</option>
+              </select>
+            </label>
+            <label style="margin-top:10px">Hizmet Bölgesi
+              <select id="profileTamirBolge">
+                <option value="">— Seçiniz —</option>
+                <option value="tum">📍 Tüm İlçeler</option>
+              </select>
+            </label>
+            <div class="row-2" style="margin-top:10px">
+              <label>İşçilik Min (₺)
+                <input type="number" id="profileTamirMinUcret" min="100" max="99999" step="50" placeholder="500" />
+              </label>
+              <label>İşçilik Max (₺)
+                <input type="number" id="profileTamirMaxUcret" min="100" max="99999" step="50" placeholder="2000" />
+              </label>
+            </div>
+            <label style="margin-top:10px">Açıklama
+              <textarea id="profileTamirAciklama" rows="4" maxlength="600" placeholder="Hizmet detayını yaz: uzmanlık alanları, çalışma saatleri, garanti politikası..."></textarea>
+            </label>
+            <fieldset class="etiket-fieldset" style="margin-top:10px">
+              <legend>Etiketler <small class="muted">(opsiyonel)</small></legend>
+              <div class="etiket-checks">
+                <label class="etiket-check"><input type="checkbox" name="tamir_p_etiket" value="acik_7_24" /><span class="etiket-chip-form">🕐 7/24 Açık</span></label>
+                <label class="etiket-check"><input type="checkbox" name="tamir_p_etiket" value="hafta_sonu" /><span class="etiket-chip-form">📅 Hafta sonu açık</span></label>
+                <label class="etiket-check"><input type="checkbox" name="tamir_p_etiket" value="garantili" /><span class="etiket-chip-form">🛡 Garantili işçilik</span></label>
+                <label class="etiket-check"><input type="checkbox" name="tamir_p_etiket" value="kredi_karti" /><span class="etiket-chip-form">💳 Kredi kartı geçer</span></label>
+                <label class="etiket-check"><input type="checkbox" name="tamir_p_etiket" value="yedek_parca" /><span class="etiket-chip-form">🔩 Orijinal yedek parça</span></label>
+                <label class="etiket-check"><input type="checkbox" name="tamir_p_etiket" value="hizli_servis" /><span class="etiket-chip-form">⚡ Hızlı servis</span></label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
+        <!-- SATIŞ alanları (sadece işletme, v192) -->
+        <div data-tab-section="satis" class="hidden">
+          <p class="muted small" style="margin-bottom:10px">🏍 <strong>Satılık motor/scooter/ekipman ilanın varsa</strong> aşağıyı doldur — Alım-Satım listesinde görünmek için.</p>
+          <label class="toggle-row" style="margin:4px 0 10px;cursor:pointer">
+            <input type="checkbox" id="profileSatisAktif" />
+            <span>🏍 <strong>Satılık ürünüm var</strong></span>
+          </label>
+          <div id="profileSatisDetayWrap" class="hidden">
+            <label>Kategori
+              <select id="profileSatisKategori">
+                <option value="">— Seçiniz —</option>
+                <option value="motor">🏍 Motor</option>
+                <option value="scooter">🛴 Scooter</option>
+                <option value="bisiklet">🚲 Bisiklet</option>
+                <option value="ekipman">🎒 Ekipman (kask/çanta/eldiven)</option>
+                <option value="parca">🔩 Yedek Parça</option>
+              </select>
+            </label>
+            <label style="margin-top:10px">İlan Başlığı
+              <input type="text" id="profileSatisBaslik" maxlength="80" placeholder="Örn: 2022 Honda CB125F" />
+            </label>
+            <div class="row-2" style="margin-top:10px">
+              <label>Marka / Model
+                <input type="text" id="profileSatisMarkaModel" maxlength="60" placeholder="Honda CB125F" />
+              </label>
+              <label>Yıl
+                <input type="number" id="profileSatisYil" min="1980" max="2030" placeholder="2022" />
+              </label>
+            </div>
+            <div class="row-2" style="margin-top:10px">
+              <label>Durum
+                <select id="profileSatisDurum">
+                  <option value="">— Seçiniz —</option>
+                  <option value="sifir">🆕 Sıfır</option>
+                  <option value="ikinci_el">🔄 İkinci el</option>
+                </select>
+              </label>
+              <label>Fiyat (₺)
+                <input type="number" id="profileSatisFiyat" min="100" max="9999999" step="100" placeholder="65000" />
+              </label>
+            </div>
+            <label style="margin-top:10px">Konum (İlçe)
+              <select id="profileSatisBolge">
+                <option value="">— Seçiniz —</option>
+                <option value="tum">📍 Tüm İlçeler</option>
+              </select>
+            </label>
+            <label style="margin-top:10px">Açıklama
+              <textarea id="profileSatisAciklama" rows="4" maxlength="600" placeholder="Ürün detayını yaz: durum, hasar geçmişi, ekipman bilgisi, takasla ilgili tercih..."></textarea>
+            </label>
+            <label style="margin-top:10px">Fotoğraf URL (opsiyonel)
+              <input type="url" id="profileSatisFotoUrl" maxlength="500" placeholder="https://..." />
+              <small class="muted">İmaj hosting servisi (imgur, postimage vb) URL'i yapıştır. Yakında foto upload gelecek.</small>
+            </label>
+          </div>
+        </div>
+
+        <!-- MUHASEBE alanları (sadece işletme, v192) -->
+        <div data-tab-section="muhasebe" class="hidden">
+          <p class="muted small" style="margin-bottom:10px">📊 <strong>Muhasebe / Danışmanlık hizmeti veriyorsan</strong> aşağıyı doldur — Muhasebe listesinde görünmek için.</p>
+          <label class="toggle-row" style="margin:4px 0 10px;cursor:pointer">
+            <input type="checkbox" id="profileMuhasebeAktif" />
+            <span>📊 <strong>Muhasebe / Danışmanlık veriyorum</strong></span>
+          </label>
+          <div id="profileMuhasebeDetayWrap" class="hidden">
+            <label>Hizmet Alanı
+              <select id="profileMuhasebeHizmet">
+                <option value="">— Seçiniz —</option>
+                <option value="vergi">📑 Vergi & Beyanname</option>
+                <option value="sgk">🛡 SGK / Bağ-Kur</option>
+                <option value="sirket_kurulum">🏢 Şirket Kurulumu</option>
+                <option value="genel">📋 Genel Muhasebe</option>
+                <option value="diger">📊 Diğer Danışmanlık</option>
+              </select>
+            </label>
+            <label style="margin-top:10px">Çalışma Bölgesi
+              <select id="profileMuhasebeBolge">
+                <option value="">— Seçiniz —</option>
+                <option value="tum">📍 Tüm İlçeler</option>
+              </select>
+            </label>
+            <label style="margin-top:10px">Açıklama
+              <textarea id="profileMuhasebeAciklama" rows="4" maxlength="600" placeholder="Hizmet detayını yaz: uzmanlık alanı, ücret yapısı, online görüşme imkanı..."></textarea>
+            </label>
+            <fieldset class="etiket-fieldset" style="margin-top:10px">
+              <legend>Etiketler <small class="muted">(opsiyonel)</small></legend>
+              <div class="etiket-checks">
+                <label class="etiket-check"><input type="checkbox" name="muhasebe_p_etiket" value="online" /><span class="etiket-chip-form">💻 Online görüşme</span></label>
+                <label class="etiket-check"><input type="checkbox" name="muhasebe_p_etiket" value="ev_ziyareti" /><span class="etiket-chip-form">🏠 Evde/işyerinde ziyaret</span></label>
+                <label class="etiket-check"><input type="checkbox" name="muhasebe_p_etiket" value="esnaf_uzmani" /><span class="etiket-chip-form">🏪 Esnaf uzmanı</span></label>
+                <label class="etiket-check"><input type="checkbox" name="muhasebe_p_etiket" value="kurye_uzmani" /><span class="etiket-chip-form">🏍 Kurye uzmanı</span></label>
+                <label class="etiket-check"><input type="checkbox" name="muhasebe_p_etiket" value="aylik_paket" /><span class="etiket-chip-form">📦 Aylık abonelik paketi</span></label>
+                <label class="etiket-check"><input type="checkbox" name="muhasebe_p_etiket" value="ucretsiz_ilk_gorusme" /><span class="etiket-chip-form">🎁 Ücretsiz ilk görüşme</span></label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
         <!-- Bildirim alanları -->
         <div data-tab-section="bildirim" class="hidden">
           <p class="muted small" style="margin-bottom:8px">Hangi durumlarda e-posta almak istediğini seç.</p>
@@ -1442,9 +1725,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=191"></script>
-  <script src="script.js?v=191"></script>
-  <script src="script-is-ilani.js?v=191"></script>
-  <script src="script-pazaryeri.js?v=191"></script>
+  <script src="supabase-config.js?v=192"></script>
+  <script src="script.js?v=192"></script>
+  <script src="script-is-ilani.js?v=192"></script>
+  <script src="script-pazaryeri.js?v=192"></script>
 </body>
 </html>
