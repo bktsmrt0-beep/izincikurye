@@ -878,8 +878,8 @@
     document.querySelectorAll("#isilanlariScope .seg-btn").forEach(btn => {
       btn.addEventListener("click", () => _setIsIlanScope(btn.dataset.scope));
     });
-    // "+ İş İlanı Ver" butonu
-    document.getElementById("isIlanVerBtn")?.addEventListener("click", _openIsIlanForm);
+    // "+ İş İlanı Ver" butonu — arrow ile sar ki event objesi editIlan parametresi olmasın!
+    document.getElementById("isIlanVerBtn")?.addEventListener("click", () => _openIsIlanForm());
     // Form submit
     document.getElementById("isIlanForm")?.addEventListener("submit", _submitIsIlan);
     // "Düzenle" hint linkleri (Profilim'e gider)
