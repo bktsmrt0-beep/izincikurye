@@ -347,7 +347,7 @@
   }
 
   // ============== FORM ==============
-  function _openIsIlanForm(editIlan = null) {
+  async function _openIsIlanForm(editIlan = null) {
     if (!window.currentUser) {
       window.toast?.("İlan vermek için önce giriş yap.", "info", 4000);
       window.openModal?.("registerModal");
@@ -357,8 +357,24 @@
       window.toast?.("İş ilanı verebilmek için işletme hesabı gerekir.", "error", 5000);
       return;
     }
-    // v173: işletme adı + telefon profilden gelir, readonly. Eksikse profile yönlendir.
-    if (!editIlan) {
+    // v176: işletme adı boş ise DB'den taze çek (cached state olabilir)
+    if (!editIlan && (!window.currentUser.isletmeAdi || !window.currentUser.tel)) {
+      const session = window.readStoredSession?.();
+      if (session?.access_token) {
+        try {
+          const { data } = await window.rawSelect(
+            `profiles?id=eq.${window.currentUser.id}&select=isletme_adi,tel,is_telefonu`,
+            session.access_token, 5000
+          );
+          const p = Array.isArray(data) && data[0];
+          if (p) {
+            if (p.isletme_adi) window.currentUser.isletmeAdi = p.isletme_adi;
+            if (p.tel) window.currentUser.tel = p.tel;
+            if (p.is_telefonu) window.currentUser.isTelefonu = p.is_telefonu;
+          }
+        } catch (e) { console.warn("[isIlanForm profile refresh]", e); }
+      }
+      // Hâlâ eksikse Profilim'e yönlendir
       if (!window.currentUser.isletmeAdi || !window.currentUser.tel) {
         window.toast?.("Önce profilinden işletme adını ve cep telefonunu tamamla.", "info", 6000);
         setTimeout(() => {
