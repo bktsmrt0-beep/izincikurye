@@ -3843,18 +3843,26 @@ textarea#rwYorum:focus {
   margin: 0 auto;
 }
 
-/* İş ilanı compact row (v168 — anlık ilan .ilan-row ile BİREBİR aynı ölçek) */
+/* İş ilanı compact row (v169 — meta+aksiyon tek cell, anlık ilan ile aynı ölçek) */
 .is-ilan-row {
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  padding: 10px 14px;            /* anlık ilan ile aynı */
+  padding: 10px 14px;
   cursor: pointer;
   transition: background .12s, border-color .12s, transform .08s;
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  grid-template-columns: 2fr 1fr 1fr auto;
   align-items: center;
-  gap: 12px;                      /* anlık ilan ile aynı */
+  gap: 12px;
+}
+.iir-rozet-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  font-size: 11px;
 }
 .is-ilan-row:hover { background: #fff7ed; border-color: #fed7aa; }
 .is-ilan-row:active { transform: scale(0.998); }
@@ -3884,13 +3892,7 @@ textarea#rwYorum:focus {
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.2px;
 }
-.iir-meta {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-wrap: nowrap;
-  font-size: 11.5px;              /* anlık ilan cell-aktif ile aynı */
-}
+.iir-meta { display: none; }   /* v169: meta cell kaldırıldı, içerik aksiyon cell'inde */
 .iir-etiket-sayi {
   background: #ecfdf5;
   color: #047857;
@@ -3958,11 +3960,12 @@ textarea#rwYorum:focus {
   color: #dc2626;
 }
 
-/* İş ilanı aksiyon butonları (v158/v167 compact) */
+/* İş ilanı aksiyon butonları (v158/v167 compact / v169 rozet+aksiyon kombine) */
 .iir-aksiyon {
   display: flex;
-  justify-content: flex-end;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
 }
 .iir-act-row {
   display: flex;
@@ -4053,26 +4056,33 @@ textarea#rwYorum:focus {
   margin-top: 14px;
 }
 
-/* Mobile: anlık ilan ile BİREBİR aynı ölçek (v168) — 2 satır grid */
+/* Mobile: 2 satır kompakt (v169) — anlık ilan ile aynı yoğunluk */
 @media (max-width: 600px) {
   .is-ilan-row {
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-columns: 1fr auto;
     grid-template-areas:
-      "isletme isletme isletme meta"
-      "ilce    ilce    maas    aksiyon";
-    gap: 4px 6px;                 /* anlık ilan ile aynı */
-    padding: 10px 12px;           /* anlık ilan ile aynı */
+      "isletme maas"
+      "ilce    aksiyon";
+    gap: 4px 8px;
+    padding: 10px 12px;
   }
-  .iir-isletme-baslik { grid-area: isletme; }
-  .iir-ilce { grid-area: ilce; }
-  .iir-maas { grid-area: maas; justify-self: end; }
-  .iir-meta { grid-area: meta; justify-self: end; align-self: start; }
-  .iir-aksiyon { grid-area: aksiyon; justify-content: flex-end; }
-  .iir-isletme-ad { font-size: 13.5px; }     /* anlık ilan ile aynı */
-  .iir-ilce .cell-text { font-size: 13px; }   /* anlık ilan ile aynı */
-  .iir-maas-val { font-size: 13.5px; }        /* anlık ilan strong ile aynı */
-  .iir-meta { font-size: 10.5px; }            /* anlık ilan cell-aktif ile aynı */
-  .iir-act { font-size: 12px; padding: 3px 4px; }
+  .iir-isletme-baslik { grid-area: isletme; min-width: 0; }
+  .iir-ilce { grid-area: ilce; min-width: 0; }
+  .iir-maas { grid-area: maas; justify-self: end; align-items: center; }
+  .iir-aksiyon { grid-area: aksiyon; justify-content: flex-end; align-items: flex-end; gap: 2px; }
+  .iir-rozet-row { font-size: 10.5px; gap: 3px; flex-wrap: nowrap; }
+  .iir-rozet-row .durum-rozet { padding: 1px 6px; font-size: 10px; }
+  .iir-rozet-row .iir-etiket-sayi { padding: 1px 5px; font-size: 10px; }
+  .iir-isletme-ad { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .iir-ilce .cell-text { font-size: 13px; }
+  .iir-maas-val { font-size: 13.5px; white-space: nowrap; }
+  .iir-act { font-size: 13px; padding: 3px 4px; }
+  .iir-act-row { gap: 2px; }
+}
+@media (max-width: 380px) {
+  .iir-isletme-ad { font-size: 12.5px; }
+  .iir-maas-val { font-size: 12.5px; }
+  .iir-ilce .cell-text { font-size: 12px; }
 }
 
 /* Durum rozetleri (kullanıcı kendi ilanını gördüğünde) */

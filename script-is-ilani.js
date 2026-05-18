@@ -64,6 +64,22 @@
     return "≤ " + _formatMaas(max);
   }
 
+  // Kısa maaş formatı — kart için (25000 → 25K, range 25-35K ₺)
+  function _kisaSayi(n) {
+    if (n == null) return "—";
+    if (n >= 1000) {
+      const k = n / 1000;
+      return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1).replace(".0", "").replace(".", ",")) + "K";
+    }
+    return String(n);
+  }
+  function _formatMaasKisa(min, max) {
+    if (min == null && max == null) return "—";
+    if (min != null && max != null) return _kisaSayi(min) + "-" + _kisaSayi(max) + " ₺";
+    if (min != null) return _kisaSayi(min) + "+ ₺";
+    return "≤" + _kisaSayi(max) + " ₺";
+  }
+
   // Durum rozeti
   function _durumRozet(durum) {
     if (durum === "beklemede")  return `<span class="durum-rozet durum-bekleme">⏳ İncelemede</span>`;
@@ -146,7 +162,7 @@
   function buildIsIlanCardHTML(i) {
     const turMeta = IS_ILAN_TURLERI[i.tur] || { label: i.tur, emoji: "💼" };
     const isletme = i.isyeri_ad || i.profile?.isletme_adi || (i.profile ? (i.profile.ad + " " + i.profile.soyad).trim() : "");
-    const maas = _formatMaasAralik(i.maas_min, i.maas_max);
+    const maas = _formatMaasKisa(i.maas_min, i.maas_max);  // kart için kısa (25K-35K ₺)
     const isOwn = window.currentUser && i.user_id === window.currentUser.id;
     const isAnonim = !window.currentUser;
     const durumLabel = isOwn ? _durumRozet(i.durum) : "";
@@ -182,7 +198,7 @@
       aksiyonlar.push(`<button class="iir-act iir-act-danger" data-iict="delete" data-id="${i.id}" title="Sil">🗑</button>`);
     }
 
-    // Compact tek satır (v167) — anlık ilan satırı pattern'ı, etiketler detayda
+    // Compact (v169) — meta + aksiyon tek cell'de birleşik, mobilde sığsın
     return `
       <article class="is-ilan-row" data-id="${i.id}">
         <div class="iir-cell iir-isletme-baslik" title="${window.escapeHtml(turMeta.label)}">
@@ -194,12 +210,8 @@
         <div class="iir-cell iir-maas">
           <strong class="iir-maas-val">${maas}</strong>
         </div>
-        <div class="iir-cell iir-meta">
-          ${etiketRozet}
-          ${netRozet}
-          ${durumLabel}
-        </div>
         <div class="iir-cell iir-aksiyon">
+          <div class="iir-rozet-row">${etiketRozet}${netRozet}${durumLabel}</div>
           <div class="iir-act-row">${aksiyonlar.join("")}</div>
         </div>
         ${redBlock}
