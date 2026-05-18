@@ -3843,56 +3843,27 @@ textarea#rwYorum:focus {
   margin: 0 auto;
 }
 
-/* İş ilanı compact row (v169 — meta+aksiyon tek cell, anlık ilan ile aynı ölçek) */
-.is-ilan-row {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 10px 14px;
-  cursor: pointer;
-  transition: background .12s, border-color .12s, transform .08s;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr auto;
-  align-items: center;
-  gap: 12px;
+/* İş ilanı satırı (v170) — anlık ilan .ilan-row class'ını miras alır.
+   Sadece işletme adı turuncu + aksiyon ikonları cell'i farklı. */
+.is-ilan-row .cell-isletme {
+  flex: 1;
+  min-width: 0;
 }
-.iir-rozet-row {
-  display: flex;
-  align-items: center;
+.is-ilan-row .cell-isletme .cell-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: #c2410c;                 /* turuncu — işletme adını vurgular */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.is-ilan-row .cell-maas strong { color: #047857; }
+.is-ilan-row .cell-is-ilani-aksiyon {
+  flex-direction: row;
   gap: 4px;
   flex-wrap: wrap;
   justify-content: flex-end;
-  font-size: 11px;
 }
-.is-ilan-row:hover { background: #fff7ed; border-color: #fed7aa; }
-.is-ilan-row:active { transform: scale(0.998); }
-.iir-isletme-baslik { min-width: 0; }
-.iir-isletme-ad {
-  font-size: 14px;                /* anlık ilan .cell-bolge .cell-text ile aynı */
-  font-weight: 700;
-  color: #c2410c;
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  letter-spacing: -0.1px;
-}
-.iir-ilce .cell-text {
-  font-size: 14px;                /* anlık ilan ile aynı */
-  font-weight: 600;
-  color: #1e293b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.iir-maas-val {
-  font-size: 16px;                /* anlık ilan strong ile aynı */
-  font-weight: 800;
-  color: #047857;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.2px;
-}
-.iir-meta { display: none; }   /* v169: meta cell kaldırıldı, içerik aksiyon cell'inde */
 .iir-etiket-sayi {
   background: #ecfdf5;
   color: #047857;
@@ -3902,7 +3873,6 @@ textarea#rwYorum:focus {
   font-weight: 600;
   cursor: help;
 }
-.iir-cell { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .is-ilan-row:hover {
   border-color: var(--orange);
   box-shadow: 0 2px 8px rgba(0,0,0,0.06);
@@ -4056,33 +4026,29 @@ textarea#rwYorum:focus {
   margin-top: 14px;
 }
 
-/* Mobile: 2 satır kompakt (v169) — anlık ilan ile aynı yoğunluk */
+/* Mobile: anlık ilan mobile pattern'ı aynen — sadece grid-areas (v170) */
 @media (max-width: 600px) {
   .is-ilan-row {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-template-areas:
-      "isletme maas"
-      "ilce    aksiyon";
-    gap: 4px 8px;
-    padding: 10px 12px;
+      "isletme isletme isletme aksiyon"
+      "ilce    maas    tarih   aksiyon";
+    gap: 4px 6px;
   }
-  .iir-isletme-baslik { grid-area: isletme; min-width: 0; }
-  .iir-ilce { grid-area: ilce; min-width: 0; }
-  .iir-maas { grid-area: maas; justify-self: end; align-items: center; }
-  .iir-aksiyon { grid-area: aksiyon; justify-content: flex-end; align-items: flex-end; gap: 2px; }
-  .iir-rozet-row { font-size: 10.5px; gap: 3px; flex-wrap: nowrap; }
-  .iir-rozet-row .durum-rozet { padding: 1px 6px; font-size: 10px; }
-  .iir-rozet-row .iir-etiket-sayi { padding: 1px 5px; font-size: 10px; }
-  .iir-isletme-ad { font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .iir-ilce .cell-text { font-size: 13px; }
-  .iir-maas-val { font-size: 13.5px; white-space: nowrap; }
-  .iir-act { font-size: 13px; padding: 3px 4px; }
-  .iir-act-row { gap: 2px; }
+  .is-ilan-row .cell-isletme { grid-area: isletme; }
+  .is-ilan-row .cell-ilce { grid-area: ilce; }
+  .is-ilan-row .cell-maas { grid-area: maas; }
+  .is-ilan-row .cell-tarih { grid-area: tarih; }
+  .is-ilan-row .cell-is-ilani-aksiyon {
+    grid-area: aksiyon;
+    justify-content: flex-end;
+    align-items: flex-end;
+  }
+  .is-ilan-row .iir-act-row { gap: 2px; }
+  .is-ilan-row .iir-act { padding: 2px 4px; font-size: 12px; }
 }
-@media (max-width: 380px) {
-  .iir-isletme-ad { font-size: 12.5px; }
-  .iir-maas-val { font-size: 12.5px; }
-  .iir-ilce .cell-text { font-size: 12px; }
+@media (max-width: 400px) {
+  .is-ilan-row .cell-tarih { display: none; }
 }
 
 /* Durum rozetleri (kullanıcı kendi ilanını gördüğünde) */

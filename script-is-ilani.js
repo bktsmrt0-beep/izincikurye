@@ -198,20 +198,30 @@
       aksiyonlar.push(`<button class="iir-act iir-act-danger" data-iict="delete" data-id="${i.id}" title="Sil">🗑</button>`);
     }
 
-    // Compact (v169) — meta + aksiyon tek cell'de birleşik, mobilde sığsın
+    // v170: anlık ilan satırı CLASSI'NI birebir kullan — aynı CSS otomatik gelir
+    // Sadece "cell-isletme" özel (turuncu işletme adı) ve "cell-aktif" aksiyon ikonları içerir
     return `
-      <article class="is-ilan-row" data-id="${i.id}">
-        <div class="iir-cell iir-isletme-baslik" title="${window.escapeHtml(turMeta.label)}">
-          <span class="iir-isletme-ad">🏢 ${window.escapeHtml(isletme || "İlan")}</span>
+      <article class="ilan-row is-ilan-row" data-id="${i.id}">
+        <div class="ilan-row-cell cell-isletme" title="${window.escapeHtml(turMeta.label)}">
+          <span class="cell-ico">🏢</span>
+          <span class="cell-text">${window.escapeHtml(isletme || "İlan")}</span>
         </div>
-        <div class="iir-cell iir-ilce">
-          <span class="cell-text">📍 ${window.escapeHtml(i.ilce)}</span>
+        <div class="ilan-row-cell cell-ilce">
+          <span class="cell-label">İlçe</span>
+          <strong>${window.escapeHtml(i.ilce)}</strong>
         </div>
-        <div class="iir-cell iir-maas">
-          <strong class="iir-maas-val">${maas}</strong>
+        <div class="ilan-row-cell cell-maas">
+          <span class="cell-label">Maaş</span>
+          <strong>${maas}</strong>
         </div>
-        <div class="iir-cell iir-aksiyon">
-          <div class="iir-rozet-row">${etiketRozet}${netRozet}${durumLabel}</div>
+        <div class="ilan-row-cell cell-tarih">
+          <span class="cell-label">Tarih</span>
+          <strong>${window.formatDateTime ? window.formatDateTime(i.created_at).replace(/^\d{1,2}\s\w+\s\d{4}\s/, "") : ""}</strong>
+        </div>
+        <div class="ilan-row-cell cell-aktif cell-is-ilani-aksiyon">
+          ${durumLabel}
+          ${netRozet}
+          ${etiketRozet}
           <div class="iir-act-row">${aksiyonlar.join("")}</div>
         </div>
         ${redBlock}
