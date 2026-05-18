@@ -629,6 +629,7 @@
     const submitBtnText = _editingIsIlanId ? "Güncelle" : "Yayınla";
     if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = _editingIsIlanId ? "Güncelleniyor..." : "Gönderiliyor..."; }
 
+    console.log("[isIlan submit] form values:", { tur, baslik, isyeri_ad, ilce, calisma_suresi, maas_min, maas_max });
     const payload = {
       tur,
       baslik,
@@ -664,7 +665,9 @@
     } else {
       // INSERT
       payload.user_id = window.currentUser.id;
+      console.log("[isIlan submit] INSERT payload:", payload);
       const result = await window.rawInsert("ilanlar", payload, session.access_token);
+      console.log("[isIlan submit] INSERT result:", result);
       error = result.error;
     }
 
