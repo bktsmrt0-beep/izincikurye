@@ -4402,18 +4402,13 @@ document.querySelectorAll(".content-tab").forEach(btn => {
     const newTab = btn.dataset.contentTab;
     if (newTab === contentTab) return;  // zaten bu sekmedeyiz
 
-    // History yönetimi (v160 — basit replaceState):
-    // Eski push/back mantığı 4 tab'da kırılıyordu (back öncekı state'e gidip
-    // istenen tab'a değil eski tab'a dönerken). Şimdi her geçiş tek bir
-    // state slotu — geri tuşu siteden çıkarır (zaten kullanıcı bilinçli geçti).
+    // URL hash ile tab persistance (v178) — yenilemede tab korunur
     if (!_switchingTabFromPopstate) {
       try {
-        const isDefault = (newTab === "ilanlar");
-        if (isDefault) {
-          history.replaceState(null, "", window.location.href);
-        } else {
-          history.replaceState({ tab: newTab }, "", window.location.href);
-        }
+        const newUrl = newTab === "ilanlar"
+          ? window.location.pathname + window.location.search
+          : window.location.pathname + window.location.search + "#" + newTab;
+        history.replaceState({ tab: newTab }, "", newUrl);
       } catch {}
     }
 
@@ -4515,6 +4510,16 @@ async function _enforceRememberMe() {
 
   // 4) Senkron son rötuşlar
   try { checkProfilEksikBanner(); } catch (e) { console.error("init checkProfilEksikBanner:", e); }
+
+  // URL hash'inde tab varsa o sekmeye geç (v178 — yenilemede tab korumak için)
+  try {
+    const hash = (window.location.hash || "").replace(/^#/, "");
+    const validTabs = ["ilanlar", "kuryeler", "isilanlari", "pazaryeri"];
+    if (validTabs.includes(hash) && hash !== "ilanlar") {
+      const btn = document.querySelector(`.content-tab[data-content-tab="${hash}"]`);
+      if (btn && !btn.classList.contains("active")) btn.click();
+    }
+  } catch (e) { console.warn("[init hash tab]", e); }
 
   if (_isRecoveryUrl) {
     openModal("forgotResetModal");
