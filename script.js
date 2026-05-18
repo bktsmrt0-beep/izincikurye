@@ -1965,6 +1965,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   const ticari = fd.get("ticari") === "on";
 
   const isletme_adi = (fd.get("isletme_adi") || "").trim();
+  const isletme_tipi = (fd.get("isletme_tipi") || "").trim();
   const is_adresi = (fd.get("is_adresi") || "").trim();
   const is_telefonu = (fd.get("is_telefonu") || "").trim();
 
@@ -1975,6 +1976,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   if (!_isMobileTr(tel)) { toast("Cep telefonu numarası 5 ile başlamalı (örn. 0532...).", "error"); return; }
   if (kullanici_tipi === "isletme") {
     if (!isletme_adi) { toast("İşletme adı zorunludur.", "error"); return; }
+    if (!isletme_tipi) { toast("İşletme tipi seç — sahte ilanları önlemek için zorunludur.", "error", 5000); return; }
     if (!is_adresi) { toast("İş adresi zorunludur.", "error"); return; }
     if (!is_telefonu) { toast("İş telefonu zorunludur.", "error"); return; }
     if (_telDigits(is_telefonu).length < 10) { toast("İş telefonu en az 10 hane olmalı.", "error"); return; }
@@ -1990,7 +1992,7 @@ document.getElementById("registerForm").addEventListener("submit", async e => {
   const { error } = await rawSignUp(
     email,
     sifre,
-    { ad, soyad, tel: telE164, ticari, kullanici_tipi, isletme_adi, is_adresi, is_telefonu: isTelE164 },
+    { ad, soyad, tel: telE164, ticari, kullanici_tipi, isletme_adi, isletme_tipi, is_adresi, is_telefonu: isTelE164 },
     window.location.origin + "/"
   );
   if (error) { toast("Kayıt hatası: " + error.message, "error"); return; }
@@ -3861,8 +3863,6 @@ async function _commitCekiciMusait(yeni) {
   const nowIso = new Date().toISOString();
   // Optimistic
   currentUser.cekiciMusait = yeni;
-  const ct = document.getElementById("cekiciMusaitToggle");
-  if (ct) ct.checked = yeni;
   _updateCekiciBannerVisual();
 
   try {
@@ -3883,23 +3883,28 @@ async function _commitCekiciMusait(yeni) {
     window.izPazaryeri?.load?.();
   } catch (e) {
     currentUser.cekiciMusait = !yeni;
-    if (ct) ct.checked = !yeni;
     _updateCekiciBannerVisual();
     toast("Güncellenemedi: " + (e.message || e), "error");
   }
 }
 
-// Banner görsel state — ikon/title/active class
+// Banner görsel state — ikon/title/action span'ları + active class
 function _updateCekiciBannerVisual() {
   const banner = document.getElementById("cekiciMusaitBanner");
   const icon = document.getElementById("cekiciMusaitIcon");
   const title = document.getElementById("cekiciMusaitTitle");
-  const ct = document.getElementById("cekiciMusaitToggle");
+  const hint = document.getElementById("cekiciMusaitHint");
+  const action = document.getElementById("cekiciMusaitAction");
+  const btn = document.getElementById("cekiciMusaitBtn");
   const yeni = !!currentUser?.cekiciMusait;
   if (banner) banner.classList.toggle("active", yeni);
-  if (icon) icon.textContent = yeni ? "🟢" : "🔴";
-  if (title) title.textContent = yeni ? "Şu an müsaitsin" : "Müsait Değilsin";
-  if (ct) ct.checked = yeni;
+  if (icon) icon.textContent = yeni ? "🟢" : "🟠";
+  if (title) title.textContent = yeni ? "MÜSAİTSİN" : "MEŞGUL DURUMDASIN";
+  if (hint) hint.innerHTML = yeni
+    ? "Müşterilerin <b>Müsait Çekiciler</b> listesinde görüyor"
+    : "Tek tıkla <b>Müsait</b> ol — müşteriler seni görür";
+  if (action) action.textContent = yeni ? "MÜSAİT DEĞİLİM" : "MÜSAİT OL";
+  if (btn) btn.setAttribute("aria-pressed", yeni ? "true" : "false");
 }
 
 function _openCekiciMusaitOnay(onConfirm) {
@@ -3920,14 +3925,14 @@ function _openCekiciMusaitOnay(onConfirm) {
   openModal("cekiciMusaitOnayModal");
 }
 
-document.getElementById("cekiciMusaitToggle")?.addEventListener("change", e => {
+document.getElementById("cekiciMusaitBtn")?.addEventListener("click", () => {
   if (!currentUser) return;
-  const yeni = e.target.checked;
-  if (yeni) {
-    e.target.checked = false;
-    _openCekiciMusaitOnay(() => _commitCekiciMusait(true));
-  } else {
+  if (currentUser.cekiciMusait) {
+    // Şu an müsait → tek tıkla kapat (onay yok)
     _commitCekiciMusait(false);
+  } else {
+    // Müsait değil → onay modal aç (kurallar onayı), sonra commit
+    _openCekiciMusaitOnay(() => _commitCekiciMusait(true));
   }
 });
 
