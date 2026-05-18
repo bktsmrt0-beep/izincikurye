@@ -357,8 +357,8 @@
       window.toast?.("İş ilanı verebilmek için işletme hesabı gerekir.", "error", 5000);
       return;
     }
-    // v176: işletme adı boş ise DB'den taze çek (cached state olabilir)
-    if (!editIlan && (!window.currentUser.isletmeAdi || !window.currentUser.tel)) {
+    // v177: yeni ilan modunda HER ZAMAN DB'den taze profile çek (cache'e güvenme)
+    if (!editIlan) {
       const session = window.readStoredSession?.();
       if (session?.access_token) {
         try {
@@ -367,14 +367,15 @@
             session.access_token, 5000
           );
           const p = Array.isArray(data) && data[0];
+          console.log("[isIlanForm] DB profile refresh:", p);
           if (p) {
-            if (p.isletme_adi) window.currentUser.isletmeAdi = p.isletme_adi;
-            if (p.tel) window.currentUser.tel = p.tel;
-            if (p.is_telefonu) window.currentUser.isTelefonu = p.is_telefonu;
+            window.currentUser.isletmeAdi = p.isletme_adi || "";
+            window.currentUser.tel = p.tel || "";
+            window.currentUser.isTelefonu = p.is_telefonu || "";
           }
         } catch (e) { console.warn("[isIlanForm profile refresh]", e); }
       }
-      // Hâlâ eksikse Profilim'e yönlendir
+      // Eksikse Profilim'e yönlendir
       if (!window.currentUser.isletmeAdi || !window.currentUser.tel) {
         window.toast?.("Önce profilinden işletme adını ve cep telefonunu tamamla.", "info", 6000);
         setTimeout(() => {
