@@ -38,6 +38,23 @@
   let _isIlanIlce = "all";               // ilçe filtresi
   let _editingIsIlanId = null;           // düzenleme modunda mı?
 
+  // Kategori bazlı çalışma süresi seçenekleri (v173)
+  const SURE_SECENEKLER = {
+    tam_zamanli:   ["8-10", "10-12", "12-14", "14-16"],
+    part_time:     ["4-6", "6-8"],
+    esnaf_kurye:   ["4-6", "6-8", "8-10", "10-12", "12-14", "14-16"],
+    arabali_kurye: ["4-6", "6-8", "8-10", "10-12", "12-14", "14-16"]
+  };
+  function _refreshSureDropdown(tur, keepValue = null) {
+    const sel = document.getElementById("isIlanCalismaSuresi");
+    if (!sel) return;
+    const aralar = SURE_SECENEKLER[tur] || [];
+    const mevcut = keepValue || sel.value;
+    sel.innerHTML = `<option value="">Seçiniz...</option>` +
+      aralar.map(s => `<option value="${s}">${s} saat</option>`).join("");
+    if (aralar.includes(mevcut)) sel.value = mevcut;
+  }
+
   // ============== HELPERS ==============
   // 300 kelime kontrolü — _validateIcerik üstüne wrapper
   function _validateUzunForm(text, alanAdi = "Açıklama") {
@@ -340,6 +357,17 @@
       window.toast?.("İş ilanı verebilmek için işletme hesabı gerekir.", "error", 5000);
       return;
     }
+    // v173: işletme adı + telefon profilden gelir, readonly. Eksikse profile yönlendir.
+    if (!editIlan) {
+      if (!window.currentUser.isletmeAdi || !window.currentUser.tel) {
+        window.toast?.("Önce profilinden işletme adını ve cep telefonunu tamamla.", "info", 6000);
+        setTimeout(() => {
+          if (typeof window.openProfileModal === "function") window.openProfileModal();
+          else window.openModal?.("profileModal");
+        }, 800);
+        return;
+      }
+    }
 
     _editingIsIlanId = editIlan ? editIlan.id : null;
     const form = document.getElementById("isIlanForm");
@@ -365,7 +393,10 @@
 
     // Kategori
     const turSel = document.getElementById("isIlanTur");
-    if (turSel) turSel.value = editIlan ? editIlan.tur : _isIlanAltTur;
+    const aktifTur = editIlan ? editIlan.tur : _isIlanAltTur;
+    if (turSel) turSel.value = aktifTur;
+    // Süre dropdown'ı kategoriye göre güncelle (v173)
+    _refreshSureDropdown(aktifTur, editIlan?.calisma_suresi);
 
     if (editIlan) {
       // EDIT — mevcut değerleri yükle
@@ -475,19 +506,24 @@
     });
   }
 
-  // "Düzenle" linkleri — alanı temizle ve focus ver (anlık ilan pattern)
+  // "Düzenle" linkleri — Profilim modal'ına yönlendir (v173: artık form içinde değiştirilemez)
   function _bindEditHints() {
-    document.getElementById("isIlanAdEditBtn")?.addEventListener("click", e => {
+    const goProfil = (e) => {
       e.preventDefault();
-      const input = document.getElementById("isIlanIsyeriAd");
-      if (input) { input.value = ""; input.focus(); }
-      document.getElementById("isIlanAdHint")?.classList.add("hidden");
-    });
-    document.getElementById("isIlanTelEditBtn")?.addEventListener("click", e => {
-      e.preventDefault();
-      const input = document.getElementById("isIlanTel");
-      if (input) { input.value = ""; input.focus(); }
-      document.getElementById("isIlanTelHint")?.classList.add("hidden");
+      window.closeModals?.();
+      setTimeout(() => {
+        if (typeof window.openProfileModal === "function") window.openProfileModal();
+        else window.openModal?.("profileModal");
+      }, 150);
+    };
+    document.getElementById("isIlanAdEditBtn")?.addEventListener("click", goProfil);
+    document.getElementById("isIlanTelEditBtn")?.addEventListener("click", goProfil);
+  }
+
+  // Kategori değişince çalışma süresi dropdown'ını yenile
+  function _bindKategoriChange() {
+    document.getElementById("isIlanTur")?.addEventListener("change", e => {
+      _refreshSureDropdown(e.target.value);
     });
   }
 
@@ -821,8 +857,10 @@
     document.getElementById("isIlanVerBtn")?.addEventListener("click", _openIsIlanForm);
     // Form submit
     document.getElementById("isIlanForm")?.addEventListener("submit", _submitIsIlan);
-    // "Düzenle" hint linkleri
+    // "Düzenle" hint linkleri (Profilim'e gider)
     _bindEditHints();
+    // Kategori değişince süre dropdown'ı kategoriye uygun seçeneklerle yenile (v173)
+    _bindKategoriChange();
     // Maaş input binlik nokta + bin preview (v172)
     _bindMaasInput("isIlanMaasMin", "isIlanMaasMinPreview");
     _bindMaasInput("isIlanMaasMax", "isIlanMaasMaxPreview");
