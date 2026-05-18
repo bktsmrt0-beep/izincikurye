@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=173" />
+  <link rel="stylesheet" href="style.css?v=174" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -599,8 +599,8 @@
         </label>
 
         <label>İşyeri / Firma Adı <span class="req">*</span>
-          <input type="text" name="isyeri_ad" id="isIlanIsyeriAd" required maxlength="80" placeholder="Profilinden gelir" readonly />
-          <p class="muted small ilan-edit-hint" id="isIlanAdHint">🔒 Kayıtlı işletme adından otomatik. Değiştirmek için <a href="#" id="isIlanAdEditBtn" class="link-orange">Profilim → İşletme Bilgileri</a>.</p>
+          <input type="text" name="isyeri_ad" id="isIlanIsyeriAd" required maxlength="80" placeholder="Örn: Kızılay Lokantası" />
+          <p class="muted small ilan-edit-hint hidden" id="isIlanAdHint">Kayıtlı işletme adından otomatik dolduruldu. Bu ilan için farklı yazabilirsin.</p>
         </label>
 
         <label>İşin Yapılacağı İlçe (Ankara) <span class="req">*</span>
@@ -638,7 +638,7 @@
         </label>
 
         <label>İletişim Cep Telefonu <span class="req">*</span>
-          <input type="tel" name="iletisim_tel" id="isIlanTel" required inputmode="numeric" maxlength="20" placeholder="Profilinden gelir" readonly />
+          <input type="tel" name="iletisim_tel" id="isIlanTel" required inputmode="numeric" maxlength="20" placeholder="+90 532 123 45 67" readonly />
           <p class="muted small ilan-edit-hint" id="isIlanTelHint">🔒 Kayıtlı cep numaran kullanılır. Sahte numara paylaşımı yasak — ileride SMS doğrulama gelecek. Değiştirmek için <a href="#" id="isIlanTelEditBtn" class="link-orange">Profilim → Güvenlik</a>.</p>
         </label>
 
@@ -1198,8 +1198,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=173"></script>
-  <script src="script.js?v=173"></script>
-  <script src="script-is-ilani.js?v=173"></script>
+  <script src="supabase-config.js?v=174"></script>
+  <script src="script.js?v=174"></script>
+  <script src="script-is-ilani.js?v=174"></script>
 </body>
 </html>

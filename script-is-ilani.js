@@ -506,7 +506,7 @@
     });
   }
 
-  // "Düzenle" linkleri — Profilim modal'ına yönlendir (v173: artık form içinde değiştirilemez)
+  // v174: telefon readonly + Profilim linki; işyeri adı serbest düzenlenebilir
   function _bindEditHints() {
     const goProfil = (e) => {
       e.preventDefault();
@@ -516,7 +516,6 @@
         else window.openModal?.("profileModal");
       }, 150);
     };
-    document.getElementById("isIlanAdEditBtn")?.addEventListener("click", goProfil);
     document.getElementById("isIlanTelEditBtn")?.addEventListener("click", goProfil);
   }
 
