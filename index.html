@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=186" />
+  <link rel="stylesheet" href="style.css?v=187" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -262,14 +262,15 @@
         <div id="pzrCekiciPanel">
           <!-- Çekici müsait sticky banner (kurye banner pattern) -->
           <div id="cekiciMusaitBanner" class="kurye-musait-banner hidden">
-            <div class="kmb-content">
-              <div class="kmb-left">
-                <span class="kmb-dot"></span>
-                <span class="kmb-text">Çekici hizmetin için <strong>müsait</strong> olduğunu göster.</span>
+            <div style="display:flex;align-items:center;gap:16px;max-width:1200px;margin:0 auto;padding:16px 24px;color:white">
+              <span style="font-size:32px;line-height:1;flex-shrink:0" id="cekiciMusaitIcon">🔴</span>
+              <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+                <strong style="font-size:17px;font-weight:800;letter-spacing:0.3px" id="cekiciMusaitTitle">Müsait Değilsin</strong>
+                <span style="font-size:13px;opacity:0.92;line-height:1.4">Müsait olduğunda Müsait Çekiciler listesinde görünürsün.</span>
               </div>
-              <label class="switch" title="Müsait olduğunda Müsait Çekiciler listesinde görünürsün.">
-                <input type="checkbox" id="cekiciMusaitToggle" />
-                <span class="slider"></span>
+              <label class="toggle-row" style="background:rgba(255,255,255,0.18);padding:8px 14px;border-radius:24px;cursor:pointer;font-weight:600;font-size:14px;color:white;border:1px solid rgba(255,255,255,0.35);user-select:none">
+                <input type="checkbox" id="cekiciMusaitToggle" style="margin-right:8px;cursor:pointer" />
+                <span>Müsait Ol</span>
               </label>
             </div>
           </div>
@@ -1429,9 +1430,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=186"></script>
-  <script src="script.js?v=186"></script>
-  <script src="script-is-ilani.js?v=186"></script>
-  <script src="script-pazaryeri.js?v=186"></script>
+  <script src="supabase-config.js?v=187"></script>
+  <script src="script.js?v=187"></script>
+  <script src="script-is-ilani.js?v=187"></script>
+  <script src="script-pazaryeri.js?v=187"></script>
 </body>
 </html>

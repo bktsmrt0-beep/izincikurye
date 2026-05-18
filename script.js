@@ -3863,6 +3863,7 @@ async function _commitCekiciMusait(yeni) {
   currentUser.cekiciMusait = yeni;
   const ct = document.getElementById("cekiciMusaitToggle");
   if (ct) ct.checked = yeni;
+  _updateCekiciBannerVisual();
 
   try {
     const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
@@ -3883,8 +3884,22 @@ async function _commitCekiciMusait(yeni) {
   } catch (e) {
     currentUser.cekiciMusait = !yeni;
     if (ct) ct.checked = !yeni;
+    _updateCekiciBannerVisual();
     toast("Güncellenemedi: " + (e.message || e), "error");
   }
+}
+
+// Banner görsel state — ikon/title/active class
+function _updateCekiciBannerVisual() {
+  const banner = document.getElementById("cekiciMusaitBanner");
+  const icon = document.getElementById("cekiciMusaitIcon");
+  const title = document.getElementById("cekiciMusaitTitle");
+  const ct = document.getElementById("cekiciMusaitToggle");
+  const yeni = !!currentUser?.cekiciMusait;
+  if (banner) banner.classList.toggle("active", yeni);
+  if (icon) icon.textContent = yeni ? "🟢" : "🔴";
+  if (title) title.textContent = yeni ? "Şu an müsaitsin" : "Müsait Değilsin";
+  if (ct) ct.checked = yeni;
 }
 
 function _openCekiciMusaitOnay(onConfirm) {
@@ -3960,8 +3975,7 @@ window._updateCekiciBanner = function() {
   if (isIsletme && isCekiciAktif) {
     banner?.classList.remove("hidden");
     eksikBanner?.classList.add("hidden");
-    const ct = document.getElementById("cekiciMusaitToggle");
-    if (ct) ct.checked = !!currentUser.cekiciMusait;
+    _updateCekiciBannerVisual();
   } else if (isIsletme && !isCekiciAktif) {
     // İşletme ama çekici aktif değil → "profil eksik" banner
     banner?.classList.add("hidden");
