@@ -506,7 +506,7 @@
     });
   }
 
-  // v174: telefon readonly + Profilim linki; işyeri adı serbest düzenlenebilir
+  // v174/v175: telefon readonly + tıklayınca uyarı; işyeri adı serbest düzenlenebilir
   function _bindEditHints() {
     const goProfil = (e) => {
       e.preventDefault();
@@ -517,6 +517,15 @@
       }, 150);
     };
     document.getElementById("isIlanTelEditBtn")?.addEventListener("click", goProfil);
+    // v175: telefon input'a tıklama → uyarı + Profilim'e gitme önerisi
+    const telInput = document.getElementById("isIlanTel");
+    if (telInput) {
+      const showWarn = () => {
+        window.toast?.("🔒 İletişim numarası düzenlenemez. Kayıtlı cep numaran kullanılır. Değiştirmek için Profilim → Güvenlik.", "info", 5000);
+      };
+      telInput.addEventListener("click", showWarn);
+      telInput.addEventListener("focus", showWarn);
+    }
   }
 
   // Kategori değişince çalışma süresi dropdown'ını yenile
