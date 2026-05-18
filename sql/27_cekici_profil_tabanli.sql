@@ -20,10 +20,13 @@ alter table public.ilanlar
   add constraint ilanlar_tur_check
   check (tur in ('anlik_kurye', 'tam_zamanli', 'esnaf_kurye', 'arabali_kurye', 'part_time'));
 
--- (c) cekici_arac_tipi kolonu ilanlar tablosundan kaldır
+-- (c) View'ı ÖNCE düşür (cekici_arac_tipi kolonuna bağımlı olabilir)
+drop view if exists public.ilanlar_public cascade;
+
+-- (d) cekici_arac_tipi kolonu ilanlar tablosundan kaldır (artık view bağımlılığı yok)
 alter table public.ilanlar drop column if exists cekici_arac_tipi;
 
--- (d) ilanlar_cekici_idx (sql/25) düşür
+-- (e) ilanlar_cekici_idx (sql/25) düşür
 drop index if exists ilanlar_cekici_idx;
 
 -- 2) profiles tablosuna ÇEKİCİ alanları ekle
@@ -59,8 +62,7 @@ alter table public.profiles
 create index if not exists profiles_cekici_musait_idx on public.profiles(cekici_musait, cekici_musait_at desc)
   where cekici_aktif = true and cekici_musait = true;
 
--- 4) ilanlar_public view'ı yeniden oluştur (cekici_arac_tipi kolonu silindiği için)
-drop view if exists public.ilanlar_public cascade;
+-- 4) ilanlar_public view'ı yeniden oluştur (kolon drop sonrası)
 create view public.ilanlar_public as
   select * from public.ilanlar
   where
