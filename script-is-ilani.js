@@ -185,7 +185,7 @@
         </div>
         <div class="ilan-row-cell cell-sure">
           <span class="cell-label">Süre</span>
-          <strong>${turMeta.label}</strong>
+          <strong>${i.calisma_suresi ? window.escapeHtml(i.calisma_suresi) + " <small>sa</small>" : turMeta.label}</strong>
         </div>
         <div class="ilan-row-cell cell-kazanc">
           <span class="cell-label">Tahmini</span>
@@ -294,6 +294,7 @@
       <div class="iid-meta">
         ${isyeriAdi ? `<div>🏢 <strong>${window.escapeHtml(isyeriAdi)}</strong></div>` : ""}
         <div>📍 ${window.escapeHtml(ilan.ilce)} (Ankara)</div>
+        ${ilan.calisma_suresi ? `<div>⏰ Çalışma süresi: <strong>${window.escapeHtml(ilan.calisma_suresi)} saat/gün</strong></div>` : ""}
         <div>💰 ${_formatMaasAralik(ilan.maas_min, ilan.maas_max)}</div>
       </div>
       ${ilan.aciklama ? `<div class="iid-aciklama">${window.escapeHtml(ilan.aciklama).replace(/\n/g, "<br>")}</div>` : ""}
@@ -373,10 +374,18 @@
       const adInput = document.getElementById("isIlanIsyeriAd");
       if (adInput) adInput.value = editIlan.isyeri_ad || "";
       if (ilceSel) ilceSel.value = editIlan.ilce || "";
+      const sureSel = document.getElementById("isIlanCalismaSuresi");
+      if (sureSel) sureSel.value = editIlan.calisma_suresi || "";
       const maasMin = document.getElementById("isIlanMaasMin");
-      if (maasMin) maasMin.value = editIlan.maas_min ?? "";
+      if (maasMin) {
+        maasMin.value = editIlan.maas_min != null ? Number(editIlan.maas_min).toLocaleString("tr-TR") : "";
+        _updateMaasPreview(maasMin, document.getElementById("isIlanMaasMinPreview"));
+      }
       const maasMax = document.getElementById("isIlanMaasMax");
-      if (maasMax) maasMax.value = editIlan.maas_max ?? "";
+      if (maasMax) {
+        maasMax.value = editIlan.maas_max != null ? Number(editIlan.maas_max).toLocaleString("tr-TR") : "";
+        _updateMaasPreview(maasMax, document.getElementById("isIlanMaasMaxPreview"));
+      }
       const aciklamaTa = document.getElementById("isIlanAciklama");
       if (aciklamaTa) aciklamaTa.value = editIlan.aciklama || "";
       const telInput = document.getElementById("isIlanTel");
@@ -419,12 +428,51 @@
       }
       // Etiketler temiz
       document.querySelectorAll('#isIlanForm input[name=isilan_etiket]').forEach(cb => { cb.checked = false; });
+      // Süre + maaş alanlarını temizle
+      const sureSel = document.getElementById("isIlanCalismaSuresi");
+      if (sureSel) sureSel.value = "";
+      const maasMin = document.getElementById("isIlanMaasMin");
+      if (maasMin) maasMin.value = "";
+      const maasMax = document.getElementById("isIlanMaasMax");
+      if (maasMax) maasMax.value = "";
+      const minPrev = document.getElementById("isIlanMaasMinPreview");
+      if (minPrev) minPrev.textContent = "";
+      const maxPrev = document.getElementById("isIlanMaasMaxPreview");
+      if (maxPrev) maxPrev.textContent = "";
       // Kelime sayacı sıfırla
       const counter = document.getElementById("isIlanKelimeSayac");
       if (counter) counter.textContent = "0 / 300 kelime";
     }
 
     window.openModal?.("isIlanFormModal");
+  }
+
+  // Maaş input — binlik nokta + "X bin ₺" preview (v172)
+  function _updateMaasPreview(input, previewEl) {
+    if (!input || !previewEl) return;
+    const raw = (input.value || "").replace(/\D/g, "");
+    if (!raw) { previewEl.textContent = ""; return; }
+    const n = parseInt(raw, 10);
+    if (isNaN(n) || n <= 0) { previewEl.textContent = ""; return; }
+    if (n >= 1000) {
+      const k = n / 1000;
+      const kStr = (k % 1 === 0) ? k.toFixed(0) : k.toFixed(1).replace(".", ",");
+      previewEl.textContent = "= " + kStr + " bin ₺";
+    } else {
+      previewEl.textContent = "= " + n + " ₺";
+    }
+  }
+  function _bindMaasInput(inputId, previewId) {
+    const input = document.getElementById(inputId);
+    const preview = document.getElementById(previewId);
+    if (!input) return;
+    input.addEventListener("input", () => {
+      const raw = (input.value || "").replace(/\D/g, "");
+      // Max 9 hane (999.999.999) — formatlanmış 11 karakter
+      const clipped = raw.slice(0, 9);
+      input.value = clipped ? parseInt(clipped, 10).toLocaleString("tr-TR") : "";
+      _updateMaasPreview(input, preview);
+    });
   }
 
   // "Düzenle" linkleri — alanı temizle ve focus ver (anlık ilan pattern)
@@ -456,9 +504,11 @@
     const baslik = (fd.get("baslik") || "").trim();
     const isyeri_ad = (fd.get("isyeri_ad") || "").trim();
     const ilce = fd.get("ilce");
+    const calisma_suresi = fd.get("calisma_suresi");
     const aciklama = (fd.get("aciklama") || "").trim();
-    const maas_min = parseInt(fd.get("maas_min"), 10);
-    const maas_max = parseInt(fd.get("maas_max"), 10);
+    // Maaş: input'taki noktalar JS formatlama'dan geliyor, parse öncesi temizle
+    const maas_min = parseInt((fd.get("maas_min") || "").replace(/\D/g, ""), 10);
+    const maas_max = parseInt((fd.get("maas_max") || "").replace(/\D/g, ""), 10);
     const tel_raw = (fd.get("iletisim_tel") || "").trim();
     const kurallar = document.getElementById("isIlanKurallarOnay")?.checked;
 
@@ -468,6 +518,7 @@
     if (baslik.length > 80) return window.toast?.("Başlık 80 karakteri geçemez.", "error");
     if (!isyeri_ad || isyeri_ad.length < 2) return window.toast?.("İşyeri / firma adı zorunlu.", "error");
     if (!ilce) return window.toast?.("İşin yapılacağı ilçe zorunlu.", "error");
+    if (!calisma_suresi) return window.toast?.("Çalışılacak süre aralığı seç.", "error");
     if (!aciklama || aciklama.length < 20) return window.toast?.("Açıklama en az 20 karakter olmalı.", "error");
     const aciklamaErr = _validateUzunForm(aciklama, "Açıklama");
     if (aciklamaErr) return window.toast?.(aciklamaErr, "error", 6000);
@@ -500,6 +551,7 @@
       isyeri_ad,
       isyeri_adres: null,   // İş ilanlarında adres yok (firma farklı şehirde olabilir)
       ilce,
+      calisma_suresi,
       aciklama,
       maas_min: isNaN(maas_min) ? null : maas_min,
       maas_max: isNaN(maas_max) ? null : maas_max,
@@ -771,6 +823,9 @@
     document.getElementById("isIlanForm")?.addEventListener("submit", _submitIsIlan);
     // "Düzenle" hint linkleri
     _bindEditHints();
+    // Maaş input binlik nokta + bin preview (v172)
+    _bindMaasInput("isIlanMaasMin", "isIlanMaasMinPreview");
+    _bindMaasInput("isIlanMaasMax", "isIlanMaasMaxPreview");
     // Row click delegasyonu (compact row pattern — anlık ilan ile aynı)
     document.getElementById("isilanlariListings")?.addEventListener("click", (e) => {
       // Önce aksiyon butonları kontrol (satır click'ini engelle)

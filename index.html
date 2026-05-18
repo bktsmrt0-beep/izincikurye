@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=171" />
+  <link rel="stylesheet" href="style.css?v=172" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -609,12 +609,26 @@
           </select>
         </label>
 
+        <label>Çalışılacak Süre <span class="req">*</span>
+          <select name="calisma_suresi" id="isIlanCalismaSuresi" required>
+            <option value="">Seçiniz...</option>
+            <option value="4-6">4-6 saat</option>
+            <option value="6-8">6-8 saat</option>
+            <option value="8-10">8-10 saat</option>
+            <option value="10-12">10-12 saat</option>
+            <option value="12-14">12-14 saat</option>
+            <option value="14-16">14-16 saat</option>
+          </select>
+        </label>
+
         <div class="row-2">
           <label>Maaş Alt Sınır (₺)
-            <input type="number" name="maas_min" id="isIlanMaasMin" min="0" max="999999" placeholder="Örn: 25000" />
+            <input type="text" name="maas_min" id="isIlanMaasMin" inputmode="numeric" maxlength="11" placeholder="Örn: 25.000" autocomplete="off" />
+            <small class="muted" id="isIlanMaasMinPreview"></small>
           </label>
           <label>Maaş Üst Sınır (₺)
-            <input type="number" name="maas_max" id="isIlanMaasMax" min="0" max="999999" placeholder="Örn: 45000" />
+            <input type="text" name="maas_max" id="isIlanMaasMax" inputmode="numeric" maxlength="11" placeholder="Örn: 45.000" autocomplete="off" />
+            <small class="muted" id="isIlanMaasMaxPreview"></small>
           </label>
         </div>
 
@@ -1185,8 +1199,8 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=171"></script>
-  <script src="script.js?v=171"></script>
-  <script src="script-is-ilani.js?v=171"></script>
+  <script src="supabase-config.js?v=172"></script>
+  <script src="script.js?v=172"></script>
+  <script src="script-is-ilani.js?v=172"></script>
 </body>
 </html>
