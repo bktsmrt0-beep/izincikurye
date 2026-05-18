@@ -4573,7 +4573,15 @@ async function openIlanFromUrl() {
     openModal("registerModal");
     return;
   }
-  openIlanDetail(ilan);
+  // v180: ilan türüne göre doğru detay modal'ını aç (iş ilanı / anlık ilan)
+  if (ilan.tur && ilan.tur !== "anlik_kurye" && window.izIsIlani?.openDetail) {
+    // İş ilanı sekmesine geç ki kullanıcı bağlamı görsün
+    const btn = document.querySelector('.content-tab[data-content-tab="isilanlari"]');
+    if (btn && !btn.classList.contains("active")) btn.click();
+    window.izIsIlani.openDetail(ilan);
+  } else {
+    openIlanDetail(ilan);
+  }
 }
 
 // Paylaşım: clean URL kopyala

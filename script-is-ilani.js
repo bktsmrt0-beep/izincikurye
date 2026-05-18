@@ -414,6 +414,9 @@
     if (turSel) turSel.value = aktifTur;
     // Süre dropdown'ı kategoriye göre güncelle (v173)
     _refreshSureDropdown(aktifTur, editIlan?.calisma_suresi);
+    // Başlık placeholder kategoriye göre (v180)
+    const baslikInput = document.querySelector("#isIlanForm [name=baslik]");
+    if (baslikInput) baslikInput.placeholder = BASLIK_PLACEHOLDER[aktifTur] || "İlan başlığı yaz...";
 
     if (editIlan) {
       // EDIT — mevcut değerleri yükle
@@ -545,10 +548,19 @@
     }
   }
 
-  // Kategori değişince çalışma süresi dropdown'ını yenile
+  // Kategori değişince süre dropdown + başlık placeholder güncelle
+  const BASLIK_PLACEHOLDER = {
+    tam_zamanli:   "Örn: Çankaya'da Tam Zamanlı Motorlu Kurye Arıyoruz",
+    part_time:     "Örn: Akşam Mesaisi Part Time Kurye Aranıyor",
+    esnaf_kurye:   "Örn: Restoranımıza Esnaf Kurye Arıyoruz (Günlük)",
+    arabali_kurye: "Örn: Şehir İçi Arabalı Kurye İlanı"
+  };
   function _bindKategoriChange() {
     document.getElementById("isIlanTur")?.addEventListener("change", e => {
-      _refreshSureDropdown(e.target.value);
+      const tur = e.target.value;
+      _refreshSureDropdown(tur);
+      const baslikInput = document.querySelector("#isIlanForm [name=baslik]");
+      if (baslikInput) baslikInput.placeholder = BASLIK_PLACEHOLDER[tur] || "İlan başlığı yaz...";
     });
   }
 
@@ -590,6 +602,17 @@
     if (!isNaN(maas_min) && !isNaN(maas_max) && maas_min > maas_max) {
       return window.toast?.("Maaş alt sınırı üst sınırdan büyük olamaz.", "error");
     }
+    // Mantık dışı maaş uyarısı (v180): 10K altı veya 300K üstü tipik değildir
+    const checkMaas = (n, label) => {
+      if (isNaN(n)) return null;
+      if (n > 0 && n < 10000) return `${label} 10.000 ₺ altında — kuryeler için makul değil.`;
+      if (n > 300000) return `${label} 300.000 ₺ üstünde — fazla yüksek görünüyor, kontrol et.`;
+      return null;
+    };
+    const minErr = checkMaas(maas_min, "Maaş alt sınırı");
+    const maxErr = checkMaas(maas_max, "Maaş üst sınırı");
+    if (minErr) return window.toast?.(minErr, "error", 6000);
+    if (maxErr) return window.toast?.(maxErr, "error", 6000);
     if (!tel_raw || !window._isMobileTr?.(tel_raw)) {
       return window.toast?.("Geçerli bir cep telefonu gerekli.", "error");
     }
