@@ -1943,11 +1943,15 @@ document.querySelectorAll('#registerForm input[name="kullanici_tipi"]').forEach(
   r.addEventListener("change", () => {
     const isBiz = r.value === "isletme" && r.checked;
     const bf = document.getElementById("businessFields");
+    const bt = document.getElementById("businessTipWrap");
     if (bf) bf.classList.toggle("hidden", !isBiz);
+    if (bt) bt.classList.toggle("hidden", !isBiz);
     // Required toggle
     bf?.querySelectorAll('input[name="isletme_adi"], input[name="is_adresi"]').forEach(inp => {
       inp.required = isBiz;
     });
+    const tipSel = document.getElementById("regIsletmeTipi");
+    if (tipSel) tipSel.required = isBiz;
   });
 });
 

@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=189" />
+  <link rel="stylesheet" href="style.css?v=190" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -357,6 +357,21 @@
           </label>
         </div>
 
+        <!-- İşletme tipi — Ad/Soyad üstünde, kullanici_tipi=isletme'de görünür -->
+        <div id="businessTipWrap" class="hidden">
+          <label>İşletme Tipi <span class="req">*</span>
+            <select name="isletme_tipi" id="regIsletmeTipi">
+              <option value="">Seçiniz...</option>
+              <option value="restoran">🍽 Restoran</option>
+              <option value="cekici">🚛 Çekici / Kurtarıcı</option>
+              <option value="tamirci">🔧 Tamirci / Servis</option>
+              <option value="muhasebe">📊 Muhasebe / Danışmanlık</option>
+              <option value="diger">🏬 Diğer</option>
+            </select>
+            <small class="muted">Doğru tip seçimi sahte ilanlara karşı denetimimize yardımcı olur.</small>
+          </label>
+        </div>
+
         <div class="row-2">
           <label>Ad <span class="req">*</span>
             <input type="text" name="ad" required maxlength="40" autocomplete="given-name" />
@@ -379,17 +394,6 @@
         <div id="businessFields" class="hidden">
           <label>İşletme Adı <span class="req">*</span>
             <input type="text" name="isletme_adi" maxlength="100" placeholder="Örn: Kızılay Lokantası" />
-          </label>
-          <label>İşletme Tipi <span class="req">*</span>
-            <select name="isletme_tipi" id="regIsletmeTipi">
-              <option value="">Seçiniz...</option>
-              <option value="restoran">🍽 Restoran</option>
-              <option value="cekici">🚛 Çekici / Kurtarıcı</option>
-              <option value="tamirci">🔧 Tamirci / Servis</option>
-              <option value="muhasebe">📊 Muhasebe / Danışmanlık</option>
-              <option value="diger">🏬 Diğer</option>
-            </select>
-            <small class="muted">Doğru tip seçimi sahte ilanlara karşı denetimimize yardımcı olur.</small>
           </label>
           <label>İş Adresi <span class="req">*</span>
             <input type="text" name="is_adresi" maxlength="200" placeholder="Mahalle, cadde/sokak, no" />
@@ -1438,9 +1442,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=189"></script>
-  <script src="script.js?v=189"></script>
-  <script src="script-is-ilani.js?v=189"></script>
-  <script src="script-pazaryeri.js?v=189"></script>
+  <script src="supabase-config.js?v=190"></script>
+  <script src="script.js?v=190"></script>
+  <script src="script-is-ilani.js?v=190"></script>
+  <script src="script-pazaryeri.js?v=190"></script>
 </body>
 </html>
