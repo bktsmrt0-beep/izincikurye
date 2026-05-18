@@ -171,58 +171,29 @@
       ? `<div class="red-sebebi">❌ <strong>Red sebebi:</strong> ${window.escapeHtml(i.red_sebebi)}</div>`
       : "";
 
-    // Etiketler kart üstünde gösterilmez (compact için) — etiket sayısı varsa küçük rozet
-    const etArr = Array.isArray(i.etiketler) ? i.etiketler : [];
-    const etiketRozet = etArr.length
-      ? `<span class="iir-etiket-sayi" title="${etArr.map(k => IS_ILAN_ETIKETLER[k]?.label || k).filter(Boolean).join(', ')}">🏷 ${etArr.length}</span>`
-      : "";
+    // Durum rozeti üst köşede mini (sadece sahibe)
+    const durumMini = isOwn && durumLabel ? `<div class="iir-durum-mini">${durumLabel}</div>` : "";
 
-    // Reaksiyon sayaçları (anlık ilan ile aynı kolon — DB seviyesinde paylaşılan)
-    const begen = i.begen_sayisi || 0;
-    const begenmeme = i.begenmeme_sayisi || 0;
-    const net = begen - begenmeme;
-    const netRozet = net > 0
-      ? `<span class="net-rxn-pos">👍 +${net}</span>`
-      : net < 0 ? `<span class="net-rxn-neg">👎 ${net}</span>` : "";
-
-    // Aksiyon butonları satırı (Paylaş + Bildir + Düzenle + Sil)
-    const aksiyonlar = [];
-    aksiyonlar.push(`<button class="iir-act" data-iict="share" data-id="${i.id}" title="Paylaş">🔗</button>`);
-    if (!isAnonim && !isOwn) {
-      aksiyonlar.push(`<button class="iir-act" data-iict="rxn-up" data-id="${i.id}" title="Beğen">👍</button>`);
-      aksiyonlar.push(`<button class="iir-act" data-iict="rxn-down" data-id="${i.id}" title="Beğenmeme">👎</button>`);
-      aksiyonlar.push(`<button class="iir-act" data-iict="report" data-id="${i.id}" title="Sorun Bildir">⚠</button>`);
-    }
-    if (isOwn) {
-      aksiyonlar.push(`<button class="iir-act" data-iict="edit" data-id="${i.id}" title="Düzenle">✏</button>`);
-      aksiyonlar.push(`<button class="iir-act iir-act-danger" data-iict="delete" data-id="${i.id}" title="Sil">🗑</button>`);
-    }
-
-    // v170: anlık ilan satırı CLASSI'NI birebir kullan — aynı CSS otomatik gelir
-    // Sadece "cell-isletme" özel (turuncu işletme adı) ve "cell-aktif" aksiyon ikonları içerir
+    // v171: anlık ilan satırının BİREBİR aynısı — 4 hücre, label+strong pattern,
+    // canlı aktif sayaç. Aksiyon ikonları kart üstünde yok; detay modal'da var.
     return `
-      <article class="ilan-row is-ilan-row" data-id="${i.id}">
-        <div class="ilan-row-cell cell-isletme" title="${window.escapeHtml(turMeta.label)}">
-          <span class="cell-ico">🏢</span>
-          <span class="cell-text">${window.escapeHtml(isletme || "İlan")}</span>
+      <article class="ilan-row is-ilan-row" data-id="${i.id}" data-act="open-is-ilan">
+        ${durumMini}
+        <div class="ilan-row-cell cell-bolge">
+          <span class="cell-ico">📍</span>
+          <span class="cell-text">${window.escapeHtml(i.ilce)}, Ankara</span>
         </div>
-        <div class="ilan-row-cell cell-ilce">
-          <span class="cell-label">İlçe</span>
-          <strong>${window.escapeHtml(i.ilce)}</strong>
+        <div class="ilan-row-cell cell-sure">
+          <span class="cell-label">Süre</span>
+          <strong>${turMeta.label}</strong>
         </div>
-        <div class="ilan-row-cell cell-maas">
-          <span class="cell-label">Maaş</span>
+        <div class="ilan-row-cell cell-kazanc">
+          <span class="cell-label">Tahmini</span>
           <strong>${maas}</strong>
         </div>
-        <div class="ilan-row-cell cell-tarih">
-          <span class="cell-label">Tarih</span>
-          <strong>${window.formatDateTime ? window.formatDateTime(i.created_at).replace(/^\d{1,2}\s\w+\s\d{4}\s/, "") : ""}</strong>
-        </div>
-        <div class="ilan-row-cell cell-aktif cell-is-ilani-aksiyon">
-          ${durumLabel}
-          ${netRozet}
-          ${etiketRozet}
-          <div class="iir-act-row">${aksiyonlar.join("")}</div>
+        <div class="ilan-row-cell cell-aktif">
+          <span class="cell-dot"></span>
+          <span class="ilan-aktif-sayac" data-created="${i.created_at}">…</span>
         </div>
         ${redBlock}
       </article>

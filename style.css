@@ -3843,35 +3843,24 @@ textarea#rwYorum:focus {
   margin: 0 auto;
 }
 
-/* İş ilanı satırı (v170) — anlık ilan .ilan-row class'ını miras alır.
-   Sadece işletme adı turuncu + aksiyon ikonları cell'i farklı. */
-.is-ilan-row .cell-isletme {
-  flex: 1;
-  min-width: 0;
+/* İş ilanı satırı (v171) — anlık ilan .ilan-row class'ını miras alır.
+   Tek farkı: 4 hücre (saatlik+km yok) + sahibine durum rozeti üst sağda mini. */
+.is-ilan-row {
+  position: relative;
+  grid-template-columns: 2fr 1fr 1.4fr 1fr;
 }
-.is-ilan-row .cell-isletme .cell-text {
-  font-size: 14px;
-  font-weight: 700;
-  color: #c2410c;                 /* turuncu — işletme adını vurgular */
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.is-ilan-row .cell-kazanc strong { color: #047857; }
+.iir-durum-mini {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  font-size: 10px;
+  pointer-events: none;
 }
-.is-ilan-row .cell-maas strong { color: #047857; }
-.is-ilan-row .cell-is-ilani-aksiyon {
-  flex-direction: row;
-  gap: 4px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-.iir-etiket-sayi {
-  background: #ecfdf5;
-  color: #047857;
-  font-size: 11px;
-  padding: 2px 7px;
-  border-radius: 5px;
-  font-weight: 600;
-  cursor: help;
+.iir-durum-mini .durum-rozet {
+  padding: 1px 6px;
+  font-size: 10px;
+  line-height: 1.3;
 }
 .is-ilan-row:hover {
   border-color: var(--orange);
@@ -4026,29 +4015,19 @@ textarea#rwYorum:focus {
   margin-top: 14px;
 }
 
-/* Mobile: anlık ilan mobile pattern'ı aynen — sadece grid-areas (v170) */
+/* Mobile (v171) — anlık ilan mobile ile birebir aynı grid pattern */
 @media (max-width: 600px) {
   .is-ilan-row {
     grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-template-areas:
-      "isletme isletme isletme aksiyon"
-      "ilce    maas    tarih   aksiyon";
+      "bolge bolge bolge aktif"
+      "sure  sure  kazanc kazanc";
     gap: 4px 6px;
   }
-  .is-ilan-row .cell-isletme { grid-area: isletme; }
-  .is-ilan-row .cell-ilce { grid-area: ilce; }
-  .is-ilan-row .cell-maas { grid-area: maas; }
-  .is-ilan-row .cell-tarih { grid-area: tarih; }
-  .is-ilan-row .cell-is-ilani-aksiyon {
-    grid-area: aksiyon;
-    justify-content: flex-end;
-    align-items: flex-end;
-  }
-  .is-ilan-row .iir-act-row { gap: 2px; }
-  .is-ilan-row .iir-act { padding: 2px 4px; font-size: 12px; }
-}
-@media (max-width: 400px) {
-  .is-ilan-row .cell-tarih { display: none; }
+  .is-ilan-row .cell-bolge { grid-area: bolge; }
+  .is-ilan-row .cell-sure { grid-area: sure; }
+  .is-ilan-row .cell-kazanc { grid-area: kazanc; }
+  .is-ilan-row .cell-aktif { grid-area: aktif; justify-content: flex-end; }
 }
 
 /* Durum rozetleri (kullanıcı kendi ilanını gördüğünde) */
