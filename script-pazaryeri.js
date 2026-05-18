@@ -223,26 +223,28 @@
     ` : "";
 
     body.innerHTML = `
-      <div class="kd-header">
-        ${avatar}
-        <div class="kd-info">
-          <h2 class="kd-ad">${window.escapeHtml(ad)}</h2>
-          ${puanBlock}
+      <div class="kurye-detail-v75">
+        <div class="kd-header">
+          ${avatar}
+          <div class="kd-info">
+            <h2 class="kd-name">${window.escapeHtml(ad)}</h2>
+            ${puanBlock}
+          </div>
         </div>
+
+        <div class="kd-grid">
+          <div class="kd-cell"><span class="kd-cell-label">Hizmet Türü</span><strong>${aracMeta.ico} ${aracMeta.label}</strong></div>
+          <div class="kd-cell"><span class="kd-cell-label">Bölge</span><strong>📍 ${window.escapeHtml(bolge)}</strong></div>
+          <div class="kd-cell"><span class="kd-cell-label">Çağrı Başı</span><strong>${_formatFiyatAralik(cekici.cekici_min_ucret, cekici.cekici_max_ucret)}</strong></div>
+          <div class="kd-cell"><span class="kd-cell-label">Müsait süre</span><strong>🟢 ${_aktiflikSuresi(cekici.cekici_musait_at)}</strong></div>
+        </div>
+
+        ${etiketBlock}
+
+        ${cekici.cekici_aciklama ? `<div class="kd-bio">${window.escapeHtml(cekici.cekici_aciklama).replace(/\n/g, "<br>")}</div>` : ""}
+
+        ${iletisimBlock}
       </div>
-
-      <div class="kd-grid">
-        <div class="kd-cell"><span class="kd-label">Hizmet Türü</span><strong>${aracMeta.ico} ${aracMeta.label}</strong></div>
-        <div class="kd-cell"><span class="kd-label">Bölge</span><strong>📍 ${window.escapeHtml(bolge)}</strong></div>
-        <div class="kd-cell"><span class="kd-label">Çağrı Başı</span><strong>${_formatFiyatAralik(cekici.cekici_min_ucret, cekici.cekici_max_ucret)}</strong></div>
-        <div class="kd-cell"><span class="kd-label">Müsait süre</span><strong>🟢 ${_aktiflikSuresi(cekici.cekici_musait_at)}</strong></div>
-      </div>
-
-      ${etiketBlock}
-
-      ${cekici.cekici_aciklama ? `<div class="iid-aciklama">${window.escapeHtml(cekici.cekici_aciklama).replace(/\n/g, "<br>")}</div>` : ""}
-
-      ${iletisimBlock}
     `;
     window.openModal?.("cekiciDetailModal");
     try { history.pushState({ modal: "cekiciDetail" }, "", "/cekici/" + cekici.id); } catch (e) {}
