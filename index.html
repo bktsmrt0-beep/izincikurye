@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=183" />
+  <link rel="stylesheet" href="style.css?v=184" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -249,12 +249,52 @@
         <div id="isilanlariEmpty" class="empty hidden"></div>
       </div>
 
-      <!-- ===== PAZARYERİ PANELİ (Faz 2B placeholder) ===== -->
+      <!-- ===== PAZARYERİ PANELİ (Faz 2B, v184) ===== -->
       <div id="pazaryeriPanel" class="hidden">
-        <div class="empty" style="padding:60px 24px;text-align:center;">
-          <div class="empty-icon">🚧</div>
-          <h3>Pazaryeri Yakında</h3>
-          <p>Müsait çekiciler, açık tamir işletmeleri, motor alım-satım, kiralık motor ve muhasebe hizmetleri burada olacak.</p>
+        <div id="pazaryeriSubTabs" class="sub-tabs">
+          <button type="button" class="sub-tab active" data-pzr="cekici">🚛 Müsait Çekiciler</button>
+          <button type="button" class="sub-tab" data-pzr="tamir">🔧 Açık Tamir</button>
+          <button type="button" class="sub-tab" data-pzr="satis">🏍 Alım-Satım</button>
+          <button type="button" class="sub-tab" data-pzr="muhasebe">📊 Muhasebe</button>
+        </div>
+
+        <!-- Çekici alt-paneli (aktif) -->
+        <div id="pzrCekiciPanel">
+          <div class="isilanlari-toolbar">
+            <div id="pzrCekiciScope" class="seg-group" role="tablist" aria-label="Görünüm">
+              <button type="button" class="seg-btn active" data-scope="all">Tüm İlanlar</button>
+              <button type="button" class="seg-btn" data-scope="mine">İlanlarım</button>
+            </div>
+            <select id="pzrCekiciIlceFilter" class="select" style="max-width:180px">
+              <option value="all">Tüm Bölgeler</option>
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" id="pzrCekiciVerBtn">+ Çekici İlanı Ver</button>
+          </div>
+          <div id="pzrCekiciListings" class="is-ilan-list"></div>
+          <div id="pzrCekiciEmpty" class="empty hidden"></div>
+        </div>
+
+        <!-- Diğer alt-paneller placeholder -->
+        <div id="pzrTamirPanel" class="hidden">
+          <div class="empty" style="padding:60px 24px;text-align:center;">
+            <div class="empty-icon">🔧</div>
+            <h3>Açık Tamir Yerleri — Yakında</h3>
+            <p>Geç saatte/hafta sonu açık olan motor tamir, lastik, oto elektrik servisleri burada listelenecek.</p>
+          </div>
+        </div>
+        <div id="pzrSatisPanel" class="hidden">
+          <div class="empty" style="padding:60px 24px;text-align:center;">
+            <div class="empty-icon">🏍</div>
+            <h3>Motor Alım-Satım — Yakında</h3>
+            <p>İkinci el motor/scooter, kasko, ekipman ilanları burada olacak.</p>
+          </div>
+        </div>
+        <div id="pzrMuhasebePanel" class="hidden">
+          <div class="empty" style="padding:60px 24px;text-align:center;">
+            <div class="empty-icon">📊</div>
+            <h3>Muhasebe / Danışmanlık — Yakında</h3>
+            <p>Esnaf kuryelere yönelik muhasebe, vergi, sigorta hizmeti veren firmalar burada toplanacak.</p>
+          </div>
         </div>
       </div>
       <p id="kuryeGuestNotice" class="muted small hidden" style="text-align:center;margin-top:12px">Müsait kuryeleri görmek için <a href="#" id="kuryeGuestLink" class="link-orange">giriş yap</a>.</p>
@@ -673,6 +713,94 @@
     <div class="modal-card modal-wide">
       <button class="modal-close" data-close>&times;</button>
       <div id="isIlanDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== ÇEKİCİ İLANI FORM MODAL (Faz 2B, v184) ===== -->
+  <div class="modal hidden" id="cekiciFormModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>🚛 Çekici İlanı Ver</h2>
+      <p class="muted small">7/24 veya belirli saatlerde çağrı bekleyen çekici/kurtarıcı hizmeti veriyorsan buradan ilan paylaşabilirsin. İlan <strong>moderatör onayından</strong> sonra yayına çıkar (~4 saat). Yayın süresi 30 gün.</p>
+
+      <form id="cekiciForm" class="form" novalidate>
+        <label>Araç Tipi <span class="req">*</span>
+          <select name="cekici_arac_tipi" id="cekiciAracTipi" required>
+            <option value="">Seçiniz...</option>
+            <option value="lastikli">🛞 Lastikli Çekici</option>
+            <option value="suruklemeli">🪝 Sürüklemeli Çekici</option>
+            <option value="platformlu">🚚 Platformlu (Sıfır Hasar)</option>
+            <option value="agir_vasita">🚛 Ağır Vasıta Çekicisi</option>
+          </select>
+        </label>
+
+        <label>İlan Başlığı <span class="req">*</span>
+          <input type="text" name="baslik" id="cekiciBaslik" required maxlength="80" minlength="3" placeholder="Örn: Çankaya - 7/24 Platformlu Çekici Hizmeti" />
+        </label>
+
+        <label>İşyeri / Firma Adı <span class="req">*</span>
+          <input type="text" name="isyeri_ad" id="cekiciIsyeriAd" required maxlength="80" placeholder="Örn: Yıldız Çekici" />
+          <p class="muted small ilan-edit-hint hidden" id="cekiciAdHint">Kayıtlı işletme adından otomatik dolduruldu. Bu ilan için farklı yazabilirsin.</p>
+        </label>
+
+        <label>Hizmet Bölgesi (Ankara) <span class="req">*</span>
+          <select name="ilce" id="cekiciIlce" required>
+            <option value="">Seçiniz...</option>
+          </select>
+        </label>
+
+        <div class="row-2">
+          <label>Çağrı Başı Alt Sınır (₺)
+            <input type="text" name="maas_min" id="cekiciFiyatMin" inputmode="numeric" maxlength="9" placeholder="Örn: 750" autocomplete="off" />
+            <small class="muted" id="cekiciFiyatMinPreview"></small>
+          </label>
+          <label>Çağrı Başı Üst Sınır (₺)
+            <input type="text" name="maas_max" id="cekiciFiyatMax" inputmode="numeric" maxlength="9" placeholder="Örn: 1.500" autocomplete="off" />
+            <small class="muted" id="cekiciFiyatMaxPreview"></small>
+          </label>
+        </div>
+
+        <label>İlan Açıklaması <span class="req">*</span>
+          <textarea name="aciklama" id="cekiciAciklama" rows="6" required minlength="20" placeholder="Hizmet detayını yaz: çalışma saatleri, kapsam (şehir içi / şehirler arası), ekstra ücretler (otoyol/feribot), kapora politikası..."></textarea>
+          <small class="muted" id="cekiciKelimeSayac">0 / 300 kelime</small>
+        </label>
+
+        <label>İletişim Cep Telefonu <span class="req">*</span>
+          <input type="tel" name="iletisim_tel" id="cekiciTel" required inputmode="numeric" maxlength="20" placeholder="+90 532 123 45 67" readonly />
+          <p class="muted small ilan-edit-hint">🔒 Kayıtlı cep numaran kullanılır. Değiştirmek için Profilim → Güvenlik.</p>
+        </label>
+
+        <fieldset class="etiket-fieldset">
+          <legend>Etiketler <small class="muted">(opsiyonel)</small></legend>
+          <div class="etiket-checks">
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="acik_7_24" /><span class="etiket-chip-form">🕐 7/24 Açık</span></label>
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="sehirler_arasi" /><span class="etiket-chip-form">🛣 Şehirler arası</span></label>
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="kredi_karti" /><span class="etiket-chip-form">💳 Kredi kartı geçer</span></label>
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="kapora_yok" /><span class="etiket-chip-form">✅ Kapora yok</span></label>
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="agir_arac" /><span class="etiket-chip-form">🚛 Ağır araç çeker</span></label>
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="motor_cekici" /><span class="etiket-chip-form">🏍 Motor çekici</span></label>
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="garantili" /><span class="etiket-chip-form">🛡 Garantili / sigortalı</span></label>
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="hizli_servis" /><span class="etiket-chip-form">⚡ 30 dk içinde</span></label>
+          </div>
+        </fieldset>
+
+        <label class="consent" style="margin-top:8px">
+          <input type="checkbox" id="cekiciKurallarOnay" required />
+          <span>
+            <a href="/ilan-kurallari.html" target="_blank" rel="noopener">İlan Verme Kuralları</a>'nı okudum ve ilanımın bu kurallarla uyumlu olduğunu onaylıyorum. <span class="req">*</span>
+          </span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:12px">Yayınla</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===== ÇEKİCİ İLANI DETAY MODAL (v184) ===== -->
+  <div class="modal hidden" id="cekiciDetailModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <div id="cekiciDetailBody"></div>
     </div>
   </div>
 
@@ -1198,8 +1326,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=183"></script>
-  <script src="script.js?v=183"></script>
-  <script src="script-is-ilani.js?v=183"></script>
+  <script src="supabase-config.js?v=184"></script>
+  <script src="script.js?v=184"></script>
+  <script src="script-is-ilani.js?v=184"></script>
+  <script src="script-pazaryeri.js?v=184"></script>
 </body>
 </html>

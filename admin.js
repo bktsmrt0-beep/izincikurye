@@ -65,8 +65,10 @@ document.getElementById("logoutBtn").addEventListener("click", () => {
 // Bekleyen iş ilanları (v153 — durum='beklemede')
 const KATEGORI_LABEL = {
   tam_zamanli:   "💼 Tam Zamanlı",
+  part_time:     "⏰ Part Time",
   esnaf_kurye:   "🏪 Esnaf Kurye",
-  arabali_kurye: "🚗 Arabalı"
+  arabali_kurye: "🚗 Arabalı",
+  cekici:        "🚛 Çekici"
 };
 
 function _bekleyenSure(createdAt) {

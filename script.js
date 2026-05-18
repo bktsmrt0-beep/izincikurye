@@ -4443,6 +4443,9 @@ document.querySelectorAll(".content-tab").forEach(btn => {
     } else if (showIsIlani) {
       // script-is-ilani.js modülü kendi içinde yükler (tab click event listener)
       window.izIsIlani?.load?.();
+    } else if (showPazaryeri) {
+      // script-pazaryeri.js — Çekici modülü (v184)
+      window.izPazaryeri?.load?.();
     } else if (showIlanlar) {
       if (ilanlar.length === 0) emptyEl.classList.remove("hidden");
     }
