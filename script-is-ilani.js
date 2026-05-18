@@ -202,7 +202,7 @@
         </div>
         <div class="ilan-row-cell cell-sure">
           <span class="cell-label">Süre</span>
-          <strong>${i.calisma_suresi ? window.escapeHtml(i.calisma_suresi) + " <small>sa</small>" : turMeta.label}</strong>
+          <strong>${i.calisma_suresi ? window.escapeHtml(i.calisma_suresi) + " <small>sa</small>" : "—"}</strong>
         </div>
         <div class="ilan-row-cell cell-kazanc">
           <span class="cell-label">Tahmini</span>
