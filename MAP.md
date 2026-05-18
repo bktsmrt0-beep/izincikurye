@@ -192,18 +192,33 @@ ilanlarimBanner (v132)       | z=?   | content içinde, "Sadece kendi ilanların
 ## script-is-ilani.js — Faz 2A modülü (v153, IIFE)
 
 ```
-loadIsIlanlari           | script-is-ilani.js | rawSelect ile iş ilanları çek (alt-tur + scope filtreli)
+loadIsIlanlari           | script-is-ilani.js | rawSelect ile iş ilanları çek (alt-tur + scope + ilçe filtreli)
 renderIsIlanlari         | script-is-ilani.js | compact kart listesi render
-buildIsIlanCardHTML      | script-is-ilani.js | tek iş ilanı kartı HTML
+buildIsIlanCardHTML      | script-is-ilani.js | .ilan-row class miras (anlık ilan kopya) — 4 hücre
 openIsIlanDetail         | script-is-ilani.js | detay modal aç (#isIlanDetailModal)
-_setIsIlanAltTur         | script-is-ilani.js | sub-tab değişimi (tam_zamanli/esnaf_kurye/arabali_kurye)
+_setIsIlanAltTur         | script-is-ilani.js | sub-tab değişimi (tam_zamanli/part_time/esnaf_kurye/arabali_kurye)
 _setIsIlanScope          | script-is-ilani.js | scope değişimi (all/mine)
-_openIsIlanForm          | script-is-ilani.js | form modal aç (#isIlanFormModal) + ilçe doldur + tel ön-doldur
-_submitIsIlan            | script-is-ilani.js | rawInsert ilanlar (durum='beklemede')
+_openIsIlanForm          | script-is-ilani.js | form modal aç + DB'den taze profile fetch + edit modu (editIlan param)
+_submitIsIlan            | script-is-ilani.js | INSERT (yeni) veya PATCH (edit — durum=beklemede reset)
 _deleteIsIlan            | script-is-ilani.js | raw DELETE iş ilanı
 _validateUzunForm        | script-is-ilani.js | _validateIcerik + 300 kelime kontrolü
-_durumRozet              | script-is-ilani.js | ⏳ İncelemede / ✅ Onaylı / ❌ Reddedildi rozet HTML
-_formatMaasAralik        | script-is-ilani.js | "25.000 ₺ — 45.000 ₺" formatı
+_durumRozet              | script-is-ilani.js | ⏳ İncelemede / ✅ Onaylı / ❌ Reddedildi rozet
+_formatMaasAralik        | script-is-ilani.js | "25.000 ₺ — 45.000 ₺" (uzun, detay için)
+_formatMaasKisa          | script-is-ilani.js | "25K-35K ₺" (kart için)
+_kisaSayi                | script-is-ilani.js | 25000 → "25K"
+_handleIsIlanAction      | script-is-ilani.js | aksiyon dispatcher (detay/edit/delete/share/report/rxn)
+_toggleIsIlanRxn         | script-is-ilani.js | reaksiyon ekle (INSERT-only, geri alınmaz)
+_updateDetailRxnCounts   | script-is-ilani.js | detay modal'da reaksiyon sayısı canlı güncelle
+_copyIsIlanLink          | script-is-ilani.js | navigator.share + clipboard fallback
+_refreshSureDropdown     | script-is-ilani.js | kategoriye göre süre options (PT:4-8, TZ:8-16, Esnaf/Arabalı:4-16)
+_bindKategoriChange      | script-is-ilani.js | kategori değişiminde süre dropdown + başlık placeholder yenile
+_bindMaasInput           | script-is-ilani.js | input → binlik nokta + "X bin ₺" preview
+_updateMaasPreview       | script-is-ilani.js | maaş alt yazı bin gösterimi
+_bindEditHints           | script-is-ilani.js | telefon click → uyarı toast + Profilim link
+IS_ILAN_TURLERI          | script-is-ilani.js | kategori → label+emoji
+IS_ILAN_ETIKETLER        | script-is-ilani.js | 8 iş ilanı etiketi (yemek_dahil, sgk, vb.)
+SURE_SECENEKLER          | script-is-ilani.js | kategori bazlı süre listesi
+BASLIK_PLACEHOLDER       | script-is-ilani.js | kategori bazlı dinamik placeholder
 window.izIsIlani         | script-is-ilani.js | Public API: load/setAltTur/setScope/openForm/openDetail
 ```
 
@@ -280,6 +295,12 @@ Avatar kırpma (v139)         | style.css:~3720
 16_hesap_kapatma                | soft-delete + geri bildirim tablosu + pg_cron
 17_ilan_bildirim_takip          | ilçe bazlı bildirim aboneliği tablosu + RLS
 18_ilanlar_faz2                 | ilanlar.tur + maas_min/max + durum + red_sebebi; iş ilanları için NOT NULL'lar gevşetildi; ilanlar_public view recreate
+19_isyeri_alanlari_optional     | isyeri_ad / isyeri_adres NOT NULL kaldırıldı (iş ilanı için)
+20_ilanlar_admin_update_policy  | admin UPDATE RLS policy (onay/red için)
+21_part_time_tur                | tur CHECK constraint'e 'part_time' eklendi
+22_reaksiyon_kalici             | reaksiyonlar UPDATE+DELETE policy kaldırıldı (geri alınmaz)
+23_calisma_suresi               | ilanlar.calisma_suresi text (iş ilanı çalışma süresi)
+24_view_refresh_calisma_suresi  | ilanlar_public view recreate (calisma_suresi yansısın)
 ```
 
 ---
