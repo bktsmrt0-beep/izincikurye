@@ -275,7 +275,19 @@ async function syncSession() {
         musaitAt: profile?.musait_at || null,
         aracTipi: profile?.arac_tipi || "",
         aracMarkaModel: profile?.arac_marka_model || "",
-        silinmekUzereAt: profile?.silinmek_uzere_at || null
+        silinmekUzereAt: profile?.silinmek_uzere_at || null,
+        // Çekici alanları (v186 sql/27)
+        cekiciAktif: !!profile?.cekici_aktif,
+        cekiciAracTipi: profile?.cekici_arac_tipi || "",
+        cekiciBolge: profile?.cekici_bolge || "",
+        cekiciMinUcret: profile?.cekici_min_ucret ?? null,
+        cekiciMaxUcret: profile?.cekici_max_ucret ?? null,
+        cekiciAciklama: profile?.cekici_aciklama || "",
+        cekiciEtiketler: Array.isArray(profile?.cekici_etiketler) ? profile.cekici_etiketler : [],
+        cekiciMusait: !!profile?.cekici_musait,
+        cekiciMusaitAt: profile?.cekici_musait_at || null,
+        puanOrt: profile?.puan_ort ?? null,
+        puanSayisi: profile?.puan_sayisi ?? 0
       };
       // Soft-delete banner — kullanıcı 7 gün içinde geri dönmüşse uyar
       if (typeof window._showSilinecekBanner === "function") window._showSilinecekBanner();
@@ -2706,7 +2718,15 @@ function _readProfileForm() {
     calisma_baslangic: (() => { const v = document.getElementById("profileCalismaBaslangic")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
     calisma_bitis: (() => { const v = document.getElementById("profileCalismaBitis")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
     min_ucret: (() => { const v = document.getElementById("profileMinUcret")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
-    max_ucret: (() => { const v = document.getElementById("profileMaxUcret")?.value; return v === "" || v == null ? null : parseInt(v, 10); })()
+    max_ucret: (() => { const v = document.getElementById("profileMaxUcret")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
+    // Çekici alanları (v186)
+    cekici_aktif: !!document.getElementById("profileCekiciAktif")?.checked,
+    cekici_arac_tipi: document.getElementById("profileCekiciAracTipi")?.value || "",
+    cekici_bolge: document.getElementById("profileCekiciBolge")?.value || "",
+    cekici_min_ucret: (() => { const v = document.getElementById("profileCekiciMinUcret")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
+    cekici_max_ucret: (() => { const v = document.getElementById("profileCekiciMaxUcret")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
+    cekici_aciklama: document.getElementById("profileCekiciAciklama")?.value.trim() || "",
+    cekici_etiketler: Array.from(document.querySelectorAll('input[name="cekici_p_etiket"]:checked')).map(cb => cb.value)
   };
 }
 
@@ -2732,6 +2752,14 @@ function profileHasChanges() {
   if (f.calisma_bitis !== (currentUser.calismaBitis ?? null)) return true;
   if (f.min_ucret !== (currentUser.minUcret ?? null)) return true;
   if (f.max_ucret !== (currentUser.maxUcret ?? null)) return true;
+  // Çekici alanları (v186)
+  if (f.cekici_aktif !== !!currentUser.cekiciAktif) return true;
+  if (f.cekici_arac_tipi !== (currentUser.cekiciAracTipi || "")) return true;
+  if (f.cekici_bolge !== (currentUser.cekiciBolge || "")) return true;
+  if (f.cekici_min_ucret !== (currentUser.cekiciMinUcret ?? null)) return true;
+  if (f.cekici_max_ucret !== (currentUser.cekiciMaxUcret ?? null)) return true;
+  if (f.cekici_aciklama !== (currentUser.cekiciAciklama || "")) return true;
+  if (JSON.stringify([...f.cekici_etiketler].sort()) !== JSON.stringify([...(currentUser.cekiciEtiketler || [])].sort())) return true;
   return false;
 }
 
@@ -2832,8 +2860,8 @@ function switchProfileTab(name) {
   document.querySelectorAll("#profileModal [data-tab-panel]").forEach(p => {
     p.classList.toggle("hidden", p.dataset.tabPanel !== name);
   });
-  // Form içi bölümler (profil, isletme, bildirim)
-  const showForm = (name === "profil" || name === "isletme" || name === "bildirim");
+  // Form içi bölümler (profil, isletme, cekici, bildirim)
+  const showForm = (name === "profil" || name === "isletme" || name === "cekici" || name === "bildirim");
   document.querySelectorAll("#profileModal [data-tab-section]").forEach(s => {
     s.classList.toggle("hidden", s.dataset.tabSection !== name);
   });
@@ -3435,6 +3463,37 @@ function openProfileModal() {
   if (isTelEl) isTelEl.value = formatTel(currentUser.isTelefonu || "");
   if (isAdresEl) isAdresEl.value = currentUser.isAdresi || "";
 
+  // Çekici sekmesi (sadece işletme için görünür, v186)
+  document.getElementById("profileTabCekici")?.classList.toggle("hidden", !isIsletme);
+  if (isIsletme) {
+    const cekiciAktifEl = document.getElementById("profileCekiciAktif");
+    if (cekiciAktifEl) cekiciAktifEl.checked = !!currentUser.cekiciAktif;
+    document.getElementById("profileCekiciDetayWrap")?.classList.toggle("hidden", !currentUser.cekiciAktif);
+
+    const cAracEl = document.getElementById("profileCekiciAracTipi");
+    if (cAracEl) cAracEl.value = currentUser.cekiciAracTipi || "";
+
+    // Bölge dropdown'ı doldur (tum + 25 ilçe)
+    const cBolgeSel = document.getElementById("profileCekiciBolge");
+    if (cBolgeSel && cBolgeSel.options.length <= 2 && Array.isArray(ANKARA_ILCELERI)) {
+      ANKARA_ILCELERI.forEach(i => cBolgeSel.appendChild(new Option(i, i)));
+    }
+    if (cBolgeSel) cBolgeSel.value = currentUser.cekiciBolge || "";
+
+    const cMinEl = document.getElementById("profileCekiciMinUcret");
+    const cMaxEl = document.getElementById("profileCekiciMaxUcret");
+    if (cMinEl) cMinEl.value = currentUser.cekiciMinUcret ?? "";
+    if (cMaxEl) cMaxEl.value = currentUser.cekiciMaxUcret ?? "";
+
+    const cAcikEl = document.getElementById("profileCekiciAciklama");
+    if (cAcikEl) cAcikEl.value = currentUser.cekiciAciklama || "";
+
+    const cekEtiketler = currentUser.cekiciEtiketler || [];
+    document.querySelectorAll('input[name="cekici_p_etiket"]').forEach(cb => {
+      cb.checked = cekEtiketler.includes(cb.value);
+    });
+  }
+
   // Kullanıcı tipi rozeti
   const tb = document.getElementById("profileTypeBadge");
   if (tb) {
@@ -3579,6 +3638,18 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
     updateObj.isletme_tipi = f.isletme_tipi || null;
     updateObj.is_telefonu = f.is_telefonu || null;
     updateObj.is_adresi = f.is_adresi || null;
+    // Çekici alanları (v186) — sadece işletme tipi profillerde
+    updateObj.cekici_aktif = !!f.cekici_aktif;
+    updateObj.cekici_arac_tipi = f.cekici_arac_tipi || null;
+    updateObj.cekici_bolge = f.cekici_bolge || null;
+    updateObj.cekici_min_ucret = f.cekici_min_ucret;
+    updateObj.cekici_max_ucret = f.cekici_max_ucret;
+    updateObj.cekici_aciklama = f.cekici_aciklama || null;
+    updateObj.cekici_etiketler = f.cekici_etiketler || [];
+    // Çekici_aktif false ise müsait da otomatik kapansın
+    if (!f.cekici_aktif) {
+      updateObj.cekici_musait = false;
+    }
   }
   // Kurye alanları
   const isKuryeUser = currentUser.kullaniciTipi === "kurye";
@@ -3633,7 +3704,17 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
       isletmeAdi: f.isletme_adi,
       isletmeTipi: f.isletme_tipi,
       isTelefonu: f.is_telefonu,
-      isAdresi: f.is_adresi
+      isAdresi: f.is_adresi,
+      // Çekici (v186)
+      cekiciAktif: !!f.cekici_aktif,
+      cekiciAracTipi: f.cekici_arac_tipi || "",
+      cekiciBolge: f.cekici_bolge || "",
+      cekiciMinUcret: f.cekici_min_ucret,
+      cekiciMaxUcret: f.cekici_max_ucret,
+      cekiciAciklama: f.cekici_aciklama || "",
+      cekiciEtiketler: f.cekici_etiketler || [],
+      // cekici_aktif kapatıldıysa müsait de düştü
+      cekiciMusait: f.cekici_aktif ? currentUser.cekiciMusait : false
     });
   }
   if (isKuryeUser) {
@@ -3762,6 +3843,135 @@ document.getElementById("musaitToggle")?.addEventListener("change", e => {
     _commitMusait(false);
   }
 });
+
+// =============== ÇEKİCİ MÜSAİT TOGGLE (v186) ===============
+async function _commitCekiciMusait(yeni) {
+  if (!currentUser) return;
+  const session = readStoredSession();
+  if (!session?.access_token) {
+    toast("Oturumun sona ermiş, tekrar giriş yap.", "error", 5000);
+    setTimeout(() => openModal("loginModal"), 800);
+    return;
+  }
+  // Çekici aktif değilse müsait açılamaz
+  if (yeni && !currentUser.cekiciAktif) {
+    toast("Önce Profilim → Çekici sekmesinde 'Çekici hizmeti veriyorum' onayını ver.", "info", 6000);
+    return;
+  }
+  const nowIso = new Date().toISOString();
+  // Optimistic
+  currentUser.cekiciMusait = yeni;
+  const ct = document.getElementById("cekiciMusaitToggle");
+  if (ct) ct.checked = yeni;
+
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${currentUser.id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SUPABASE_KEY,
+        Authorization: "Bearer " + session.access_token,
+        "Content-Type": "application/json",
+        Prefer: "return=minimal"
+      },
+      body: JSON.stringify({ cekici_musait: yeni, cekici_musait_at: nowIso })
+    });
+    if (!r.ok) throw new Error("HTTP " + r.status + " — " + (await r.text()));
+    currentUser.cekiciMusaitAt = nowIso;
+    toast(yeni ? "🟢 Çekici olarak müsait gösterildin" : "🔴 Çekici müsaitliğin kapatıldı", "ok");
+    // Pazaryeri listesi açıksa yenile
+    window.izPazaryeri?.load?.();
+  } catch (e) {
+    currentUser.cekiciMusait = !yeni;
+    if (ct) ct.checked = !yeni;
+    toast("Güncellenemedi: " + (e.message || e), "error");
+  }
+}
+
+function _openCekiciMusaitOnay(onConfirm) {
+  const cb = document.getElementById("cekiciMusaitKurallarOnay");
+  const btn = document.getElementById("cekiciMusaitOnayBtn");
+  if (cb) cb.checked = false;
+  if (btn) btn.disabled = true;
+  if (cb && btn) {
+    cb.onchange = () => { btn.disabled = !cb.checked; };
+  }
+  if (btn) {
+    btn.onclick = () => {
+      if (!cb?.checked) return;
+      closeModals();
+      onConfirm();
+    };
+  }
+  openModal("cekiciMusaitOnayModal");
+}
+
+document.getElementById("cekiciMusaitToggle")?.addEventListener("change", e => {
+  if (!currentUser) return;
+  const yeni = e.target.checked;
+  if (yeni) {
+    e.target.checked = false;
+    _openCekiciMusaitOnay(() => _commitCekiciMusait(true));
+  } else {
+    _commitCekiciMusait(false);
+  }
+});
+
+// Profilim → Çekici sekmesinde "Çekici hizmeti veriyorum" checkbox:
+// işaretli → detay formu göster + Kaydet butonu aktif olur
+document.getElementById("profileCekiciAktif")?.addEventListener("change", e => {
+  document.getElementById("profileCekiciDetayWrap")?.classList.toggle("hidden", !e.target.checked);
+  refreshProfileSaveBtn();
+});
+
+// Çekici profili eksik banner — "profilim aç" linki
+document.getElementById("cekiciProfilAcLink")?.addEventListener("click", e => {
+  e.preventDefault();
+  if (typeof window.openProfileModal === "function") {
+    window.openProfileModal();
+    setTimeout(() => switchProfileTab("cekici"), 250);
+  }
+});
+
+// Pazaryeri çekici listesi anonim giriş linki
+document.getElementById("pzrCekiciGuestLink")?.addEventListener("click", e => {
+  e.preventDefault();
+  openModal("loginModal");
+});
+
+// Pazaryeri sekmesi açıldığında çekici banner görünürlüğü
+window._updateCekiciBanner = function() {
+  const isIsletme = currentUser?.kullaniciTipi === "isletme";
+  const isCekiciAktif = !!currentUser?.cekiciAktif;
+  const banner = document.getElementById("cekiciMusaitBanner");
+  const eksikBanner = document.getElementById("cekiciProfilEksikBanner");
+  // Banner sadece pazaryeri-çekici sekmesi açıkken
+  const pazaryeriAcik = document.querySelector('.content-tab.active[data-content-tab="pazaryeri"]') !== null;
+  if (!pazaryeriAcik) {
+    banner?.classList.add("hidden");
+    eksikBanner?.classList.add("hidden");
+    return;
+  }
+  if (!currentUser) {
+    banner?.classList.add("hidden");
+    eksikBanner?.classList.add("hidden");
+    return;
+  }
+  // İşletme + çekici aktif → müsait banner görünür
+  if (isIsletme && isCekiciAktif) {
+    banner?.classList.remove("hidden");
+    eksikBanner?.classList.add("hidden");
+    const ct = document.getElementById("cekiciMusaitToggle");
+    if (ct) ct.checked = !!currentUser.cekiciMusait;
+  } else if (isIsletme && !isCekiciAktif) {
+    // İşletme ama çekici aktif değil → "profil eksik" banner
+    banner?.classList.add("hidden");
+    eksikBanner?.classList.remove("hidden");
+  } else {
+    // Kurye veya başka tip → hiçbir banner yok
+    banner?.classList.add("hidden");
+    eksikBanner?.classList.add("hidden");
+  }
+};
 
 // =============== ŞİFRE DEĞİŞTİR (girişli kullanıcı) ===============
 document.getElementById("changePasswordBtn").addEventListener("click", () => {
@@ -4444,8 +4654,9 @@ document.querySelectorAll(".content-tab").forEach(btn => {
       // script-is-ilani.js modülü kendi içinde yükler (tab click event listener)
       window.izIsIlani?.load?.();
     } else if (showPazaryeri) {
-      // script-pazaryeri.js — Çekici modülü (v184)
+      // script-pazaryeri.js — Müsait Çekiciler (v186, profil tabanlı)
       window.izPazaryeri?.load?.();
+      window._updateCekiciBanner?.();
     } else if (showIlanlar) {
       if (ilanlar.length === 0) emptyEl.classList.remove("hidden");
     }

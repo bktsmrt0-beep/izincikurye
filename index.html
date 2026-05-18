@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=185" />
+  <link rel="stylesheet" href="style.css?v=186" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -258,20 +258,43 @@
           <button type="button" class="sub-tab" data-pzr="muhasebe">📊 Muhasebe</button>
         </div>
 
-        <!-- Çekici alt-paneli (aktif) -->
+        <!-- Çekici alt-paneli (aktif) — profil tabanlı (v186) -->
         <div id="pzrCekiciPanel">
-          <div class="isilanlari-toolbar">
-            <div id="pzrCekiciScope" class="seg-group" role="tablist" aria-label="Görünüm">
-              <button type="button" class="seg-btn active" data-scope="all">Tüm İlanlar</button>
-              <button type="button" class="seg-btn" data-scope="mine">İlanlarım</button>
+          <!-- Çekici müsait sticky banner (kurye banner pattern) -->
+          <div id="cekiciMusaitBanner" class="kurye-musait-banner hidden">
+            <div class="kmb-content">
+              <div class="kmb-left">
+                <span class="kmb-dot"></span>
+                <span class="kmb-text">Çekici hizmetin için <strong>müsait</strong> olduğunu göster.</span>
+              </div>
+              <label class="switch" title="Müsait olduğunda Müsait Çekiciler listesinde görünürsün.">
+                <input type="checkbox" id="cekiciMusaitToggle" />
+                <span class="slider"></span>
+              </label>
             </div>
-            <select id="pzrCekiciIlceFilter" class="select" style="max-width:180px">
+          </div>
+
+          <!-- Çekici profili eksik bildirimi -->
+          <div id="cekiciProfilEksikBanner" class="hidden" style="background:#fef3c7;border:1px solid #fde68a;border-radius:10px;padding:12px 16px;margin-bottom:14px;color:#92400e;font-size:14px;line-height:1.5;">
+            🚛 <strong>Çekici hizmeti veriyorsan</strong> profilini doldur — Müsait Çekiciler listesinde görünmek için.
+            <a href="#" id="cekiciProfilAcLink" class="link-orange">Profilim → Çekici sekmesi</a>
+          </div>
+
+          <div class="isilanlari-toolbar">
+            <select id="pzrCekiciIlceFilter" class="select" style="max-width:200px">
               <option value="all">Tüm Bölgeler</option>
             </select>
-            <button type="button" class="btn btn-primary btn-sm" id="pzrCekiciVerBtn">+ Çekici İlanı Ver</button>
+            <select id="pzrCekiciHizmetFilter" class="select" style="max-width:200px">
+              <option value="all">Tüm Hizmetler</option>
+              <option value="motor_cekici">🏍 Motosiklet</option>
+              <option value="arac_cekici">🚗 Araç</option>
+              <option value="her_ikisi">🚛 Her ikisi</option>
+            </select>
           </div>
-          <div id="pzrCekiciListings" class="is-ilan-list"></div>
+
+          <div id="pzrCekiciListings" class="kurye-listings"></div>
           <div id="pzrCekiciEmpty" class="empty hidden"></div>
+          <p id="pzrCekiciGuestNotice" class="muted small hidden" style="text-align:center;margin-top:12px">Müsait çekicileri görmek için <a href="#" id="pzrCekiciGuestLink" class="link-orange">giriş yap</a>.</p>
         </div>
 
         <!-- Diğer alt-paneller placeholder -->
@@ -716,8 +739,8 @@
     </div>
   </div>
 
-  <!-- ===== ÇEKİCİ İLANI FORM MODAL (Faz 2B, v184) ===== -->
-  <div class="modal hidden" id="cekiciFormModal">
+  <!-- ===== ÇEKİCİ İLANI FORM MODAL (KALDIRILDI v186 — profil tabanlı) ===== -->
+  <div class="modal hidden" id="_cekiciFormModalOLD" style="display:none">
     <div class="modal-card modal-wide">
       <button class="modal-close" data-close>&times;</button>
       <h2>🚛 Çekici İlanı Ver</h2>
@@ -797,8 +820,30 @@
     </div>
   </div>
 
-  <!-- ===== ÇEKİCİ İLANI DETAY MODAL (v184) ===== -->
+  <!-- ===== ÇEKİCİ DETAY MODAL (v186 — profil tabanlı) ===== -->
   <div class="modal hidden" id="cekiciDetailModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <div id="cekiciDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== Çekici Müsait Onay Modal (kurye musaitOnayModal benzeri) ===== -->
+  <div class="modal hidden" id="cekiciMusaitOnayModal">
+    <div class="modal-card">
+      <button class="modal-close" data-close>&times;</button>
+      <h2>🚛 Çekici Müsait Olarak İşaretleneceksin</h2>
+      <p>Müsait olduğunda <strong>Müsait Çekiciler</strong> listesinde görünürsün. Müşteri seni ararsa hızlı dönüş yapabilmen önemlidir.</p>
+      <label class="consent" style="margin-top:10px">
+        <input type="checkbox" id="cekiciMusaitKurallarOnay" required />
+        <span><a href="/ilan-kurallari.html" target="_blank" rel="noopener">İlan Verme Kuralları</a>'nı okudum ve hizmetimin kurallara uygun olduğunu onaylıyorum.</span>
+      </label>
+      <button type="button" id="cekiciMusaitOnayBtn" class="btn btn-primary btn-block" style="margin-top:12px" disabled>Müsait Ol</button>
+    </div>
+  </div>
+
+  <!-- ===== ESKİ ÇEKİCİ DETAY MODAL (KALDIRILDI v186) ===== -->
+  <div class="modal hidden" id="_cekiciDetailModalOLD2" style="display:none">
     <div class="modal-card modal-wide">
       <button class="modal-close" data-close>&times;</button>
       <div id="cekiciDetailBody"></div>
@@ -1046,6 +1091,7 @@
         <button type="button" class="tab-btn active" data-tab="genel" role="tab">Genel</button>
         <button type="button" class="tab-btn" data-tab="profil" role="tab">Profil</button>
         <button type="button" class="tab-btn hidden" data-tab="isletme" role="tab" id="profileTabIsletme">🏪 İşletme</button>
+        <button type="button" class="tab-btn hidden" data-tab="cekici" role="tab" id="profileTabCekici">🚛 Çekici</button>
         <button type="button" class="tab-btn" data-tab="bildirim" role="tab">Bildirimler</button>
         <button type="button" class="tab-btn" data-tab="guvenlik" role="tab">Güvenlik</button>
       </div>
@@ -1271,6 +1317,62 @@
           <p class="muted small" style="margin-top:10px">📍 İş adresini <strong>Profil</strong> sekmesinden düzenleyebilirsin.</p>
         </div>
 
+        <!-- ÇEKİCİ alanları (sadece işletme için görünür, v186) -->
+        <div data-tab-section="cekici" class="hidden">
+          <p class="muted small" style="margin-bottom:10px">🚛 <strong>Çekici hizmeti veriyorsan</strong> aşağıyı doldur — Müsait Çekiciler listesinde görünebilirsin.</p>
+
+          <label class="toggle-row" style="margin:4px 0 10px;cursor:pointer">
+            <input type="checkbox" id="profileCekiciAktif" />
+            <span>🚛 <strong>Çekici hizmeti veriyorum</strong> (Müsait Çekiciler sekmesinde görünmek için açık olmalı)</span>
+          </label>
+
+          <div id="profileCekiciDetayWrap" class="hidden">
+            <label>Hizmet Türü
+              <select id="profileCekiciAracTipi">
+                <option value="">— Seçiniz —</option>
+                <option value="motor_cekici">🏍 Motosiklet çekmeye uygun</option>
+                <option value="arac_cekici">🚗 Araç çekmeye uygun</option>
+                <option value="her_ikisi">🚛 Her ikisi için uygun</option>
+              </select>
+            </label>
+
+            <label style="margin-top:10px">Hizmet Bölgesi
+              <select id="profileCekiciBolge">
+                <option value="">— Seçiniz —</option>
+                <option value="tum">📍 Tüm İlçeler (Tüm Ankara)</option>
+              </select>
+            </label>
+            <p class="muted small">Çekici mobil hizmet olduğundan "Tüm İlçeler" önerilir.</p>
+
+            <div class="row-2" style="margin-top:10px">
+              <label>Çağrı Başı Alt Sınır (₺)
+                <input type="number" id="profileCekiciMinUcret" min="100" max="99999" step="50" placeholder="750" />
+              </label>
+              <label>Çağrı Başı Üst Sınır (₺)
+                <input type="number" id="profileCekiciMaxUcret" min="100" max="99999" step="50" placeholder="1500" />
+              </label>
+            </div>
+
+            <label style="margin-top:10px">Hizmet Açıklaması
+              <textarea id="profileCekiciAciklama" rows="4" maxlength="600" placeholder="Hizmet detayını yaz: çalışma saatleri, kapsam, ekstra ücretler, kapora politikası..."></textarea>
+            </label>
+
+            <fieldset class="etiket-fieldset" style="margin-top:10px">
+              <legend>Etiketler <small class="muted">(opsiyonel)</small></legend>
+              <div class="etiket-checks">
+                <label class="etiket-check"><input type="checkbox" name="cekici_p_etiket" value="acik_7_24" /><span class="etiket-chip-form">🕐 7/24 Açık</span></label>
+                <label class="etiket-check"><input type="checkbox" name="cekici_p_etiket" value="sehirler_arasi" /><span class="etiket-chip-form">🛣 Şehirler arası</span></label>
+                <label class="etiket-check"><input type="checkbox" name="cekici_p_etiket" value="kredi_karti" /><span class="etiket-chip-form">💳 Kredi kartı geçer</span></label>
+                <label class="etiket-check"><input type="checkbox" name="cekici_p_etiket" value="kapora_yok" /><span class="etiket-chip-form">✅ Kapora yok</span></label>
+                <label class="etiket-check"><input type="checkbox" name="cekici_p_etiket" value="garantili" /><span class="etiket-chip-form">🛡 Garantili / sigortalı</span></label>
+                <label class="etiket-check"><input type="checkbox" name="cekici_p_etiket" value="hizli_servis" /><span class="etiket-chip-form">⚡ 30 dk içinde</span></label>
+                <label class="etiket-check"><input type="checkbox" name="cekici_p_etiket" value="otoyol_dahil" /><span class="etiket-chip-form">🛤 Otoyol ücreti dahil</span></label>
+                <label class="etiket-check"><input type="checkbox" name="cekici_p_etiket" value="avans_yok" /><span class="etiket-chip-form">💵 Avans alınmaz</span></label>
+              </div>
+            </fieldset>
+          </div>
+        </div>
+
         <!-- Bildirim alanları -->
         <div data-tab-section="bildirim" class="hidden">
           <p class="muted small" style="margin-bottom:8px">Hangi durumlarda e-posta almak istediğini seç.</p>
@@ -1327,9 +1429,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=185"></script>
-  <script src="script.js?v=185"></script>
-  <script src="script-is-ilani.js?v=185"></script>
-  <script src="script-pazaryeri.js?v=185"></script>
+  <script src="supabase-config.js?v=186"></script>
+  <script src="script.js?v=186"></script>
+  <script src="script-is-ilani.js?v=186"></script>
+  <script src="script-pazaryeri.js?v=186"></script>
 </body>
 </html>

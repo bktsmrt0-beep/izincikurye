@@ -67,8 +67,7 @@ const KATEGORI_LABEL = {
   tam_zamanli:   "💼 Tam Zamanlı",
   part_time:     "⏰ Part Time",
   esnaf_kurye:   "🏪 Esnaf Kurye",
-  arabali_kurye: "🚗 Arabalı",
-  cekici:        "🚛 Çekici"
+  arabali_kurye: "🚗 Arabalı"
 };
 
 function _bekleyenSure(createdAt) {
