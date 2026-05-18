@@ -13,10 +13,9 @@
   "use strict";
 
   const CEKICI_ARAC_INFO = {
-    lastikli:    { ico: "🛞", label: "Lastikli" },
-    suruklemeli: { ico: "🪝", label: "Sürüklemeli" },
-    platformlu:  { ico: "🚚", label: "Platformlu" },
-    agir_vasita: { ico: "🚛", label: "Ağır Vasıta" }
+    motor_cekici: { ico: "🏍", label: "Motosiklet" },
+    arac_cekici:  { ico: "🚗", label: "Araç" },
+    her_ikisi:    { ico: "🚛", label: "Her ikisi" }
   };
 
   const CEKICI_ETIKETLER = {
@@ -24,11 +23,17 @@
     sehirler_arasi: { ico: "🛣", label: "Şehirler arası" },
     kredi_karti:    { ico: "💳", label: "Kredi kartı geçer" },
     kapora_yok:     { ico: "✅", label: "Kapora yok" },
-    agir_arac:      { ico: "🚛", label: "Ağır araç çeker" },
-    motor_cekici:   { ico: "🏍", label: "Motor çekici" },
     garantili:      { ico: "🛡", label: "Garantili / sigortalı" },
-    hizli_servis:   { ico: "⚡", label: "30 dk içinde" }
+    hizli_servis:   { ico: "⚡", label: "30 dk içinde" },
+    otoyol_dahil:   { ico: "🛤", label: "Otoyol ücreti dahil" },
+    avans_yok:      { ico: "💵", label: "Avans alınmaz" }
   };
+
+  // "Tüm İlçeler" gösterimi için yardımcı
+  function _ilceDisplay(ilce) {
+    if (!ilce || ilce === "tum") return "Tüm Ankara";
+    return ilce + ", Ankara";
+  }
 
   let _cekiciler = [];
   let _cekiciScope = "all";
@@ -161,10 +166,10 @@
         ${durumMini}
         <div class="ilan-row-cell cell-bolge">
           <span class="cell-ico">📍</span>
-          <span class="cell-text">${window.escapeHtml(i.ilce)}, Ankara</span>
+          <span class="cell-text">${window.escapeHtml(_ilceDisplay(i.ilce))}</span>
         </div>
         <div class="ilan-row-cell cell-sure">
-          <span class="cell-label">Araç</span>
+          <span class="cell-label">Hizmet</span>
           <strong>${aracMeta.ico} ${aracMeta.label}</strong>
         </div>
         <div class="ilan-row-cell cell-kazanc">
@@ -268,8 +273,8 @@
       ${etiketBlock}
       <div class="iid-meta">
         ${isyeriAdi ? `<div>🏢 <strong>${window.escapeHtml(isyeriAdi)}</strong></div>` : ""}
-        <div>📍 ${window.escapeHtml(ilan.ilce)} (Ankara)</div>
-        <div>${aracMeta.ico} <strong>${aracMeta.label} Çekici</strong></div>
+        <div>📍 ${window.escapeHtml(_ilceDisplay(ilan.ilce))}</div>
+        <div>${aracMeta.ico} <strong>${aracMeta.label} çekme hizmeti</strong></div>
         <div>💰 Çağrı başı: <strong>${_formatFiyatAralik(ilan.maas_min, ilan.maas_max)}</strong></div>
       </div>
       ${ilan.aciklama ? `<div class="iid-aciklama">${window.escapeHtml(ilan.aciklama).replace(/\n/g, "<br>")}</div>` : ""}
@@ -346,10 +351,11 @@
       if (submitBtn) submitBtn.textContent = "Yayınla";
     }
 
+    // İlçe dropdown'ı: HTML'de 2 statik option var (Seçiniz + Tüm İlçeler).
+    // 25 Ankara ilçesini sadece bir kez append et.
     const ilceSel = document.getElementById("cekiciIlce");
-    if (ilceSel && ilceSel.options.length <= 1 && Array.isArray(window.ANKARA_ILCELERI)) {
-      ilceSel.innerHTML = `<option value="">Seçiniz...</option>` +
-        window.ANKARA_ILCELERI.map(i => `<option value="${i}">${i}</option>`).join("");
+    if (ilceSel && ilceSel.options.length <= 2 && Array.isArray(window.ANKARA_ILCELERI)) {
+      window.ANKARA_ILCELERI.forEach(i => ilceSel.appendChild(new Option(i, i)));
     }
 
     if (editIlan) {

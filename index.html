@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=184" />
+  <link rel="stylesheet" href="style.css?v=185" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -724,13 +724,12 @@
       <p class="muted small">7/24 veya belirli saatlerde çağrı bekleyen çekici/kurtarıcı hizmeti veriyorsan buradan ilan paylaşabilirsin. İlan <strong>moderatör onayından</strong> sonra yayına çıkar (~4 saat). Yayın süresi 30 gün.</p>
 
       <form id="cekiciForm" class="form" novalidate>
-        <label>Araç Tipi <span class="req">*</span>
+        <label>Hizmet Türü <span class="req">*</span>
           <select name="cekici_arac_tipi" id="cekiciAracTipi" required>
             <option value="">Seçiniz...</option>
-            <option value="lastikli">🛞 Lastikli Çekici</option>
-            <option value="suruklemeli">🪝 Sürüklemeli Çekici</option>
-            <option value="platformlu">🚚 Platformlu (Sıfır Hasar)</option>
-            <option value="agir_vasita">🚛 Ağır Vasıta Çekicisi</option>
+            <option value="motor_cekici">🏍 Motosiklet çekmeye uygun</option>
+            <option value="arac_cekici">🚗 Araç çekmeye uygun</option>
+            <option value="her_ikisi">🚛 Her ikisi için uygun</option>
           </select>
         </label>
 
@@ -746,7 +745,9 @@
         <label>Hizmet Bölgesi (Ankara) <span class="req">*</span>
           <select name="ilce" id="cekiciIlce" required>
             <option value="">Seçiniz...</option>
+            <option value="tum">📍 Tüm İlçeler (Tüm Ankara)</option>
           </select>
+          <p class="muted small">Çekici hizmetin mobil olduğu için varsayılan "Tüm İlçeler" önerilir. İstersen tek bir ilçe de seçebilirsin.</p>
         </label>
 
         <div class="row-2">
@@ -777,10 +778,10 @@
             <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="sehirler_arasi" /><span class="etiket-chip-form">🛣 Şehirler arası</span></label>
             <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="kredi_karti" /><span class="etiket-chip-form">💳 Kredi kartı geçer</span></label>
             <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="kapora_yok" /><span class="etiket-chip-form">✅ Kapora yok</span></label>
-            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="agir_arac" /><span class="etiket-chip-form">🚛 Ağır araç çeker</span></label>
-            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="motor_cekici" /><span class="etiket-chip-form">🏍 Motor çekici</span></label>
             <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="garantili" /><span class="etiket-chip-form">🛡 Garantili / sigortalı</span></label>
             <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="hizli_servis" /><span class="etiket-chip-form">⚡ 30 dk içinde</span></label>
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="otoyol_dahil" /><span class="etiket-chip-form">🛤 Otoyol ücreti dahil</span></label>
+            <label class="etiket-check"><input type="checkbox" name="cekici_etiket" value="avans_yok" /><span class="etiket-chip-form">💵 Avans alınmaz</span></label>
           </div>
         </fieldset>
 
@@ -1326,9 +1327,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=184"></script>
-  <script src="script.js?v=184"></script>
-  <script src="script-is-ilani.js?v=184"></script>
-  <script src="script-pazaryeri.js?v=184"></script>
+  <script src="supabase-config.js?v=185"></script>
+  <script src="script.js?v=185"></script>
+  <script src="script-is-ilani.js?v=185"></script>
+  <script src="script-pazaryeri.js?v=185"></script>
 </body>
 </html>
