@@ -3628,6 +3628,16 @@ function openProfileModal() {
     if (sAcikEl) sAcikEl.value = currentUser.satisAciklama || "";
     const sFotoEl = document.getElementById("profileSatisFotoUrl");
     if (sFotoEl) sFotoEl.value = currentUser.satisFotoUrl || "";
+    // Preview göster/gizle
+    const sPrev = document.getElementById("profileSatisFotoPreview");
+    const sSilBtn = document.getElementById("profileSatisFotoSilBtn");
+    if (currentUser.satisFotoUrl) {
+      if (sPrev) { sPrev.src = currentUser.satisFotoUrl; sPrev.style.display = "block"; }
+      sSilBtn?.classList.remove("hidden");
+    } else {
+      if (sPrev) { sPrev.src = ""; sPrev.style.display = "none"; }
+      sSilBtn?.classList.add("hidden");
+    }
 
     // MUHASEBE (v192)
     const mAktifEl = document.getElementById("profileMuhasebeAktif");
@@ -4260,6 +4270,90 @@ function _openSvcMusaitOnay(svc, onConfirm) {
   }
   openModal(svc + "MusaitOnayModal");
 }
+
+// =============== SATIŞ FOTO UPLOAD (v193) ===============
+// Resize'i client-side yap: max 1024px uzun kenar + JPEG %85
+async function _resizeImage(file, maxDim = 1024, quality = 0.85) {
+  const img = new Image();
+  const reader = new FileReader();
+  return new Promise((resolve, reject) => {
+    reader.onload = e => { img.src = e.target.result; };
+    reader.onerror = reject;
+    img.onload = () => {
+      const w = img.width, h = img.height;
+      const scale = Math.min(1, maxDim / Math.max(w, h));
+      const cw = Math.round(w * scale);
+      const ch = Math.round(h * scale);
+      const cv = document.createElement("canvas");
+      cv.width = cw; cv.height = ch;
+      const ctx = cv.getContext("2d");
+      ctx.drawImage(img, 0, 0, cw, ch);
+      cv.toBlob(blob => blob ? resolve(blob) : reject(new Error("toBlob failed")), "image/jpeg", quality);
+    };
+    img.onerror = () => reject(new Error("img load failed"));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function _handleSatisFotoUpload(file) {
+  if (!file) return;
+  if (!file.type.startsWith("image/")) {
+    toast("Sadece resim dosyası yükleyebilirsin.", "error");
+    return;
+  }
+  if (!currentUser) return;
+  const status = document.getElementById("profileSatisFotoStatus");
+  const prev = document.getElementById("profileSatisFotoPreview");
+  const urlInp = document.getElementById("profileSatisFotoUrl");
+  const silBtn = document.getElementById("profileSatisFotoSilBtn");
+  if (status) status.textContent = "Yükleniyor...";
+
+  try {
+    const blob = await _resizeImage(file, 1024, 0.85);
+    const path = `${currentUser.id}/satis/${Date.now()}.jpg`;
+    const { error: upErr } = await sb.storage.from("avatars").upload(path, blob, {
+      cacheControl: "3600", upsert: true, contentType: "image/jpeg"
+    });
+    if (upErr) throw upErr;
+    const { data: urlData } = sb.storage.from("avatars").getPublicUrl(path);
+    const publicUrl = urlData.publicUrl + "?t=" + Date.now();
+    if (urlInp) urlInp.value = publicUrl;
+    if (prev) { prev.src = publicUrl; prev.style.display = "block"; }
+    silBtn?.classList.remove("hidden");
+    if (status) status.textContent = "✅ Yüklendi";
+    refreshProfileSaveBtn();
+  } catch (e) {
+    if (status) status.textContent = "❌ Yüklenemedi: " + (e.message || e);
+    toast("Foto yüklenemedi: " + (e.message || e), "error", 5000);
+  }
+}
+
+document.getElementById("profileSatisFotoSecBtn")?.addEventListener("click", () => {
+  document.getElementById("profileSatisFotoInputSec")?.click();
+});
+document.getElementById("profileSatisFotoCekBtn")?.addEventListener("click", () => {
+  document.getElementById("profileSatisFotoInputCek")?.click();
+});
+document.getElementById("profileSatisFotoInputSec")?.addEventListener("change", e => {
+  const f = e.target.files?.[0];
+  if (f) _handleSatisFotoUpload(f);
+  e.target.value = "";
+});
+document.getElementById("profileSatisFotoInputCek")?.addEventListener("change", e => {
+  const f = e.target.files?.[0];
+  if (f) _handleSatisFotoUpload(f);
+  e.target.value = "";
+});
+document.getElementById("profileSatisFotoSilBtn")?.addEventListener("click", () => {
+  const urlInp = document.getElementById("profileSatisFotoUrl");
+  const prev = document.getElementById("profileSatisFotoPreview");
+  const status = document.getElementById("profileSatisFotoStatus");
+  if (urlInp) urlInp.value = "";
+  if (prev) { prev.src = ""; prev.style.display = "none"; }
+  if (status) status.textContent = "Fotoğraf kaldırıldı (kaydetmeyi unutma)";
+  document.getElementById("profileSatisFotoSilBtn")?.classList.add("hidden");
+  refreshProfileSaveBtn();
+});
 
 // 3 yeni servis için button click handler'ları
 ["tamir", "satis", "muhasebe"].forEach(svc => {

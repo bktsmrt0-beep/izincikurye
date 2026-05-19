@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=192" />
+  <link rel="stylesheet" href="style.css?v=193" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -1621,9 +1621,19 @@
             <label style="margin-top:10px">Açıklama
               <textarea id="profileSatisAciklama" rows="4" maxlength="600" placeholder="Ürün detayını yaz: durum, hasar geçmişi, ekipman bilgisi, takasla ilgili tercih..."></textarea>
             </label>
-            <label style="margin-top:10px">Fotoğraf URL (opsiyonel)
-              <input type="url" id="profileSatisFotoUrl" maxlength="500" placeholder="https://..." />
-              <small class="muted">İmaj hosting servisi (imgur, postimage vb) URL'i yapıştır. Yakında foto upload gelecek.</small>
+            <label style="margin-top:10px">Fotoğraf (opsiyonel)
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button type="button" class="btn btn-ghost btn-sm" id="profileSatisFotoSecBtn">📂 Galeriden seç</button>
+                  <button type="button" class="btn btn-ghost btn-sm" id="profileSatisFotoCekBtn">📸 Foto çek</button>
+                  <button type="button" class="btn btn-ghost btn-sm hidden" id="profileSatisFotoSilBtn" style="color:#dc2626">🗑 Kaldır</button>
+                </div>
+                <input type="file" id="profileSatisFotoInputSec" accept="image/*" style="display:none" />
+                <input type="file" id="profileSatisFotoInputCek" accept="image/*" capture="environment" style="display:none" />
+                <img id="profileSatisFotoPreview" alt="" style="display:none;max-width:240px;max-height:180px;border-radius:10px;border:1px solid #e5e7eb;object-fit:cover" />
+                <p id="profileSatisFotoStatus" class="muted small" style="margin:0"></p>
+                <input type="hidden" id="profileSatisFotoUrl" />
+              </div>
             </label>
           </div>
         </div>
@@ -1725,9 +1735,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=192"></script>
-  <script src="script.js?v=192"></script>
-  <script src="script-is-ilani.js?v=192"></script>
-  <script src="script-pazaryeri.js?v=192"></script>
+  <script src="supabase-config.js?v=193"></script>
+  <script src="script.js?v=193"></script>
+  <script src="script-is-ilani.js?v=193"></script>
+  <script src="script-pazaryeri.js?v=193"></script>
 </body>
 </html>
