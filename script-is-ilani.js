@@ -34,7 +34,7 @@
 
   let _isIlanAltTur = "tam_zamanli";    // aktif sub-tab
   let _isIlanlar = [];                   // yüklenen ilanlar
-  let _isIlanScope = "all";              // "all" | "mine"
+  let _isIlanScope = "all";              // v195: UI kaldırıldı, her zaman "all"
   let _isIlanIlce = "all";               // ilçe filtresi
   let _editingIsIlanId = null;           // düzenleme modunda mı?
 
@@ -159,14 +159,10 @@
     if (!_isIlanlar.length) {
       listEl.innerHTML = "";
       const turMeta = IS_ILAN_TURLERI[_isIlanAltTur];
-      const isMine = _isIlanScope === "mine";
       emptyEl.innerHTML = `
         <div class="empty-icon">${turMeta.emoji}</div>
-        <h3>${isMine ? "Henüz iş ilanı vermemişsin" : turMeta.label + " ilanı bulunmuyor"}</h3>
-        <p>${isMine
-          ? "Personel arıyorsan ilk ilanını verebilirsin."
-          : "Şu an bu kategoride aktif ilan yok. Sık aralıklarla kontrol et veya farklı kategoriye bak."}
-        </p>
+        <h3>${turMeta.label} ilanı bulunmuyor</h3>
+        <p>Şu an bu kategoride aktif ilan yok. Sık aralıklarla kontrol et veya farklı kategoriye bak.</p>
       `;
       emptyEl.classList.remove("hidden");
       return;
