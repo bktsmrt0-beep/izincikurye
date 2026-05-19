@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=200" />
+  <link rel="stylesheet" href="style.css?v=201" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -106,14 +106,19 @@
         <h2 class="sidebar-title">Menü</h2>
         <button type="button" class="sidebar-close" id="sidebarCloseBtn" aria-label="Kapat">&times;</button>
       </div>
-      <!-- v200: Görünüm en üstte — hızlı erişim için (sadece login) -->
-      <div class="panel hidden" id="myListingsPanel" style="margin-bottom:10px">
-        <h3 class="panel-title">Görünüm</h3>
-        <div class="seg-toggle" role="tablist">
-          <button type="button" class="seg-btn active" data-scope="all" role="tab">Tüm İlanlar</button>
-          <button type="button" class="seg-btn" data-scope="mine" role="tab">İlanlarım</button>
+      <!-- v201: Görünüm — başlık yok, büyük segment toggle, en üstte -->
+      <div class="hidden" id="myListingsPanel" style="margin-bottom:14px">
+        <div class="scope-toggle" role="tablist">
+          <button type="button" class="scope-btn active" data-scope="all" role="tab">
+            <span class="scope-ico">📋</span>
+            <span class="scope-label">Tüm İlanlar</span>
+          </button>
+          <button type="button" class="scope-btn" data-scope="mine" role="tab">
+            <span class="scope-ico">👤</span>
+            <span class="scope-label">İlanlarım</span>
+            <span class="scope-count hidden" id="myListingsCount"></span>
+          </button>
         </div>
-        <p class="muted small" id="myListingsCount" style="margin-top:8px"></p>
       </div>
 
       <!-- ====== AKTİF İLANLAR sekmesi ====== -->
@@ -1852,9 +1857,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=200"></script>
-  <script src="script.js?v=200"></script>
-  <script src="script-is-ilani.js?v=200"></script>
-  <script src="script-pazaryeri.js?v=200"></script>
+  <script src="supabase-config.js?v=201"></script>
+  <script src="script.js?v=201"></script>
+  <script src="script-is-ilani.js?v=201"></script>
+  <script src="script-pazaryeri.js?v=201"></script>
 </body>
 </html>

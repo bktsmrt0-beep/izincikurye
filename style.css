@@ -1115,6 +1115,58 @@ body.sidebar-open { overflow: hidden; }
 }
 .seg-btn:not(.active):hover { color: #111; }
 
+/* v201: Görünüm (Tüm İlanlar / İlanlarım) — büyük 2 button, sidebar üstü */
+.scope-toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.scope-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  background: #f8fafc;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  font: inherit;
+  color: #475569;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.scope-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+.scope-btn.active {
+  background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+  border-color: #fb923c;
+  color: #c2410c;
+}
+.scope-ico {
+  font-size: 22px;
+  line-height: 1;
+}
+.scope-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+.scope-count {
+  position: absolute;
+  top: 6px; right: 8px;
+  background: #ea580c;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  min-width: 18px;
+  text-align: center;
+}
+
 /* v197: Sidebar tam-genişlik seg butonları (iş ilanı kategori, pazaryeri sub-tab jump) */
 .seg-btn-block {
   display: block;

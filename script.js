@@ -460,7 +460,7 @@ function renderTopNav() {
     myItem.innerHTML = "📋 <span>İlanlarım</span>";
     myItem.addEventListener("click", () => {
       closeUserMenu();
-      const mineBtn = document.querySelector('#myListingsPanel .seg-btn[data-scope="mine"]');
+      const mineBtn = document.querySelector('#myListingsPanel .scope-btn[data-scope="mine"], #myListingsPanel .seg-btn[data-scope="mine"]');
       if (mineBtn && !mineBtn.classList.contains("active")) mineBtn.click();
       document.getElementById("listings")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -2622,8 +2622,8 @@ document.getElementById("filterResetBtn")?.addEventListener("click", () => {
 async function _setListingScope(newScope) {
   if (newScope === listingScope) return;
   listingScope = newScope;
-  // Sidebar seg butonlarını senkronla
-  document.querySelectorAll("#myListingsPanel .seg-btn").forEach(b => {
+  // Sidebar scope butonlarını senkronla (v201: .scope-btn)
+  document.querySelectorAll("#myListingsPanel .scope-btn, #myListingsPanel .seg-btn").forEach(b => {
     b.classList.toggle("active", b.dataset.scope === newScope);
   });
   // Banner: "mine" modunda + "Aktif İlanlar" sekmesinde göster
@@ -2651,7 +2651,7 @@ function _updateBolgeBanner() {
   }
 }
 
-document.querySelectorAll("#myListingsPanel .seg-btn").forEach(btn => {
+document.querySelectorAll("#myListingsPanel .scope-btn, #myListingsPanel .seg-btn").forEach(btn => {
   btn.addEventListener("click", () => _setListingScope(btn.dataset.scope));
 });
 
