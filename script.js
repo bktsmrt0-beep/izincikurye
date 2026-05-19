@@ -296,19 +296,6 @@ async function syncSession() {
         tamirEtiketler: Array.isArray(profile?.tamir_etiketler) ? profile.tamir_etiketler : [],
         tamirMusait: !!profile?.tamir_musait,
         tamirMusaitAt: profile?.tamir_musait_at || null,
-        // Satış alanları (v192 sql/31)
-        satisAktif: !!profile?.satis_aktif,
-        satisKategori: profile?.satis_kategori || "",
-        satisBaslik: profile?.satis_baslik || "",
-        satisMarkaModel: profile?.satis_marka_model || "",
-        satisYil: profile?.satis_yil ?? null,
-        satisDurum: profile?.satis_durum || "",
-        satisFiyat: profile?.satis_fiyat ?? null,
-        satisBolge: profile?.satis_bolge || "",
-        satisAciklama: profile?.satis_aciklama || "",
-        satisFotoUrl: profile?.satis_foto_url || "",
-        satisMusait: !!profile?.satis_musait,
-        satisMusaitAt: profile?.satis_musait_at || null,
         // Muhasebe alanları (v192 sql/31)
         muhasebeAktif: !!profile?.muhasebe_aktif,
         muhasebeHizmet: profile?.muhasebe_hizmet || "",
@@ -2772,17 +2759,6 @@ function _readProfileForm() {
     tamir_max_ucret: (() => { const v = document.getElementById("profileTamirMaxUcret")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
     tamir_aciklama: document.getElementById("profileTamirAciklama")?.value.trim() || "",
     tamir_etiketler: Array.from(document.querySelectorAll('input[name="tamir_p_etiket"]:checked')).map(cb => cb.value),
-    // Satış alanları (v192)
-    satis_aktif: !!document.getElementById("profileSatisAktif")?.checked,
-    satis_kategori: document.getElementById("profileSatisKategori")?.value || "",
-    satis_baslik: document.getElementById("profileSatisBaslik")?.value.trim() || "",
-    satis_marka_model: document.getElementById("profileSatisMarkaModel")?.value.trim() || "",
-    satis_yil: (() => { const v = document.getElementById("profileSatisYil")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
-    satis_durum: document.getElementById("profileSatisDurum")?.value || "",
-    satis_fiyat: (() => { const v = document.getElementById("profileSatisFiyat")?.value; return v === "" || v == null ? null : parseInt(v, 10); })(),
-    satis_bolge: document.getElementById("profileSatisBolge")?.value || "",
-    satis_aciklama: document.getElementById("profileSatisAciklama")?.value.trim() || "",
-    satis_foto_url: document.getElementById("profileSatisFotoUrl")?.value.trim() || "",
     // Muhasebe alanları (v192)
     muhasebe_aktif: !!document.getElementById("profileMuhasebeAktif")?.checked,
     muhasebe_hizmet: document.getElementById("profileMuhasebeHizmet")?.value || "",
@@ -2830,17 +2806,6 @@ function profileHasChanges() {
   if (f.tamir_max_ucret !== (currentUser.tamirMaxUcret ?? null)) return true;
   if (f.tamir_aciklama !== (currentUser.tamirAciklama || "")) return true;
   if (JSON.stringify([...f.tamir_etiketler].sort()) !== JSON.stringify([...(currentUser.tamirEtiketler || [])].sort())) return true;
-  // Satış
-  if (f.satis_aktif !== !!currentUser.satisAktif) return true;
-  if (f.satis_kategori !== (currentUser.satisKategori || "")) return true;
-  if (f.satis_baslik !== (currentUser.satisBaslik || "")) return true;
-  if (f.satis_marka_model !== (currentUser.satisMarkaModel || "")) return true;
-  if (f.satis_yil !== (currentUser.satisYil ?? null)) return true;
-  if (f.satis_durum !== (currentUser.satisDurum || "")) return true;
-  if (f.satis_fiyat !== (currentUser.satisFiyat ?? null)) return true;
-  if (f.satis_bolge !== (currentUser.satisBolge || "")) return true;
-  if (f.satis_aciklama !== (currentUser.satisAciklama || "")) return true;
-  if (f.satis_foto_url !== (currentUser.satisFotoUrl || "")) return true;
   // Muhasebe
   if (f.muhasebe_aktif !== !!currentUser.muhasebeAktif) return true;
   if (f.muhasebe_hizmet !== (currentUser.muhasebeHizmet || "")) return true;
@@ -3603,41 +3568,8 @@ function openProfileModal() {
     const tamEt = currentUser.tamirEtiketler || [];
     document.querySelectorAll('input[name="tamir_p_etiket"]').forEach(cb => { cb.checked = tamEt.includes(cb.value); });
 
-    // SATIŞ (v192)
-    const sAktifEl = document.getElementById("profileSatisAktif");
-    if (sAktifEl) sAktifEl.checked = !!currentUser.satisAktif;
-    document.getElementById("profileSatisDetayWrap")?.classList.toggle("hidden", !currentUser.satisAktif);
-    const sKatEl = document.getElementById("profileSatisKategori");
-    if (sKatEl) sKatEl.value = currentUser.satisKategori || "";
-    const sBaslikEl = document.getElementById("profileSatisBaslik");
-    if (sBaslikEl) sBaslikEl.value = currentUser.satisBaslik || "";
-    const sMmEl = document.getElementById("profileSatisMarkaModel");
-    if (sMmEl) sMmEl.value = currentUser.satisMarkaModel || "";
-    const sYilEl = document.getElementById("profileSatisYil");
-    if (sYilEl) sYilEl.value = currentUser.satisYil ?? "";
-    const sDurEl = document.getElementById("profileSatisDurum");
-    if (sDurEl) sDurEl.value = currentUser.satisDurum || "";
-    const sFiyEl = document.getElementById("profileSatisFiyat");
-    if (sFiyEl) sFiyEl.value = currentUser.satisFiyat ?? "";
-    const sBolgeSel = document.getElementById("profileSatisBolge");
-    if (sBolgeSel && sBolgeSel.options.length <= 2 && Array.isArray(ANKARA_ILCELERI)) {
-      ANKARA_ILCELERI.forEach(i => sBolgeSel.appendChild(new Option(i, i)));
-    }
-    if (sBolgeSel) sBolgeSel.value = currentUser.satisBolge || "";
-    const sAcikEl = document.getElementById("profileSatisAciklama");
-    if (sAcikEl) sAcikEl.value = currentUser.satisAciklama || "";
-    const sFotoEl = document.getElementById("profileSatisFotoUrl");
-    if (sFotoEl) sFotoEl.value = currentUser.satisFotoUrl || "";
-    // Preview göster/gizle
-    const sPrev = document.getElementById("profileSatisFotoPreview");
-    const sSilBtn = document.getElementById("profileSatisFotoSilBtn");
-    if (currentUser.satisFotoUrl) {
-      if (sPrev) { sPrev.src = currentUser.satisFotoUrl; sPrev.style.display = "block"; }
-      sSilBtn?.classList.remove("hidden");
-    } else {
-      if (sPrev) { sPrev.src = ""; sPrev.style.display = "none"; }
-      sSilBtn?.classList.add("hidden");
-    }
+    // SATIŞ (v194) — ilan tabanlı; Profilim'de kullanıcının ilanlarını listele
+    if (typeof window._loadMyIlanlar === "function") window._loadMyIlanlar();
 
     // MUHASEBE (v192)
     const mAktifEl = document.getElementById("profileMuhasebeAktif");
@@ -3818,18 +3750,6 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
     updateObj.tamir_aciklama = f.tamir_aciklama || null;
     updateObj.tamir_etiketler = f.tamir_etiketler || [];
     if (!f.tamir_aktif) updateObj.tamir_musait = false;
-    // Satış (v192)
-    updateObj.satis_aktif = !!f.satis_aktif;
-    updateObj.satis_kategori = f.satis_kategori || null;
-    updateObj.satis_baslik = f.satis_baslik || null;
-    updateObj.satis_marka_model = f.satis_marka_model || null;
-    updateObj.satis_yil = f.satis_yil;
-    updateObj.satis_durum = f.satis_durum || null;
-    updateObj.satis_fiyat = f.satis_fiyat;
-    updateObj.satis_bolge = f.satis_bolge || null;
-    updateObj.satis_aciklama = f.satis_aciklama || null;
-    updateObj.satis_foto_url = f.satis_foto_url || null;
-    if (!f.satis_aktif) updateObj.satis_musait = false;
     // Muhasebe (v192)
     updateObj.muhasebe_aktif = !!f.muhasebe_aktif;
     updateObj.muhasebe_hizmet = f.muhasebe_hizmet || null;
@@ -3910,18 +3830,6 @@ document.getElementById("profileForm").addEventListener("submit", async e => {
       tamirAciklama: f.tamir_aciklama || "",
       tamirEtiketler: f.tamir_etiketler || [],
       tamirMusait: f.tamir_aktif ? currentUser.tamirMusait : false,
-      // Satış (v192)
-      satisAktif: !!f.satis_aktif,
-      satisKategori: f.satis_kategori || "",
-      satisBaslik: f.satis_baslik || "",
-      satisMarkaModel: f.satis_marka_model || "",
-      satisYil: f.satis_yil,
-      satisDurum: f.satis_durum || "",
-      satisFiyat: f.satis_fiyat,
-      satisBolge: f.satis_bolge || "",
-      satisAciklama: f.satis_aciklama || "",
-      satisFotoUrl: f.satis_foto_url || "",
-      satisMusait: f.satis_aktif ? currentUser.satisMusait : false,
       // Muhasebe (v192)
       muhasebeAktif: !!f.muhasebe_aktif,
       muhasebeHizmet: f.muhasebe_hizmet || "",
@@ -4182,10 +4090,6 @@ const PZR_SVC = {
               titleOn: "MÜSAİTSİN", titleOff: "MEŞGUL DURUMDASIN", actOn: "MÜSAİT DEĞİLİM", actOff: "MÜSAİT OL",
               hintOn: "Müşterilerin <b>Açık Tamir Yerleri</b> listesinde görüyor", hintOff: "Tek tıkla <b>Müsait</b> ol — müşteriler seni görür",
               toastOn: "🟢 Tamir hizmeti müsait", toastOff: "🔴 Tamir müsaitliğin kapatıldı" },
-  satis:    { col: "satis",    activeKey: "satisAktif",    musaitKey: "satisMusait",    musaitAtKey: "satisMusaitAt",
-              titleOn: "İLANIN AKTİF", titleOff: "İLAN PASİF", actOn: "SATIŞTAN KALDIR", actOff: "SATIŞA AÇ",
-              hintOn: "İlanın <b>Alım-Satım</b> listesinde alıcılarca görülüyor", hintOff: "Tek tıkla <b>satışı aktif et</b> — alıcılar görür",
-              toastOn: "🟢 Satış ilanın aktif", toastOff: "🔴 Satış ilanın pasif" },
   muhasebe: { col: "muhasebe", activeKey: "muhasebeAktif", musaitKey: "muhasebeMusait", musaitAtKey: "muhasebeMusaitAt",
               titleOn: "MÜSAİTSİN", titleOff: "MEŞGUL DURUMDASIN", actOn: "MÜSAİT DEĞİLİM", actOff: "MÜSAİT OL",
               hintOn: "Müşterilerin <b>Muhasebe</b> listesinde görüyor", hintOff: "Tek tıkla <b>Müsait</b> ol — müşteriler seni görür",
@@ -4271,8 +4175,8 @@ function _openSvcMusaitOnay(svc, onConfirm) {
   openModal(svc + "MusaitOnayModal");
 }
 
-// =============== SATIŞ FOTO UPLOAD (v193) ===============
-// Resize'i client-side yap: max 1024px uzun kenar + JPEG %85
+// =============== SATIŞ İLAN — 1:N MODEL (v194) ===============
+// Client-side image resize (max 1024px + JPEG %85) — birden çok yerde kullanılır
 async function _resizeImage(file, maxDim = 1024, quality = 0.85) {
   const img = new Image();
   const reader = new FileReader();
@@ -4295,68 +4199,341 @@ async function _resizeImage(file, maxDim = 1024, quality = 0.85) {
   });
 }
 
-async function _handleSatisFotoUpload(file) {
-  if (!file) return;
-  if (!file.type.startsWith("image/")) {
-    toast("Sadece resim dosyası yükleyebilirsin.", "error");
-    return;
-  }
-  if (!currentUser) return;
-  const status = document.getElementById("profileSatisFotoStatus");
-  const prev = document.getElementById("profileSatisFotoPreview");
-  const urlInp = document.getElementById("profileSatisFotoUrl");
-  const silBtn = document.getElementById("profileSatisFotoSilBtn");
-  if (status) status.textContent = "Yükleniyor...";
+// Satış ilan form state
+let _satisFormFotoUrls = [];     // şu an form'da yüklü foto URL'leri
+let _editingSatisIlanId = null;  // edit modunda ise ilan ID'si
 
-  try {
-    const blob = await _resizeImage(file, 1024, 0.85);
-    const path = `${currentUser.id}/satis/${Date.now()}.jpg`;
-    const { error: upErr } = await sb.storage.from("avatars").upload(path, blob, {
-      cacheControl: "3600", upsert: true, contentType: "image/jpeg"
-    });
-    if (upErr) throw upErr;
-    const { data: urlData } = sb.storage.from("avatars").getPublicUrl(path);
-    const publicUrl = urlData.publicUrl + "?t=" + Date.now();
-    if (urlInp) urlInp.value = publicUrl;
-    if (prev) { prev.src = publicUrl; prev.style.display = "block"; }
-    silBtn?.classList.remove("hidden");
-    if (status) status.textContent = "✅ Yüklendi";
-    refreshProfileSaveBtn();
-  } catch (e) {
-    if (status) status.textContent = "❌ Yüklenemedi: " + (e.message || e);
-    toast("Foto yüklenemedi: " + (e.message || e), "error", 5000);
+// Bölge dropdown'ı doldur
+function _fillSatisBolgeDropdown() {
+  const sel = document.getElementById("satisFormBolge");
+  if (sel && sel.options.length <= 2 && Array.isArray(ANKARA_ILCELERI)) {
+    ANKARA_ILCELERI.forEach(i => sel.appendChild(new Option(i, i)));
   }
 }
 
-document.getElementById("profileSatisFotoSecBtn")?.addEventListener("click", () => {
-  document.getElementById("profileSatisFotoInputSec")?.click();
-});
-document.getElementById("profileSatisFotoCekBtn")?.addEventListener("click", () => {
-  document.getElementById("profileSatisFotoInputCek")?.click();
-});
-document.getElementById("profileSatisFotoInputSec")?.addEventListener("change", e => {
-  const f = e.target.files?.[0];
-  if (f) _handleSatisFotoUpload(f);
-  e.target.value = "";
-});
-document.getElementById("profileSatisFotoInputCek")?.addEventListener("change", e => {
-  const f = e.target.files?.[0];
-  if (f) _handleSatisFotoUpload(f);
-  e.target.value = "";
-});
-document.getElementById("profileSatisFotoSilBtn")?.addEventListener("click", () => {
-  const urlInp = document.getElementById("profileSatisFotoUrl");
-  const prev = document.getElementById("profileSatisFotoPreview");
-  const status = document.getElementById("profileSatisFotoStatus");
-  if (urlInp) urlInp.value = "";
-  if (prev) { prev.src = ""; prev.style.display = "none"; }
-  if (status) status.textContent = "Fotoğraf kaldırıldı (kaydetmeyi unutma)";
-  document.getElementById("profileSatisFotoSilBtn")?.classList.add("hidden");
-  refreshProfileSaveBtn();
+// Kategoriye göre form alanları görünürlüğü
+function _refreshSatisFormFields(kategori) {
+  const isVasita = kategori === "motor" || kategori === "scooter";
+  const isBisiklet = kategori === "bisiklet";
+  const isEkipmanLike = kategori === "ekipman" || kategori === "yedek_parca";
+  document.getElementById("satisFormVasitaWrap")?.classList.toggle("hidden", !isVasita);
+  document.getElementById("satisFormBisikletWrap")?.classList.toggle("hidden", !isBisiklet);
+  document.getElementById("satisFormEkipmanWrap")?.classList.toggle("hidden", !isEkipmanLike);
+}
+
+// Foto galerisi render
+function _renderSatisFotoGaleri() {
+  const galeri = document.getElementById("satisFormFotoGaleri");
+  if (!galeri) return;
+  if (!_satisFormFotoUrls.length) {
+    galeri.innerHTML = `<p class="muted small" style="margin:0">Henüz foto yok. En az 1 foto ekle (önerilen).</p>`;
+    return;
+  }
+  galeri.innerHTML = _satisFormFotoUrls.map((url, i) => `
+    <div class="satis-foto-item">
+      <img src="${url}" alt="" />
+      <button type="button" class="satis-foto-sil" data-idx="${i}" title="Fotoyu kaldır">×</button>
+    </div>
+  `).join("");
+  galeri.querySelectorAll(".satis-foto-sil").forEach(btn => {
+    btn.addEventListener("click", e => {
+      const idx = parseInt(e.target.dataset.idx, 10);
+      _satisFormFotoUrls.splice(idx, 1);
+      _renderSatisFotoGaleri();
+    });
+  });
+}
+
+async function _uploadSatisFoto(file) {
+  if (!file || !file.type.startsWith("image/")) return null;
+  if (_satisFormFotoUrls.length >= 5) {
+    toast("Max 5 foto yükleyebilirsin.", "info", 4000);
+    return null;
+  }
+  const status = document.getElementById("satisFormFotoStatus");
+  if (status) status.textContent = "Yükleniyor...";
+  try {
+    const blob = await _resizeImage(file, 1280, 0.85);
+    const path = `${currentUser.id}/satis/${Date.now()}-${Math.floor(Math.random()*1000)}.jpg`;
+    const { error: upErr } = await sb.storage.from("avatars").upload(path, blob, {
+      cacheControl: "3600", upsert: false, contentType: "image/jpeg"
+    });
+    if (upErr) throw upErr;
+    const { data: urlData } = sb.storage.from("avatars").getPublicUrl(path);
+    const publicUrl = urlData.publicUrl;
+    _satisFormFotoUrls.push(publicUrl);
+    _renderSatisFotoGaleri();
+    if (status) status.textContent = `✅ ${_satisFormFotoUrls.length}/5 foto yüklü`;
+    return publicUrl;
+  } catch (e) {
+    if (status) status.textContent = "❌ " + (e.message || e);
+    toast("Foto yüklenemedi: " + (e.message || e), "error", 5000);
+    return null;
+  }
+}
+
+// Form aç (yeni veya edit)
+window.openSatisIlanForm = async function(ilan = null) {
+  if (!currentUser) {
+    toast("İlan vermek için önce giriş yap.", "info", 4000);
+    openModal("registerModal");
+    return;
+  }
+  if (currentUser.kullaniciTipi !== "isletme") {
+    toast("Alım-Satım ilanı için işletme hesabı gerekir.", "error", 5000);
+    return;
+  }
+  _editingSatisIlanId = ilan ? ilan.id : null;
+  _satisFormFotoUrls = ilan && Array.isArray(ilan.foto_urls) ? [...ilan.foto_urls] : [];
+  const form = document.getElementById("satisIlanForm");
+  if (form) form.reset();
+  document.getElementById("satisFormId").value = ilan?.id || "";
+  document.getElementById("satisFormTitle").textContent = ilan ? "✏ İlanı Düzenle" : "🏍 Yeni Satış İlanı";
+  document.getElementById("satisFormSubmitBtn").textContent = ilan ? "Güncelle" : "Yayınla";
+
+  _fillSatisBolgeDropdown();
+
+  if (ilan) {
+    document.getElementById("satisFormKategori").value = ilan.kategori || "";
+    document.getElementById("satisFormBaslik").value = ilan.baslik || "";
+    document.getElementById("satisFormMarkaModel").value = ilan.marka_model || "";
+    document.getElementById("satisFormYil").value = ilan.yil ?? "";
+    document.getElementById("satisFormMotorHacmi").value = ilan.motor_hacmi || "";
+    document.getElementById("satisFormYakit").value = ilan.yakit || "";
+    document.getElementById("satisFormKm").value = ilan.km ?? "";
+    document.getElementById("satisFormBisikletMarka").value = ilan.marka_model || "";
+    document.getElementById("satisFormBisikletYil").value = ilan.yil ?? "";
+    const oz = ilan.ozellikler || {};
+    document.getElementById("satisFormEkipmanTip").value = oz.tip || "";
+    document.getElementById("satisFormEkipmanMarka").value = oz.marka || "";
+    document.getElementById("satisFormDurum").value = ilan.durum || "";
+    document.getElementById("satisFormFiyat").value = ilan.fiyat != null ? Number(ilan.fiyat).toLocaleString("tr-TR") : "";
+    document.getElementById("satisFormBolge").value = ilan.bolge || "";
+    document.getElementById("satisFormAciklama").value = ilan.aciklama || "";
+    _refreshSatisFormFields(ilan.kategori);
+  } else {
+    _refreshSatisFormFields("");
+  }
+  _renderSatisFotoGaleri();
+  const status = document.getElementById("satisFormFotoStatus");
+  if (status) status.textContent = _satisFormFotoUrls.length ? `${_satisFormFotoUrls.length}/5 foto yüklü` : "";
+
+  openModal("satisIlanFormModal");
+};
+
+// Kategori değişimi
+document.getElementById("satisFormKategori")?.addEventListener("change", e => {
+  _refreshSatisFormFields(e.target.value);
 });
 
-// 3 yeni servis için button click handler'ları
-["tamir", "satis", "muhasebe"].forEach(svc => {
+// Fiyat formatlama (binlik nokta)
+document.getElementById("satisFormFiyat")?.addEventListener("input", e => {
+  const raw = (e.target.value || "").replace(/\D/g, "").slice(0, 9);
+  e.target.value = raw ? parseInt(raw, 10).toLocaleString("tr-TR") : "";
+  const prev = document.getElementById("satisFormFiyatPreview");
+  if (prev) {
+    const n = parseInt(raw, 10);
+    if (!isNaN(n) && n > 0) {
+      prev.textContent = n >= 1000 ? "= " + (n / 1000).toFixed(n % 1000 === 0 ? 0 : 1) + " bin ₺" : "= " + n + " ₺";
+    } else {
+      prev.textContent = "";
+    }
+  }
+});
+
+// Foto seç/çek butonları
+document.getElementById("satisFormFotoSecBtn")?.addEventListener("click", () => {
+  document.getElementById("satisFormFotoInputSec")?.click();
+});
+document.getElementById("satisFormFotoCekBtn")?.addEventListener("click", () => {
+  document.getElementById("satisFormFotoInputCek")?.click();
+});
+document.getElementById("satisFormFotoInputSec")?.addEventListener("change", async e => {
+  const files = Array.from(e.target.files || []);
+  for (const f of files) {
+    if (_satisFormFotoUrls.length >= 5) break;
+    await _uploadSatisFoto(f);
+  }
+  e.target.value = "";
+});
+document.getElementById("satisFormFotoInputCek")?.addEventListener("change", async e => {
+  const f = e.target.files?.[0];
+  if (f) await _uploadSatisFoto(f);
+  e.target.value = "";
+});
+
+// Form submit
+document.getElementById("satisIlanForm")?.addEventListener("submit", async e => {
+  e.preventDefault();
+  if (!currentUser) return;
+  const session = readStoredSession();
+  if (!session?.access_token) {
+    toast("Oturumun sona ermiş.", "error", 5000);
+    return;
+  }
+  const kategori = document.getElementById("satisFormKategori").value;
+  const baslik = document.getElementById("satisFormBaslik").value.trim();
+  const durum = document.getElementById("satisFormDurum").value;
+  const fiyatRaw = document.getElementById("satisFormFiyat").value.replace(/\D/g, "");
+  const fiyat = parseInt(fiyatRaw, 10);
+  const bolge = document.getElementById("satisFormBolge").value || null;
+  const aciklama = document.getElementById("satisFormAciklama").value.trim() || null;
+  const kurallar = document.getElementById("satisFormKurallarOnay").checked;
+
+  if (!kategori) return toast("Kategori seç.", "error");
+  if (!baslik || baslik.length < 3) return toast("Başlık en az 3 karakter.", "error");
+  if (!durum) return toast("Ürün durumu seç.", "error");
+  if (isNaN(fiyat) || fiyat <= 0) return toast("Geçerli bir fiyat gir.", "error");
+  if (!kurallar) return toast("İlan kurallarını onaylamalısın.", "error");
+
+  // Kategoriye göre extra alanlar
+  let marka_model = null, yil = null, motor_hacmi = null, yakit = null, km = null;
+  const ozellikler = {};
+  if (kategori === "motor" || kategori === "scooter") {
+    marka_model = document.getElementById("satisFormMarkaModel").value.trim() || null;
+    const yilVal = document.getElementById("satisFormYil").value;
+    yil = yilVal ? parseInt(yilVal, 10) : null;
+    motor_hacmi = document.getElementById("satisFormMotorHacmi").value || null;
+    yakit = document.getElementById("satisFormYakit").value || null;
+    const kmVal = document.getElementById("satisFormKm").value;
+    km = kmVal ? parseInt(kmVal, 10) : null;
+  } else if (kategori === "bisiklet") {
+    marka_model = document.getElementById("satisFormBisikletMarka").value.trim() || null;
+    const yilVal = document.getElementById("satisFormBisikletYil").value;
+    yil = yilVal ? parseInt(yilVal, 10) : null;
+  } else if (kategori === "ekipman" || kategori === "yedek_parca") {
+    const tip = document.getElementById("satisFormEkipmanTip").value.trim();
+    const marka = document.getElementById("satisFormEkipmanMarka").value.trim();
+    if (tip) ozellikler.tip = tip;
+    if (marka) ozellikler.marka = marka;
+  }
+
+  const submitBtn = document.getElementById("satisFormSubmitBtn");
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Kaydediliyor..."; }
+
+  const payload = {
+    kategori,
+    baslik,
+    marka_model,
+    yil,
+    motor_hacmi,
+    yakit,
+    km,
+    durum,
+    fiyat,
+    aciklama,
+    foto_urls: _satisFormFotoUrls,
+    bolge,
+    ozellikler,
+    aktif: true
+  };
+
+  try {
+    if (_editingSatisIlanId) {
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/satis_ilanlar?id=eq.${_editingSatisIlanId}&user_id=eq.${currentUser.id}`, {
+        method: "PATCH",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: "Bearer " + session.access_token,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal"
+        },
+        body: JSON.stringify(payload)
+      });
+      if (!r.ok) throw new Error("HTTP " + r.status + " — " + (await r.text()));
+    } else {
+      payload.user_id = currentUser.id;
+      const { error } = await rawInsert("satis_ilanlar", payload, session.access_token);
+      if (error) throw new Error(error.message);
+    }
+    closeModals();
+    toast(_editingSatisIlanId ? "✅ İlan güncellendi" : "✅ İlan yayınlandı", "ok", 4000);
+    _editingSatisIlanId = null;
+    _satisFormFotoUrls = [];
+    if (typeof window._loadMyIlanlar === "function") window._loadMyIlanlar();
+    window.izPazaryeri?.load?.();
+  } catch (e) {
+    toast("Kaydedilemedi: " + (e.message || e), "error", 6000);
+  } finally {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = _editingSatisIlanId ? "Güncelle" : "Yayınla"; }
+  }
+});
+
+// Profilim ilanlarım listesi
+window._loadMyIlanlar = async function() {
+  const wrap = document.getElementById("profileSatisIlanlarim");
+  if (!wrap || !currentUser) return;
+  wrap.innerHTML = `<div class="muted small">Yükleniyor...</div>`;
+  const session = readStoredSession();
+  if (!session?.access_token) return;
+  const { data, error } = await rawSelect(
+    `satis_ilanlar?user_id=eq.${currentUser.id}&select=*&order=created_at.desc`,
+    session.access_token, 6000
+  );
+  if (error) {
+    wrap.innerHTML = `<div class="muted small" style="color:#dc2626">Yüklenemedi: ${error.message}</div>`;
+    return;
+  }
+  const list = Array.isArray(data) ? data : [];
+  if (!list.length) {
+    wrap.innerHTML = `<div class="muted small" style="text-align:center;padding:20px">Henüz ilan vermemişsin. Yukarıdan "+ Yeni Satış İlanı"na bas.</div>`;
+    return;
+  }
+  wrap.innerHTML = list.map(i => `
+    <div class="my-ilan-card" data-id="${i.id}">
+      ${(i.foto_urls && i.foto_urls[0]) ? `<img src="${i.foto_urls[0]}" alt="" />` : `<div class="my-ilan-noimg">🏍</div>`}
+      <div class="my-ilan-body">
+        <strong>${escapeHtml(i.baslik)}</strong>
+        <div class="muted small">${escapeHtml(i.kategori)} · ${Number(i.fiyat).toLocaleString("tr-TR")} ₺ · ${i.aktif ? '🟢 Aktif' : '⏸ Pasif'}</div>
+        <div class="muted small">📅 ${new Date(i.expires_at).toLocaleDateString("tr-TR")} bitiyor</div>
+      </div>
+      <div class="my-ilan-actions">
+        <button type="button" class="btn btn-ghost btn-sm" data-act="edit">✏ Düzenle</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-act="delete" style="color:#dc2626">🗑 Sil</button>
+      </div>
+    </div>
+  `).join("");
+  wrap.querySelectorAll(".my-ilan-card").forEach(card => {
+    card.addEventListener("click", async e => {
+      const act = e.target.closest("[data-act]")?.dataset.act;
+      const id = card.dataset.id;
+      const ilan = list.find(x => x.id === id);
+      if (act === "edit") {
+        if (ilan) window.openSatisIlanForm(ilan);
+      } else if (act === "delete") {
+        if (!confirm("Bu ilanı silmek istediğine emin misin?")) return;
+        try {
+          const r = await fetch(`${SUPABASE_URL}/rest/v1/satis_ilanlar?id=eq.${id}&user_id=eq.${currentUser.id}`, {
+            method: "DELETE",
+            headers: {
+              apikey: SUPABASE_KEY,
+              Authorization: "Bearer " + session.access_token,
+              Prefer: "return=minimal"
+            }
+          });
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          toast("İlan silindi.", "ok");
+          window._loadMyIlanlar();
+          window.izPazaryeri?.load?.();
+        } catch (err) {
+          toast("Silinemedi: " + (err.message || err), "error");
+        }
+      }
+    });
+  });
+};
+
+// Pazaryeri Alım-Satım "+ Yeni İlan" butonu
+document.getElementById("pzrSatisYeniBtn")?.addEventListener("click", () => {
+  window.openSatisIlanForm();
+});
+// Profilim "+ Yeni Satış İlanı" butonu
+document.getElementById("satisYeniIlanBtn")?.addEventListener("click", () => {
+  window.openSatisIlanForm();
+});
+
+// 2 yeni servis için button click handler'ları (satış v194'te 1:N modele geçti)
+["tamir", "muhasebe"].forEach(svc => {
   document.getElementById(svc + "MusaitBtn")?.addEventListener("click", () => {
     if (!currentUser) return;
     const cfg = PZR_SVC[svc];
@@ -4368,8 +4545,8 @@ document.getElementById("profileSatisFotoSilBtn")?.addEventListener("click", () 
   });
 });
 
-// Profilim ↔ aktif checkbox değişimi
-["Tamir", "Satis", "Muhasebe"].forEach(cap => {
+// Profilim ↔ aktif checkbox değişimi (satış 1:N modelde kalktı)
+["Tamir", "Muhasebe"].forEach(cap => {
   document.getElementById("profile" + cap + "Aktif")?.addEventListener("change", e => {
     document.getElementById("profile" + cap + "DetayWrap")?.classList.toggle("hidden", !e.target.checked);
     refreshProfileSaveBtn();
@@ -4398,8 +4575,8 @@ function _updatePazaryeriBanner() {
   const pazaryeriAcik = document.querySelector('.content-tab.active[data-content-tab="pazaryeri"]') !== null;
   const aktifSub = document.querySelector("#pazaryeriSubTabs .sub-tab.active")?.dataset.pzr || "cekici";
 
-  // Tüm banner'ları gizle, sonra aktif olanı göster
-  ["cekici", "tamir", "satis", "muhasebe"].forEach(svc => {
+  // Tüm banner'ları gizle, sonra aktif olanı göster (satış 1:N modelde banner yok)
+  ["cekici", "tamir", "muhasebe"].forEach(svc => {
     const banner = document.getElementById(svc + "MusaitBanner");
     const eksik = document.getElementById(svc + "ProfilEksikBanner");
     banner?.classList.add("hidden");

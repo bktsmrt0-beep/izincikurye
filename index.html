@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=193" />
+  <link rel="stylesheet" href="style.css?v=194" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -325,21 +325,8 @@
           <div id="pzrTamirEmpty" class="empty hidden"></div>
         </div>
 
-        <!-- SATIŞ alt-paneli -->
+        <!-- SATIŞ alt-paneli (v194 - 1:N ilan modeli) -->
         <div id="pzrSatisPanel" class="hidden">
-          <section id="satisMusaitBanner" class="kurye-musait-banner banner-satis hidden" aria-live="polite">
-            <button type="button" class="kmb-btn" id="satisMusaitBtn" aria-pressed="false">
-              <span class="kmb-icon" id="satisMusaitIcon">🟠</span>
-              <span class="kmb-text">
-                <strong id="satisMusaitTitle">İLAN PASİF</strong>
-                <small id="satisMusaitHint">Tek tıkla <b>satışı aktif et</b> — alıcılar görür</small>
-              </span>
-              <span class="kmb-action" id="satisMusaitAction">SATIŞA AÇ</span>
-            </button>
-          </section>
-          <div id="satisProfilEksikBanner" class="hidden" style="background:#f3e8ff;border:1px solid #d8b4fe;border-radius:10px;padding:12px 16px;margin-bottom:14px;color:#581c87;font-size:14px;line-height:1.5;">
-            🏍 <strong>Satılık ürünün varsa</strong> profilini doldur. <a href="#" class="link-orange profil-ac-link" data-svc="satis">Profilim → Satış sekmesi</a>
-          </div>
           <div class="isilanlari-toolbar">
             <select id="pzrSatisIlceFilter" class="select" style="max-width:200px"><option value="all">Tüm Bölgeler</option></select>
             <select id="pzrSatisKategoriFilter" class="select" style="max-width:200px">
@@ -348,8 +335,9 @@
               <option value="scooter">🛴 Scooter</option>
               <option value="bisiklet">🚲 Bisiklet</option>
               <option value="ekipman">🎒 Ekipman</option>
-              <option value="parca">🔩 Yedek Parça</option>
+              <option value="yedek_parca">🔩 Yedek Parça</option>
             </select>
+            <button type="button" class="btn btn-primary btn-sm" id="pzrSatisYeniBtn">+ Yeni İlan</button>
           </div>
           <div id="pzrSatisListings" class="kurye-listings"></div>
           <div id="pzrSatisEmpty" class="empty hidden"></div>
@@ -913,6 +901,138 @@
     <div class="modal-card modal-wide">
       <button class="modal-close" data-close>&times;</button>
       <div id="tamirDetailBody"></div>
+    </div>
+  </div>
+
+  <!-- ===== SATIŞ İLANI FORM MODAL (v194) ===== -->
+  <div class="modal hidden" id="satisIlanFormModal">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" data-close>&times;</button>
+      <h2 id="satisFormTitle">🏍 Yeni Satış İlanı</h2>
+      <p class="muted small">Sahibinden tarzı ilan. Max 5 foto, 30 gün yayın.</p>
+      <form id="satisIlanForm" class="form" novalidate>
+        <input type="hidden" id="satisFormId" />
+
+        <label>Kategori <span class="req">*</span>
+          <select name="kategori" id="satisFormKategori" required>
+            <option value="">Seçiniz...</option>
+            <option value="motor">🏍 Motor / Motosiklet</option>
+            <option value="scooter">🛴 Scooter</option>
+            <option value="bisiklet">🚲 Bisiklet</option>
+            <option value="ekipman">🎒 Ekipman (kask/çanta/eldiven)</option>
+            <option value="yedek_parca">🔩 Yedek Parça</option>
+          </select>
+        </label>
+
+        <label>İlan Başlığı <span class="req">*</span>
+          <input type="text" name="baslik" id="satisFormBaslik" required maxlength="100" minlength="3" placeholder="Örn: 2022 Honda CB125F - Tertemiz - 15.000 km" />
+        </label>
+
+        <!-- Motor/Scooter spesifik alanlar -->
+        <div id="satisFormVasitaWrap" class="hidden">
+          <div class="row-2" style="margin-top:8px">
+            <label>Marka / Model
+              <input type="text" id="satisFormMarkaModel" maxlength="60" placeholder="Honda CB125F" />
+            </label>
+            <label>Yıl
+              <input type="number" id="satisFormYil" min="1980" max="2030" placeholder="2022" />
+            </label>
+          </div>
+          <div class="row-2" style="margin-top:8px">
+            <label>Motor Hacmi
+              <select id="satisFormMotorHacmi">
+                <option value="">—</option>
+                <option value="50cc">50cc</option>
+                <option value="125cc">125cc</option>
+                <option value="250cc">250cc</option>
+                <option value="500cc">500cc</option>
+                <option value="500cc+">500cc+</option>
+              </select>
+            </label>
+            <label>Yakıt
+              <select id="satisFormYakit">
+                <option value="">—</option>
+                <option value="benzin">⛽ Benzin</option>
+                <option value="elektrikli">🔋 Elektrikli</option>
+                <option value="hibrit">⚡ Hibrit</option>
+              </select>
+            </label>
+          </div>
+          <label style="margin-top:8px">KM
+            <input type="number" id="satisFormKm" min="0" max="999999" step="100" placeholder="15000" />
+          </label>
+        </div>
+
+        <!-- Bisiklet spesifik (yıl + marka_model'i reuse) -->
+        <div id="satisFormBisikletWrap" class="hidden">
+          <div class="row-2" style="margin-top:8px">
+            <label>Marka / Model
+              <input type="text" id="satisFormBisikletMarka" maxlength="60" placeholder="Trek FX 2" />
+            </label>
+            <label>Yıl
+              <input type="number" id="satisFormBisikletYil" min="1980" max="2030" placeholder="2023" />
+            </label>
+          </div>
+        </div>
+
+        <!-- Ekipman / Yedek Parça spesifik -->
+        <div id="satisFormEkipmanWrap" class="hidden">
+          <label style="margin-top:8px">Tipi (ozellikler.tip)
+            <input type="text" id="satisFormEkipmanTip" maxlength="60" placeholder="Örn: Tam yüz kask / sırt çantası" />
+          </label>
+          <label style="margin-top:8px">Marka
+            <input type="text" id="satisFormEkipmanMarka" maxlength="60" placeholder="LS2 / Givi / vb" />
+          </label>
+        </div>
+
+        <div class="row-2" style="margin-top:8px">
+          <label>Durum <span class="req">*</span>
+            <select name="durum" id="satisFormDurum" required>
+              <option value="">Seçiniz...</option>
+              <option value="sifir">🆕 Sıfır</option>
+              <option value="ikinci_el">🔄 İkinci el</option>
+              <option value="hasarli">⚠ Hasarlı</option>
+              <option value="parca_icin">🔧 Parça için</option>
+            </select>
+          </label>
+          <label>Fiyat (₺) <span class="req">*</span>
+            <input type="text" id="satisFormFiyat" required inputmode="numeric" maxlength="11" placeholder="65.000" />
+            <small class="muted" id="satisFormFiyatPreview"></small>
+          </label>
+        </div>
+
+        <label style="margin-top:8px">Konum (İlçe)
+          <select id="satisFormBolge">
+            <option value="">— Seçiniz —</option>
+            <option value="tum">📍 Tüm İlçeler</option>
+          </select>
+        </label>
+
+        <label style="margin-top:8px">Açıklama
+          <textarea id="satisFormAciklama" rows="5" maxlength="2000" placeholder="Detaylı açıklama: hasar geçmişi, ekipman, takas tercihi, bakım durumu..."></textarea>
+        </label>
+
+        <!-- 5'e kadar fotoğraf upload -->
+        <label style="margin-top:8px">Fotoğraflar (max 5)
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button type="button" class="btn btn-ghost btn-sm" id="satisFormFotoSecBtn">📂 Galeriden seç</button>
+              <button type="button" class="btn btn-ghost btn-sm" id="satisFormFotoCekBtn">📸 Foto çek</button>
+            </div>
+            <input type="file" id="satisFormFotoInputSec" accept="image/*" multiple style="display:none" />
+            <input type="file" id="satisFormFotoInputCek" accept="image/*" capture="environment" style="display:none" />
+            <div id="satisFormFotoGaleri" class="satis-foto-galeri"></div>
+            <p id="satisFormFotoStatus" class="muted small" style="margin:0"></p>
+          </div>
+        </label>
+
+        <label class="consent" style="margin-top:10px">
+          <input type="checkbox" id="satisFormKurallarOnay" required />
+          <span><a href="/ilan-kurallari.html" target="_blank" rel="noopener">İlan Verme Kuralları</a>'nı okudum. Sahte/yanıltıcı ilan vermediğimi onaylıyorum.</span>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block" style="margin-top:12px" id="satisFormSubmitBtn">Yayınla</button>
+      </form>
     </div>
   </div>
 
@@ -1571,71 +1691,11 @@
           </div>
         </div>
 
-        <!-- SATIŞ alanları (sadece işletme, v192) -->
+        <!-- SATIŞ — ilanlarım listesi (v194, 1:N model) -->
         <div data-tab-section="satis" class="hidden">
-          <p class="muted small" style="margin-bottom:10px">🏍 <strong>Satılık motor/scooter/ekipman ilanın varsa</strong> aşağıyı doldur — Alım-Satım listesinde görünmek için.</p>
-          <label class="toggle-row" style="margin:4px 0 10px;cursor:pointer">
-            <input type="checkbox" id="profileSatisAktif" />
-            <span>🏍 <strong>Satılık ürünüm var</strong></span>
-          </label>
-          <div id="profileSatisDetayWrap" class="hidden">
-            <label>Kategori
-              <select id="profileSatisKategori">
-                <option value="">— Seçiniz —</option>
-                <option value="motor">🏍 Motor</option>
-                <option value="scooter">🛴 Scooter</option>
-                <option value="bisiklet">🚲 Bisiklet</option>
-                <option value="ekipman">🎒 Ekipman (kask/çanta/eldiven)</option>
-                <option value="parca">🔩 Yedek Parça</option>
-              </select>
-            </label>
-            <label style="margin-top:10px">İlan Başlığı
-              <input type="text" id="profileSatisBaslik" maxlength="80" placeholder="Örn: 2022 Honda CB125F" />
-            </label>
-            <div class="row-2" style="margin-top:10px">
-              <label>Marka / Model
-                <input type="text" id="profileSatisMarkaModel" maxlength="60" placeholder="Honda CB125F" />
-              </label>
-              <label>Yıl
-                <input type="number" id="profileSatisYil" min="1980" max="2030" placeholder="2022" />
-              </label>
-            </div>
-            <div class="row-2" style="margin-top:10px">
-              <label>Durum
-                <select id="profileSatisDurum">
-                  <option value="">— Seçiniz —</option>
-                  <option value="sifir">🆕 Sıfır</option>
-                  <option value="ikinci_el">🔄 İkinci el</option>
-                </select>
-              </label>
-              <label>Fiyat (₺)
-                <input type="number" id="profileSatisFiyat" min="100" max="9999999" step="100" placeholder="65000" />
-              </label>
-            </div>
-            <label style="margin-top:10px">Konum (İlçe)
-              <select id="profileSatisBolge">
-                <option value="">— Seçiniz —</option>
-                <option value="tum">📍 Tüm İlçeler</option>
-              </select>
-            </label>
-            <label style="margin-top:10px">Açıklama
-              <textarea id="profileSatisAciklama" rows="4" maxlength="600" placeholder="Ürün detayını yaz: durum, hasar geçmişi, ekipman bilgisi, takasla ilgili tercih..."></textarea>
-            </label>
-            <label style="margin-top:10px">Fotoğraf (opsiyonel)
-              <div style="display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <button type="button" class="btn btn-ghost btn-sm" id="profileSatisFotoSecBtn">📂 Galeriden seç</button>
-                  <button type="button" class="btn btn-ghost btn-sm" id="profileSatisFotoCekBtn">📸 Foto çek</button>
-                  <button type="button" class="btn btn-ghost btn-sm hidden" id="profileSatisFotoSilBtn" style="color:#dc2626">🗑 Kaldır</button>
-                </div>
-                <input type="file" id="profileSatisFotoInputSec" accept="image/*" style="display:none" />
-                <input type="file" id="profileSatisFotoInputCek" accept="image/*" capture="environment" style="display:none" />
-                <img id="profileSatisFotoPreview" alt="" style="display:none;max-width:240px;max-height:180px;border-radius:10px;border:1px solid #e5e7eb;object-fit:cover" />
-                <p id="profileSatisFotoStatus" class="muted small" style="margin:0"></p>
-                <input type="hidden" id="profileSatisFotoUrl" />
-              </div>
-            </label>
-          </div>
+          <p class="muted small" style="margin-bottom:10px">🏍 <strong>Alım-Satım ilanların</strong> — birden fazla ilan açabilirsin (max 5 foto, 30 gün yayın).</p>
+          <button type="button" class="btn btn-primary btn-block" id="satisYeniIlanBtn" style="margin-bottom:14px">+ Yeni Satış İlanı</button>
+          <div id="profileSatisIlanlarim" style="display:flex;flex-direction:column;gap:10px"></div>
         </div>
 
         <!-- MUHASEBE alanları (sadece işletme, v192) -->
@@ -1735,9 +1795,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=193"></script>
-  <script src="script.js?v=193"></script>
-  <script src="script-is-ilani.js?v=193"></script>
-  <script src="script-pazaryeri.js?v=193"></script>
+  <script src="supabase-config.js?v=194"></script>
+  <script src="script.js?v=194"></script>
+  <script src="script-is-ilani.js?v=194"></script>
+  <script src="script-pazaryeri.js?v=194"></script>
 </body>
 </html>

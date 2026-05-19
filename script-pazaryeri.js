@@ -101,21 +101,20 @@
     satis: {
       label: "Alım-Satım",
       sub: "satis",
-      cols: "id,ad,soyad,isletme_adi,avatar_url,tel,puan_ort,puan_sayisi,satis_kategori,satis_baslik,satis_marka_model,satis_yil,satis_durum,satis_fiyat,satis_bolge,satis_aciklama,satis_foto_url,satis_musait,satis_musait_at,created_at",
-      activeCol: "satis_aktif",
-      musaitCol: "satis_musait",
-      musaitAtCol: "satis_musait_at",
-      bolgeCol: "satis_bolge",
-      typeCol: "satis_kategori",
+      table: "satis_ilanlar_public",  // v194: ayrı tablo
+      cols: "id,user_id,kategori,baslik,marka_model,yil,motor_hacmi,yakit,km,durum,fiyat,aciklama,foto_urls,bolge,ozellikler,created_at,expires_at",
+      isSatis: true,  // ilan tabanlı (profil değil)
+      bolgeCol: "bolge",
+      typeCol: "kategori",
       types: {
-        motor:    { ico: "🏍", label: "Motor" },
-        scooter:  { ico: "🛴", label: "Scooter" },
-        bisiklet: { ico: "🚲", label: "Bisiklet" },
-        ekipman:  { ico: "🎒", label: "Ekipman" },
-        parca:    { ico: "🔩", label: "Yedek Parça" }
+        motor:       { ico: "🏍", label: "Motor" },
+        scooter:     { ico: "🛴", label: "Scooter" },
+        bisiklet:    { ico: "🚲", label: "Bisiklet" },
+        ekipman:     { ico: "🎒", label: "Ekipman" },
+        yedek_parca: { ico: "🔩", label: "Yedek Parça" }
       },
       typeFilterId: "pzrSatisKategoriFilter",
-      typeFilterLogic: (val) => `satis_kategori=eq.${val}`,
+      typeFilterLogic: (val) => `kategori=eq.${val}`,
       ilceFilterId: "pzrSatisIlceFilter",
       listingsId: "pzrSatisListings",
       emptyId: "pzrSatisEmpty",
@@ -127,15 +126,15 @@
       emptyTitle: "Şu an satışta ürün görünmüyor",
       etiketler: {},
       fiyatLabel: "Fiyat",
-      fiyatCol: "satis_fiyat",  // tek fiyat
-      aciklamaCol: "satis_aciklama",
+      fiyatCol: "fiyat",
+      aciklamaCol: "aciklama",
       etiketCol: null,
-      baslikCol: "satis_baslik",
-      markaModelCol: "satis_marka_model",
-      yilCol: "satis_yil",
-      durumCol: "satis_durum",
-      fotoCol: "satis_foto_url",
-      isSatis: true
+      baslikCol: "baslik",
+      markaModelCol: "marka_model",
+      yilCol: "yil",
+      durumCol: "durum",
+      fotoUrlsCol: "foto_urls",  // text[]
+      orderCol: "created_at"
     },
     muhasebe: {
       label: "Muhasebe / Danışmanlık",
@@ -255,18 +254,47 @@
     if (!session?.access_token) return;
 
     const st = _state[svc];
-    let qs = `select=${cfg.cols}&${cfg.activeCol}=eq.true&${cfg.musaitCol}=eq.true`;
-    if (st.type !== "all" && cfg.typeFilterLogic) {
-      const f = cfg.typeFilterLogic(st.type);
-      if (f) qs += "&" + f;
+    let qs;
+    let tableName;
+    let postProcess = null;  // satış için profile join
+
+    if (cfg.isSatis) {
+      // Satış: satis_ilanlar tablosundan, filtre kolon adları farklı
+      tableName = cfg.table;  // satis_ilanlar_public
+      qs = `select=${cfg.cols}`;
+      if (st.type !== "all" && cfg.typeFilterLogic) {
+        qs += "&" + cfg.typeFilterLogic(st.type);
+      }
+      if (st.ilce !== "all") {
+        qs += `&or=(${cfg.bolgeCol}.eq.tum,${cfg.bolgeCol}.eq.${st.ilce})`;
+      }
+      qs += `&order=${cfg.orderCol}.desc&limit=100`;
+      // Satış için satıcı profilini ayrıca çek (isletme_adi/ad göstermek için)
+      postProcess = async (data, token) => {
+        const userIds = [...new Set(data.map(d => d.user_id))];
+        if (!userIds.length) return data;
+        const profUrl = `profiles?id=in.(${userIds.join(",")})&select=id,isletme_adi,ad,soyad,avatar_url,tel,puan_ort,puan_sayisi`;
+        const { data: profiles } = await window.rawSelect(profUrl, token, 5000);
+        const map = Object.fromEntries((profiles || []).map(p => [p.id, p]));
+        data.forEach(d => { d.profile = map[d.user_id]; });
+        return data;
+      };
+    } else {
+      // Profil tabanlı (cekici/tamir/muhasebe)
+      tableName = "profiles";
+      qs = `select=${cfg.cols}&${cfg.activeCol}=eq.true&${cfg.musaitCol}=eq.true`;
+      if (st.type !== "all" && cfg.typeFilterLogic) {
+        const f = cfg.typeFilterLogic(st.type);
+        if (f) qs += "&" + f;
+      }
+      if (st.ilce !== "all") {
+        qs += `&or=(${cfg.bolgeCol}.eq.tum,${cfg.bolgeCol}.eq.${st.ilce})`;
+      }
+      qs += `&order=${cfg.musaitAtCol}.desc&limit=100`;
     }
-    if (st.ilce !== "all") {
-      qs += `&or=(${cfg.bolgeCol}.eq.tum,${cfg.bolgeCol}.eq.${st.ilce})`;
-    }
-    qs += `&order=${cfg.musaitAtCol}.desc&limit=100`;
 
     const { data, error } = await window.rawSelect(
-      `profiles?${qs}`,
+      `${tableName}?${qs}`,
       session.access_token,
       8000
     );
@@ -274,7 +302,9 @@
       listEl.innerHTML = `<div class="muted small" style="text-align:center;padding:24px;color:#dc2626">Yüklenemedi: ${error.message}</div>`;
       return;
     }
-    st.list = Array.isArray(data) ? data : [];
+    let list = Array.isArray(data) ? data : [];
+    if (postProcess) list = await postProcess(list, session.access_token);
+    st.list = list;
     renderService(svc);
   }
 
@@ -303,24 +333,48 @@
 
   function buildRowHTML(svc, p) {
     const cfg = SERVICE_CFG[svc];
-    const ad = p.isletme_adi || ((p.ad || "") + " " + (p.soyad || "")).trim() || "—";
+    // Satış: profile join'den isletme_adi, profil tabanlı: p.isletme_adi
+    const prof = p.profile || p;
+    const ad = prof.isletme_adi || ((prof.ad || "") + " " + (prof.soyad || "")).trim() || "—";
     const tip = p[cfg.typeCol];
     const tipMeta = (cfg.types && cfg.types[tip]) || { ico: cfg.detailIcon, label: "—" };
     const bolge = _ilceDisplay(p[cfg.bolgeCol]);
-    const sure = _aktiflikSuresi(p[cfg.musaitAtCol]);
-    const puan = (p.puan_sayisi || 0) > 0
-      ? `⭐ ${Number(p.puan_ort).toFixed(1)} <small>(${p.puan_sayisi})</small>`
+    const sure = cfg.isSatis
+      ? _aktiflikSuresi(p[cfg.orderCol])
+      : _aktiflikSuresi(p[cfg.musaitAtCol]);
+    const puan = (prof.puan_sayisi || 0) > 0
+      ? `⭐ ${Number(prof.puan_ort).toFixed(1)} <small>(${prof.puan_sayisi})</small>`
       : `<span class="yeni-uye-badge">🆕 Yeni</span>`;
 
     let fiyatCell = "";
     if (cfg.isSatis) {
-      // Satışta tek fiyat
+      // Satışta tek fiyat + foto thumb
       const f = p[cfg.fiyatCol];
-      fiyatCell = `
-        <div class="kurye-row-cell cell-ucret">
-          <span class="cell-label">${tipMeta.ico} ${tipMeta.label}</span>
-          <strong>${f != null ? _kisaSayi(f) + " ₺" : "—"}</strong>
-        </div>`;
+      const fotos = Array.isArray(p[cfg.fotoUrlsCol]) ? p[cfg.fotoUrlsCol] : [];
+      const thumb = fotos[0]
+        ? `<img src="${fotos[0]}" alt="" class="pzr-satis-thumb" />`
+        : `<div class="pzr-satis-thumb pzr-satis-noimg">${cfg.detailIcon}</div>`;
+      return `
+        <article class="kurye-row ${cfg.rowClass}" data-id="${p.id}">
+          ${thumb}
+          <div class="kurye-row-cell cell-ad">
+            <span class="cell-label">${tipMeta.ico} ${tipMeta.label}</span>
+            <strong>${window.escapeHtml(p[cfg.baslikCol] || ad)}</strong>
+          </div>
+          <div class="kurye-row-cell cell-bolge">
+            <span class="cell-label">Bölge</span>
+            <strong>${window.escapeHtml(bolge)}</strong>
+          </div>
+          <div class="kurye-row-cell cell-ucret">
+            <span class="cell-label">Fiyat</span>
+            <strong>${f != null ? _kisaSayi(f) + " ₺" : "—"}</strong>
+          </div>
+          <div class="kurye-row-cell cell-musait">
+            <span class="cell-dot"></span>
+            <strong>${sure}</strong>
+          </div>
+        </article>
+      `;
     } else if (cfg.noFiyat) {
       // Muhasebe: fiyat yok, hizmet tipini göster
       fiyatCell = `
@@ -365,19 +419,20 @@
     const cfg = SERVICE_CFG[svc];
     const body = document.getElementById(cfg.detailBody);
     if (!body) return;
-    const ad = p.isletme_adi || ((p.ad || "") + " " + (p.soyad || "")).trim() || "—";
+    const prof = p.profile || p;
+    const ad = prof.isletme_adi || ((prof.ad || "") + " " + (prof.soyad || "")).trim() || "—";
     const tip = p[cfg.typeCol];
     const tipMeta = (cfg.types && cfg.types[tip]) || { ico: cfg.detailIcon, label: "—" };
     const bolge = _ilceDisplay(p[cfg.bolgeCol]);
-    const tel = p.tel;
+    const tel = prof.tel;
     const telE164 = tel ? (window._phoneToE164?.(tel) || tel) : "";
     const isMobil = tel && window._isMobileTr?.(tel);
-    const avatar = p.avatar_url
-      ? `<img src="${p.avatar_url}" class="kd-avatar" alt="" />`
+    const avatar = prof.avatar_url
+      ? `<img src="${prof.avatar_url}" class="kd-avatar" alt="" />`
       : `<div class="kd-avatar kd-avatar-placeholder">${cfg.detailIcon}</div>`;
 
-    const puanBlock = (p.puan_sayisi || 0) > 0
-      ? `<div class="kd-puan">⭐ <strong>${Number(p.puan_ort).toFixed(1)}</strong> <span class="muted small">(${p.puan_sayisi} yorum)</span></div>`
+    const puanBlock = (prof.puan_sayisi || 0) > 0
+      ? `<div class="kd-puan">⭐ <strong>${Number(prof.puan_ort).toFixed(1)}</strong> <span class="muted small">(${prof.puan_sayisi} yorum)</span></div>`
       : `<div class="kd-puan"><span class="yeni-uye-badge">🆕 Yeni üye</span></div>`;
 
     let etiketBlock = "";
@@ -402,13 +457,21 @@
     // Grid hücreleri servise göre farklı
     let gridCells = "";
     if (cfg.isSatis) {
+      const durumLabel = ({ sifir: "Sıfır", ikinci_el: "2.el", hasarli: "Hasarlı", parca_icin: "Parça için" })[p[cfg.durumCol]] || "—";
+      const oz = p.ozellikler || {};
       gridCells = `
         <div class="kd-cell"><span class="kd-cell-label">Kategori</span><strong>${tipMeta.ico} ${tipMeta.label}</strong></div>
-        <div class="kd-cell"><span class="kd-cell-label">Marka/Model</span><strong>${window.escapeHtml(p[cfg.markaModelCol] || "—")}</strong></div>
-        <div class="kd-cell"><span class="kd-cell-label">Yıl / Durum</span><strong>${p[cfg.yilCol] || "—"} · ${p[cfg.durumCol] === "sifir" ? "Sıfır" : p[cfg.durumCol] === "ikinci_el" ? "2.el" : "—"}</strong></div>
-        <div class="kd-cell"><span class="kd-cell-label">Fiyat</span><strong>${_formatFiyat(p[cfg.fiyatCol])}</strong></div>
+        ${p[cfg.markaModelCol] ? `<div class="kd-cell"><span class="kd-cell-label">Marka/Model</span><strong>${window.escapeHtml(p[cfg.markaModelCol])}</strong></div>` : ""}
+        ${p[cfg.yilCol] ? `<div class="kd-cell"><span class="kd-cell-label">Yıl</span><strong>${p[cfg.yilCol]}</strong></div>` : ""}
+        <div class="kd-cell"><span class="kd-cell-label">Durum</span><strong>${durumLabel}</strong></div>
+        ${p.motor_hacmi ? `<div class="kd-cell"><span class="kd-cell-label">Motor</span><strong>${window.escapeHtml(p.motor_hacmi)}</strong></div>` : ""}
+        ${p.yakit ? `<div class="kd-cell"><span class="kd-cell-label">Yakıt</span><strong>${window.escapeHtml(p.yakit)}</strong></div>` : ""}
+        ${p.km != null ? `<div class="kd-cell"><span class="kd-cell-label">KM</span><strong>${Number(p.km).toLocaleString("tr-TR")}</strong></div>` : ""}
+        ${oz.tip ? `<div class="kd-cell"><span class="kd-cell-label">Tip</span><strong>${window.escapeHtml(oz.tip)}</strong></div>` : ""}
+        ${oz.marka ? `<div class="kd-cell"><span class="kd-cell-label">Marka</span><strong>${window.escapeHtml(oz.marka)}</strong></div>` : ""}
+        <div class="kd-cell"><span class="kd-cell-label">Fiyat</span><strong style="color:#dc2626">${_formatFiyat(p[cfg.fiyatCol])}</strong></div>
         <div class="kd-cell"><span class="kd-cell-label">Konum</span><strong>📍 ${window.escapeHtml(bolge)}</strong></div>
-        <div class="kd-cell"><span class="kd-cell-label">İlan</span><strong>🟢 ${_aktiflikSuresi(p[cfg.musaitAtCol])}</strong></div>
+        <div class="kd-cell"><span class="kd-cell-label">İlan</span><strong>🟢 ${_aktiflikSuresi(p[cfg.orderCol])}</strong></div>
       `;
     } else if (cfg.noFiyat) {
       gridCells = `
@@ -425,9 +488,15 @@
       `;
     }
 
-    const fotoBlock = (cfg.isSatis && p[cfg.fotoCol])
-      ? `<img src="${p[cfg.fotoCol]}" alt="" style="width:100%;max-height:300px;object-fit:cover;border-radius:10px;margin-bottom:12px" onerror="this.style.display='none'" />`
-      : "";
+    let fotoBlock = "";
+    if (cfg.isSatis && Array.isArray(p[cfg.fotoUrlsCol]) && p[cfg.fotoUrlsCol].length) {
+      const fotos = p[cfg.fotoUrlsCol];
+      fotoBlock = `
+        <div class="satis-detay-galeri">
+          ${fotos.map((url, i) => `<img src="${url}" alt="" data-idx="${i}" onerror="this.style.display='none'" />`).join("")}
+        </div>
+      `;
+    }
 
     body.innerHTML = `
       <div class="kurye-detail-v75">
