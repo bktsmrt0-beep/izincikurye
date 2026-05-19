@@ -34,11 +34,14 @@ create table if not exists public.satis_ilanlar (
 );
 
 -- 2) Indexler
+-- NOT: partial index predicate'inde now() kullanılamaz (IMMUTABLE değil).
+-- aktif=true filtresi yeterli; expires_at filtresi query tarafında uygulanır.
 create index if not exists satis_ilanlar_kategori_idx on public.satis_ilanlar(kategori, aktif, created_at desc)
-  where aktif = true and expires_at > now();
+  where aktif = true;
 create index if not exists satis_ilanlar_user_idx on public.satis_ilanlar(user_id, created_at desc);
 create index if not exists satis_ilanlar_bolge_idx on public.satis_ilanlar(bolge) where aktif = true;
 create index if not exists satis_ilanlar_fiyat_idx on public.satis_ilanlar(fiyat) where aktif = true;
+create index if not exists satis_ilanlar_expires_idx on public.satis_ilanlar(expires_at) where aktif = true;
 
 -- 3) RLS
 alter table public.satis_ilanlar enable row level security;
