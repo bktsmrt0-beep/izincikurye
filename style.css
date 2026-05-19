@@ -1115,6 +1115,50 @@ body.sidebar-open { overflow: hidden; }
 }
 .seg-btn:not(.active):hover { color: #111; }
 
+/* v202: Hizmetlerim accordion (Profilim Profil sekmesinde) */
+.hizmet-acc {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  margin: 0 0 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.hizmet-acc[open] {
+  border-color: #fb923c;
+  box-shadow: 0 1px 4px rgba(251, 146, 60, 0.15);
+}
+.hizmet-acc-title {
+  padding: 12px 14px;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  background: #f8fafc;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  user-select: none;
+  color: #334155;
+}
+.hizmet-acc-title::-webkit-details-marker { display: none; }
+.hizmet-acc-title::after {
+  content: "▼";
+  font-size: 10px;
+  opacity: 0.5;
+  transition: transform 0.2s;
+}
+.hizmet-acc[open] .hizmet-acc-title {
+  background: #fff7ed;
+  color: #c2410c;
+}
+.hizmet-acc[open] .hizmet-acc-title::after {
+  transform: rotate(180deg);
+}
+.hizmet-acc-body {
+  padding: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
 /* v201: Görünüm (Tüm İlanlar / İlanlarım) — büyük 2 button, sidebar üstü */
 .scope-toggle {
   display: grid;
