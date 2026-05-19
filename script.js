@@ -1890,9 +1890,46 @@ document.getElementById("sidebarOverlay")?.addEventListener("click", closeSideba
 document.getElementById("ilanVerBtn")?.addEventListener("click", closeSidebar);
 
 // Sağ alt FAB: aynı işi yapsın (mevcut ilanVerBtn click handler'ını tetikle)
+// v197: FAB sekmeye göre doğru CTA'yı tetikler
 document.getElementById("fabIlanBtn")?.addEventListener("click", () => {
-  document.getElementById("ilanVerBtn")?.click();
+  if (contentTab === "ilanlar") {
+    document.getElementById("ilanVerBtn")?.click();
+  } else if (contentTab === "isilanlari") {
+    document.getElementById("isIlanVerBtn")?.click();
+  } else if (contentTab === "pazaryeri") {
+    // Aktif sub-tab'a göre yönlendir
+    const aktifSub = document.querySelector("#pazaryeriSubTabs .sub-tab.active")?.dataset.pzr;
+    if (aktifSub === "satis") {
+      window.openSatisIlanForm?.();
+    } else {
+      // Cekici/tamir/muhasebe için profilim'e yönlendir (aktif et + müsait toggle)
+      toast("Profilim sekmesinden " + (aktifSub || "ilgili") + " hizmetini aktif et, sonra üstteki banner'dan müsait ol.", "info", 6000);
+    }
+  } else if (contentTab === "kuryeler") {
+    // Kurye listesinde FAB anlamsız ama gizleyene kadar fallback
+    toast("Kurye olarak müsait olmak için Profilim → Genel sekmesindeki toggle'i kullan.", "info", 5000);
+  }
 });
+
+// FAB görünürlüğü sekmeye göre — Müsait Kuryeler'de gizle
+function _updateFabVisibility() {
+  const fab = document.getElementById("fabIlanBtn");
+  if (!fab) return;
+  // Sadece anonim olmayan + ilan vermesi mantıklı sekmeler
+  const showOn = ["ilanlar", "isilanlari", "pazaryeri"];
+  fab.style.display = showOn.includes(contentTab) ? "" : "none";
+  // Label sekmeye göre (mobilde sığsın)
+  const txt = fab.querySelector(".fab-text");
+  if (txt) {
+    if (contentTab === "isilanlari") txt.textContent = "İş İlanı";
+    else if (contentTab === "pazaryeri") {
+      const aktifSub = document.querySelector("#pazaryeriSubTabs .sub-tab.active")?.dataset.pzr;
+      txt.textContent = aktifSub === "satis" ? "Satış" : "İlan Ver";
+    }
+    else txt.textContent = "İlan Ver";
+  }
+}
+window._updateFabVisibility = _updateFabVisibility;
 
 // Kullanıcı menüsü helper
 function openUserMenu() {
@@ -5277,6 +5314,7 @@ document.querySelectorAll(".content-tab").forEach(btn => {
 
     // v197: Sidebar bölümleri sekmeye göre show/hide (data-for-tab attribute'i)
     _updateSidebarForTab(contentTab);
+    _updateFabVisibility();
 
     // Sekme bazlı yükleme
     if (showKuryeler) {
@@ -5307,11 +5345,15 @@ function _updateSidebarForTab(tab) {
     el.classList.toggle("hidden", !matches);
   });
 }
-// İlk yüklemede sidebar'ı default tab'a göre ayarla
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => _updateSidebarForTab(contentTab));
-} else {
+// İlk yüklemede sidebar + FAB default tab'a göre ayarlı
+function _initTabUi() {
   _updateSidebarForTab(contentTab);
+  _updateFabVisibility();
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", _initTabUi);
+} else {
+  _initTabUi();
 }
 
 // İş İlanları sidebar — kategori jump

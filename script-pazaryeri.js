@@ -584,6 +584,7 @@
     });
     if (SERVICE_CFG[sub]) loadService(sub);
     window._updatePazaryeriBanner?.();
+    window._updateFabVisibility?.();
     try { history.replaceState({}, "", "#pazaryeri-" + sub); } catch (e) {}
   }
 
