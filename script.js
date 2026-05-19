@@ -5275,6 +5275,9 @@ document.querySelectorAll(".content-tab").forEach(btn => {
     // Pazaryeri paneli (Faz 2B — şimdilik placeholder)
     document.getElementById("pazaryeriPanel")?.classList.toggle("hidden", !showPazaryeri);
 
+    // v197: Sidebar bölümleri sekmeye göre show/hide (data-for-tab attribute'i)
+    _updateSidebarForTab(contentTab);
+
     // Sekme bazlı yükleme
     if (showKuryeler) {
       if (currentUser) await loadMusaitKuryeler();
@@ -5288,6 +5291,54 @@ document.querySelectorAll(".content-tab").forEach(btn => {
     } else if (showIlanlar) {
       if (ilanlar.length === 0) emptyEl.classList.remove("hidden");
     }
+  });
+});
+
+// v197: Sidebar bölümleri content-tab'a göre gösterilir/gizlenir.
+// Elementlerde data-for-tab="ilanlar|kuryeler|isilanlari|pazaryeri" var.
+function _updateSidebarForTab(tab) {
+  document.querySelectorAll("#sidebarDrawer [data-for-tab]").forEach(el => {
+    const matches = el.dataset.forTab === tab;
+    // Aktif İlanlar'daki myListingsPanel sadece currentUser varsa görünür
+    if (el.id === "myListingsPanel") {
+      el.classList.toggle("hidden", !matches || !currentUser);
+      return;
+    }
+    el.classList.toggle("hidden", !matches);
+  });
+}
+// İlk yüklemede sidebar'ı default tab'a göre ayarla
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => _updateSidebarForTab(contentTab));
+} else {
+  _updateSidebarForTab(contentTab);
+}
+
+// İş İlanları sidebar — kategori jump
+document.querySelectorAll("#sidebarDrawer [data-sub-jump]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const sub = btn.dataset.subJump;
+    // Active class swap
+    document.querySelectorAll("#sidebarDrawer [data-sub-jump]").forEach(b => {
+      b.classList.toggle("active", b === btn);
+    });
+    // Modül üzerinden sub-tab değişimi (script-is-ilani.js)
+    window.izIsIlani?.setAltTur?.(sub);
+    // Sidebar drawer'ı kapat
+    if (typeof closeSidebar === "function") closeSidebar();
+  });
+});
+
+// Pazaryeri sidebar — alt-sekme jump
+document.querySelectorAll("#sidebarDrawer [data-pzr-jump]").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const sub = btn.dataset.pzrJump;
+    document.querySelectorAll("#sidebarDrawer [data-pzr-jump]").forEach(b => {
+      b.classList.toggle("active", b === btn);
+    });
+    window.izPazaryeri?.setSubTab?.(sub);
+    if (typeof window.closeSidebar === "function") window.closeSidebar();
+    else document.getElementById("sidebarDrawer")?.classList.remove("open");
   });
 });
 

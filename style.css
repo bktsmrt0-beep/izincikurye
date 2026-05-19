@@ -1115,6 +1115,28 @@ body.sidebar-open { overflow: hidden; }
 }
 .seg-btn:not(.active):hover { color: #111; }
 
+/* v197: Sidebar tam-genişlik seg butonları (iş ilanı kategori, pazaryeri sub-tab jump) */
+.seg-btn-block {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.seg-btn-block:hover { background: #f1f5f9; }
+.seg-btn-block.active {
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #c2410c;
+  font-weight: 600;
+}
+
 /* Tehlikeli aksiyonlar (hesap silme vb) */
 .btn-danger {
   background: #fee2e2;

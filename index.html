@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=196" />
+  <link rel="stylesheet" href="style.css?v=197" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -106,9 +106,10 @@
         <h2 class="sidebar-title">Menü</h2>
         <button type="button" class="sidebar-close" id="sidebarCloseBtn" aria-label="Kapat">&times;</button>
       </div>
-      <button class="btn btn-primary btn-block" id="ilanVerBtn">+ İlan Ver</button>
+      <!-- ====== AKTİF İLANLAR sekmesi ====== -->
+      <button class="btn btn-primary btn-block" id="ilanVerBtn" data-for-tab="ilanlar">+ Anlık İlan Ver</button>
 
-      <div class="panel">
+      <div class="panel" data-for-tab="ilanlar">
         <div class="panel-head-row">
           <h3 class="panel-title">Filtreler</h3>
           <button type="button" class="filter-reset hidden" id="filterResetBtn">Sıfırla</button>
@@ -151,13 +152,40 @@
         </label>
       </div>
 
-      <div class="panel hidden" id="myListingsPanel">
+      <div class="panel hidden" id="myListingsPanel" data-for-tab="ilanlar">
         <h3 class="panel-title">Görünüm</h3>
         <div class="seg-toggle" role="tablist">
           <button type="button" class="seg-btn active" data-scope="all" role="tab">Tüm İlanlar</button>
           <button type="button" class="seg-btn" data-scope="mine" role="tab">İlanlarım</button>
         </div>
         <p class="muted small" id="myListingsCount" style="margin-top:8px"></p>
+      </div>
+
+      <!-- ====== İŞ İLANLARI sekmesi (v197) ====== -->
+      <button class="btn btn-primary btn-block hidden" id="isIlanVerBtn" data-for-tab="isilanlari">+ İş İlanı Ver</button>
+      <div class="panel hidden" data-for-tab="isilanlari">
+        <h3 class="panel-title">İş İlanı Türleri</h3>
+        <p class="muted small" style="margin:0 0 8px">Kategori seçerek liste daral.</p>
+        <button type="button" class="seg-btn seg-btn-block active" data-sub-jump="tam_zamanli">💼 Tam Zamanlı</button>
+        <button type="button" class="seg-btn seg-btn-block" data-sub-jump="part_time">⏰ Part Time</button>
+        <button type="button" class="seg-btn seg-btn-block" data-sub-jump="esnaf_kurye">🏪 Esnaf Kurye</button>
+        <button type="button" class="seg-btn seg-btn-block" data-sub-jump="arabali_kurye">🚗 Arabalı</button>
+      </div>
+
+      <!-- ====== MÜSAİT KURYELER sekmesi (v197) ====== -->
+      <div class="panel hidden" data-for-tab="kuryeler">
+        <h3 class="panel-title">Müsait Kuryeler</h3>
+        <p class="muted small" style="margin:0">Listede gözükmek için Profilim → "🟢 Müsait" konumuna al.</p>
+      </div>
+
+      <!-- ====== PAZARYERİ sekmesi (v197) ====== -->
+      <div class="panel hidden" data-for-tab="pazaryeri">
+        <h3 class="panel-title">Pazaryeri</h3>
+        <p class="muted small" style="margin:0 0 8px">Hizmetler:</p>
+        <button type="button" class="seg-btn seg-btn-block active" data-pzr-jump="cekici">🚛 Müsait Çekiciler</button>
+        <button type="button" class="seg-btn seg-btn-block" data-pzr-jump="tamir">🔧 Açık Tamir</button>
+        <button type="button" class="seg-btn seg-btn-block" data-pzr-jump="satis">🏍 Alım-Satım</button>
+        <button type="button" class="seg-btn seg-btn-block" data-pzr-jump="muhasebe">📊 Muhasebe</button>
       </div>
     </aside>
 
@@ -234,10 +262,7 @@
           <button type="button" class="sub-tab" data-sub="arabali_kurye">🚗 Arabalı</button>
         </div>
 
-        <div class="isilanlari-toolbar">
-          <button type="button" class="btn btn-primary btn-sm" id="isIlanVerBtn">+ İş İlanı Ver</button>
-        </div>
-
+        <!-- v197: + İş İlanı Ver butonu hamburger menüsünde -->
         <div id="isilanlariListings" class="is-ilan-list"></div>
         <div id="isilanlariEmpty" class="empty hidden"></div>
       </div>
@@ -1788,9 +1813,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=196"></script>
-  <script src="script.js?v=196"></script>
-  <script src="script-is-ilani.js?v=196"></script>
-  <script src="script-pazaryeri.js?v=196"></script>
+  <script src="supabase-config.js?v=197"></script>
+  <script src="script.js?v=197"></script>
+  <script src="script-is-ilani.js?v=197"></script>
+  <script src="script-pazaryeri.js?v=197"></script>
 </body>
 </html>
