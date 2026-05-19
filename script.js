@@ -2949,9 +2949,10 @@ function switchProfileTab(name) {
   document.querySelectorAll("#profileModal [data-tab-panel]").forEach(p => {
     p.classList.toggle("hidden", p.dataset.tabPanel !== name);
   });
-  // Form içi bölümler (profil, isletme, satis, bildirim)
-  // v202: cekici/tamir/muhasebe Profil sekmesine accordion olarak entegre edildi
-  const showForm = (name === "profil" || name === "isletme" || name === "satis" || name === "bildirim");
+  // Form içi bölümler (profil, isletme, bildirim)
+  // v202: cekici/tamir/muhasebe Profil sekmesinde accordion
+  // v203: satis sekmesi kaldırıldı (Pazaryeri Alım-Satım'da yönetilir)
+  const showForm = (name === "profil" || name === "isletme" || name === "bildirim");
   document.querySelectorAll("#profileModal [data-tab-section]").forEach(s => {
     s.classList.toggle("hidden", s.dataset.tabSection !== name);
   });
@@ -3553,10 +3554,7 @@ function openProfileModal() {
   if (isTelEl) isTelEl.value = formatTel(currentUser.isTelefonu || "");
   if (isAdresEl) isAdresEl.value = currentUser.isAdresi || "";
 
-  // v202: Çekici/Tamir/Muhasebe sekmeleri kaldırıldı — Profil içindeki accordion'da
-  // Sadece Satış sekmesi ayrı kaldı (1:N ilan modeli, ilanlar listesi gerekiyor)
-  document.getElementById("profileTabSatis")?.classList.toggle("hidden", !isIsletme);
-  // Profil sekmesindeki "Verdiğim Hizmetler" başlığı + 3 accordion (sadece işletme)
+  // v202+v203: Çekici/Tamir/Muhasebe accordion (Profil sekmesinde); Satış tamamen kaldırıldı
   document.getElementById("profileHizmetlerimWrap")?.classList.toggle("hidden", !isIsletme);
   document.querySelectorAll(".hizmet-acc").forEach(el => el.classList.toggle("hidden", !isIsletme));
   if (isIsletme) {
@@ -3607,8 +3605,7 @@ function openProfileModal() {
     const tamEt = currentUser.tamirEtiketler || [];
     document.querySelectorAll('input[name="tamir_p_etiket"]').forEach(cb => { cb.checked = tamEt.includes(cb.value); });
 
-    // SATIŞ (v194) — ilan tabanlı; Profilim'de kullanıcının ilanlarını listele
-    if (typeof window._loadMyIlanlar === "function") window._loadMyIlanlar();
+    // v203: Satış sekmesi kaldırıldı, ilanlar Pazaryeri Alım-Satım'da
 
     // MUHASEBE (v192)
     const mAktifEl = document.getElementById("profileMuhasebeAktif");

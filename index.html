@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=202" />
+  <link rel="stylesheet" href="style.css?v=203" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -1419,7 +1419,6 @@
         <button type="button" class="tab-btn active" data-tab="genel" role="tab">Genel</button>
         <button type="button" class="tab-btn" data-tab="profil" role="tab">Profil</button>
         <button type="button" class="tab-btn hidden" data-tab="isletme" role="tab" id="profileTabIsletme">🏪 İşletme</button>
-        <button type="button" class="tab-btn hidden" data-tab="satis" role="tab" id="profileTabSatis">🏍 Satış</button>
         <button type="button" class="tab-btn" data-tab="bildirim" role="tab">Bildirimler</button>
         <button type="button" class="tab-btn" data-tab="guvenlik" role="tab">Güvenlik</button>
       </div>
@@ -1762,12 +1761,7 @@
           </div>
         </details>
 
-        <!-- SATIŞ — ilanlarım listesi (v194, 1:N model) -->
-        <div data-tab-section="satis" class="hidden">
-          <p class="muted small" style="margin-bottom:10px">🏍 <strong>Alım-Satım ilanların</strong> — birden fazla ilan açabilirsin (max 5 foto, 30 gün yayın).</p>
-          <button type="button" class="btn btn-primary btn-block" id="satisYeniIlanBtn" style="margin-bottom:14px">+ Yeni Satış İlanı</button>
-          <div id="profileSatisIlanlarim" style="display:flex;flex-direction:column;gap:10px"></div>
-        </div>
+        <!-- v203: Satış sekmesi tamamen kaldırıldı - ilanlar Pazaryeri Alım-Satım'da yönetilir -->
 
         <!-- MUHASEBE alanları (accordion içinde, v202) -->
         <details class="hizmet-acc hidden" data-svc="muhasebe">
@@ -1869,9 +1863,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=202"></script>
-  <script src="script.js?v=202"></script>
-  <script src="script-is-ilani.js?v=202"></script>
-  <script src="script-pazaryeri.js?v=202"></script>
+  <script src="supabase-config.js?v=203"></script>
+  <script src="script.js?v=203"></script>
+  <script src="script-is-ilani.js?v=203"></script>
+  <script src="script-pazaryeri.js?v=203"></script>
 </body>
 </html>
