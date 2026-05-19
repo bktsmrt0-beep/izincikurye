@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=199" />
+  <link rel="stylesheet" href="style.css?v=200" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -106,6 +106,16 @@
         <h2 class="sidebar-title">Menü</h2>
         <button type="button" class="sidebar-close" id="sidebarCloseBtn" aria-label="Kapat">&times;</button>
       </div>
+      <!-- v200: Görünüm en üstte — hızlı erişim için (sadece login) -->
+      <div class="panel hidden" id="myListingsPanel" style="margin-bottom:10px">
+        <h3 class="panel-title">Görünüm</h3>
+        <div class="seg-toggle" role="tablist">
+          <button type="button" class="seg-btn active" data-scope="all" role="tab">Tüm İlanlar</button>
+          <button type="button" class="seg-btn" data-scope="mine" role="tab">İlanlarım</button>
+        </div>
+        <p class="muted small" id="myListingsCount" style="margin-top:8px"></p>
+      </div>
+
       <!-- ====== AKTİF İLANLAR sekmesi ====== -->
       <button class="btn btn-primary btn-block" id="ilanVerBtn" data-for-tab="ilanlar">+ Anlık İlan Ver</button>
 
@@ -150,15 +160,6 @@
           <input type="checkbox" id="urgentOnly" />
           <span>🔥 Sadece Az Kaldı</span>
         </label>
-      </div>
-
-      <div class="panel hidden" id="myListingsPanel" data-for-tab="ilanlar">
-        <h3 class="panel-title">Görünüm</h3>
-        <div class="seg-toggle" role="tablist">
-          <button type="button" class="seg-btn active" data-scope="all" role="tab">Tüm İlanlar</button>
-          <button type="button" class="seg-btn" data-scope="mine" role="tab">İlanlarım</button>
-        </div>
-        <p class="muted small" id="myListingsCount" style="margin-top:8px"></p>
       </div>
 
       <!-- ====== İŞ İLANLARI sekmesi (v197, filtreler v199) ====== -->
@@ -1851,9 +1852,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=199"></script>
-  <script src="script.js?v=199"></script>
-  <script src="script-is-ilani.js?v=199"></script>
-  <script src="script-pazaryeri.js?v=199"></script>
+  <script src="supabase-config.js?v=200"></script>
+  <script src="script.js?v=200"></script>
+  <script src="script-is-ilani.js?v=200"></script>
+  <script src="script-pazaryeri.js?v=200"></script>
 </body>
 </html>

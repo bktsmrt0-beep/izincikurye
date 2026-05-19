@@ -5295,10 +5295,9 @@ document.querySelectorAll(".content-tab").forEach(btn => {
     const showIsIlani    = contentTab === "isilanlari";
     const showPazaryeri  = contentTab === "pazaryeri";
 
-    // Anlık ilan paneli
+    // Anlık ilan paneli (myListingsPanel görünürlüğü _updateSidebarForTab'a taşındı v200)
     listingsEl.classList.toggle("hidden", !showIlanlar);
     emptyEl.classList.toggle("hidden", !showIlanlar);
-    document.getElementById("myListingsPanel")?.classList.toggle("hidden", !showIlanlar || !currentUser);
     _updateIlanlarimBanner();
 
     // Müsait kuryeler paneli
@@ -5336,14 +5335,12 @@ document.querySelectorAll(".content-tab").forEach(btn => {
 // Elementlerde data-for-tab="ilanlar|kuryeler|isilanlari|pazaryeri" var.
 function _updateSidebarForTab(tab) {
   document.querySelectorAll("#sidebarDrawer [data-for-tab]").forEach(el => {
-    const matches = el.dataset.forTab === tab;
-    // Aktif İlanlar'daki myListingsPanel sadece currentUser varsa görünür
-    if (el.id === "myListingsPanel") {
-      el.classList.toggle("hidden", !matches || !currentUser);
-      return;
-    }
-    el.classList.toggle("hidden", !matches);
+    el.classList.toggle("hidden", el.dataset.forTab !== tab);
   });
+  // v200: myListingsPanel her sekmede sidebar'da görünür — sadece login gerek.
+  // data-for-tab attribute'ü yok artık (tab'tan bağımsız).
+  const myListings = document.getElementById("myListingsPanel");
+  if (myListings) myListings.classList.toggle("hidden", !currentUser);
 }
 // İlk yüklemede sidebar + FAB default tab'a göre ayarlı
 function _initTabUi() {
