@@ -23,7 +23,7 @@
   <link rel="preconnect" href="https://abgxzseyaefivyzdzefz.supabase.co" crossorigin />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
   <link rel="dns-prefetch" href="https://abgxzseyaefivyzdzefz.supabase.co" />
-  <link rel="stylesheet" href="style.css?v=198" />
+  <link rel="stylesheet" href="style.css?v=199" />
 </head>
 <body>
   <div id="toastHost" class="toast-host"></div>
@@ -161,7 +161,7 @@
         <p class="muted small" id="myListingsCount" style="margin-top:8px"></p>
       </div>
 
-      <!-- ====== İŞ İLANLARI sekmesi (v197) ====== -->
+      <!-- ====== İŞ İLANLARI sekmesi (v197, filtreler v199) ====== -->
       <button class="btn btn-primary btn-block hidden" id="isIlanVerBtn" data-for-tab="isilanlari">+ İş İlanı Ver</button>
       <div class="panel hidden" data-for-tab="isilanlari">
         <h3 class="panel-title">İş İlanı Türleri</h3>
@@ -170,6 +170,44 @@
         <button type="button" class="seg-btn seg-btn-block" data-sub-jump="part_time">⏰ Part Time</button>
         <button type="button" class="seg-btn seg-btn-block" data-sub-jump="esnaf_kurye">🏪 Esnaf Kurye</button>
         <button type="button" class="seg-btn seg-btn-block" data-sub-jump="arabali_kurye">🚗 Arabalı</button>
+      </div>
+
+      <div class="panel hidden" data-for-tab="isilanlari">
+        <h3 class="panel-title">Filtreler</h3>
+
+        <label class="filter-label">İlçe</label>
+        <select id="isIlanIlceFilter" class="select">
+          <option value="all">Tüm İlçeler</option>
+        </select>
+
+        <label class="filter-label">Çalışma Süresi</label>
+        <select id="isIlanSureFilter" class="select">
+          <option value="all">Tüm Süreler</option>
+          <option value="4-6">4-6 saat</option>
+          <option value="6-8">6-8 saat</option>
+          <option value="8-10">8-10 saat</option>
+          <option value="10-12">10-12 saat</option>
+          <option value="12-14">12-14 saat</option>
+          <option value="14-16">14-16 saat</option>
+        </select>
+
+        <label class="filter-label">Maaş Aralığı</label>
+        <select id="isIlanMaasFilter" class="select">
+          <option value="all">Tüm Maaşlar</option>
+          <option value="0-15000">≤ 15.000 ₺</option>
+          <option value="15000-25000">15.000–25.000 ₺</option>
+          <option value="25000-35000">25.000–35.000 ₺</option>
+          <option value="35000-50000">35.000–50.000 ₺</option>
+          <option value="50000-999999">50.000 ₺+</option>
+        </select>
+
+        <label class="filter-label">Sıralama</label>
+        <select id="isIlanSortFilter" class="select">
+          <option value="new">⬇ Yeniden Eskiye</option>
+          <option value="old">⬆ Eskiden Yeniye</option>
+          <option value="maas-desc">💰 Maaş Yüksek → Düşük</option>
+          <option value="maas-asc">💵 Maaş Düşük → Yüksek</option>
+        </select>
       </div>
 
       <!-- ====== MÜSAİT KURYELER sekmesi (v197) ====== -->
@@ -1813,9 +1851,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4"></script>
-  <script src="supabase-config.js?v=198"></script>
-  <script src="script.js?v=198"></script>
-  <script src="script-is-ilani.js?v=198"></script>
-  <script src="script-pazaryeri.js?v=198"></script>
+  <script src="supabase-config.js?v=199"></script>
+  <script src="script.js?v=199"></script>
+  <script src="script-is-ilani.js?v=199"></script>
+  <script src="script-pazaryeri.js?v=199"></script>
 </body>
 </html>

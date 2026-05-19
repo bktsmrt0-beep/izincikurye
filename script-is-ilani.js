@@ -35,6 +35,10 @@
   let _isIlanAltTur = "tam_zamanli";    // aktif sub-tab
   let _isIlanlar = [];                   // yüklenen ilanlar
   let _isIlanScope = "all";              // v195: UI kaldırıldı, her zaman "all"
+  // v199 yeni filtreler (client-side)
+  let _isIlanSureFilter = "all";         // "all" | "4-6" | "6-8" | ...
+  let _isIlanMaasFilter = "all";         // "all" | "0-15000" | "15000-25000" | ...
+  let _isIlanSortFilter = "new";         // "new" | "old" | "maas-desc" | "maas-asc"
   let _isIlanIlce = "all";               // ilçe filtresi
   let _editingIsIlanId = null;           // düzenleme modunda mı?
 
@@ -150,26 +154,60 @@
     renderIsIlanlari();
   }
 
+  // v199: Client-side filter + sort
+  function _getFilteredIsIlanlar() {
+    let list = _isIlanlar.slice();
+    // Süre filtresi (calisma_suresi alanı: "4-6", "6-8" vb)
+    if (_isIlanSureFilter !== "all") {
+      list = list.filter(i => (i.calisma_suresi || "") === _isIlanSureFilter);
+    }
+    // Maaş filtresi (maas_max veya maas_min'e göre min eşik)
+    if (_isIlanMaasFilter !== "all") {
+      const [lo, hi] = _isIlanMaasFilter.split("-").map(Number);
+      list = list.filter(i => {
+        const m = i.maas_max ?? i.maas_min ?? 0;
+        return m >= lo && m <= hi;
+      });
+    }
+    // Sıralama
+    if (_isIlanSortFilter === "new") {
+      list.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    } else if (_isIlanSortFilter === "old") {
+      list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    } else if (_isIlanSortFilter === "maas-desc") {
+      list.sort((a, b) => (b.maas_max || b.maas_min || 0) - (a.maas_max || a.maas_min || 0));
+    } else if (_isIlanSortFilter === "maas-asc") {
+      list.sort((a, b) => (a.maas_min || a.maas_max || 0) - (b.maas_min || b.maas_max || 0));
+    }
+    return list;
+  }
+
   // ============== RENDER ==============
   function renderIsIlanlari() {
     const listEl = document.getElementById("isilanlariListings");
     const emptyEl = document.getElementById("isilanlariEmpty");
     if (!listEl || !emptyEl) return;
 
-    if (!_isIlanlar.length) {
+    const filtered = _getFilteredIsIlanlar();
+
+    if (!filtered.length) {
       listEl.innerHTML = "";
       const turMeta = IS_ILAN_TURLERI[_isIlanAltTur];
+      const hasFilter = _isIlanSureFilter !== "all" || _isIlanMaasFilter !== "all";
       emptyEl.innerHTML = `
         <div class="empty-icon">${turMeta.emoji}</div>
-        <h3>${turMeta.label} ilanı bulunmuyor</h3>
-        <p>Şu an bu kategoride aktif ilan yok. Sık aralıklarla kontrol et veya farklı kategoriye bak.</p>
+        <h3>${hasFilter ? "Filtreye uyan ilan yok" : turMeta.label + " ilanı bulunmuyor"}</h3>
+        <p>${hasFilter
+          ? "Filtreyi gevşeterek tekrar dene."
+          : "Şu an bu kategoride aktif ilan yok. Sık aralıklarla kontrol et veya farklı kategoriye bak."}
+        </p>
       `;
       emptyEl.classList.remove("hidden");
       return;
     }
     emptyEl.classList.add("hidden");
 
-    listEl.innerHTML = _isIlanlar.map(i => buildIsIlanCardHTML(i)).join("");
+    listEl.innerHTML = filtered.map(i => buildIsIlanCardHTML(i)).join("");
   }
 
   function buildIsIlanCardHTML(i) {
@@ -959,17 +997,40 @@
         }, 50);
       });
     });
+
+    // v199: Sidebar (hamburger) yeni filtreler
+    document.getElementById("isIlanIlceFilter")?.addEventListener("change", e => {
+      _isIlanIlce = e.target.value || "all";
+      loadIsIlanlari();  // sunucu sorgusunu yeniden yap (ilçe DB filtresi)
+    });
+    document.getElementById("isIlanSureFilter")?.addEventListener("change", e => {
+      _isIlanSureFilter = e.target.value || "all";
+      renderIsIlanlari();  // client-side, sadece render
+    });
+    document.getElementById("isIlanMaasFilter")?.addEventListener("change", e => {
+      _isIlanMaasFilter = e.target.value || "all";
+      renderIsIlanlari();
+    });
+    document.getElementById("isIlanSortFilter")?.addEventListener("change", e => {
+      _isIlanSortFilter = e.target.value || "new";
+      renderIsIlanlari();
+    });
   }
 
   // ============== INIT ==============
   function _init() {
     _bindEvents();
-    // İlçe filtresi dropdown'ı doldur
-    const ilceFilter = document.getElementById("isilanlariIlceFilter");
+    // İlçe filtresi dropdown'ı doldur (yeni v199 ID: isIlanIlceFilter, sidebar'da)
+    const ilceFilter = document.getElementById("isIlanIlceFilter");
     if (ilceFilter && ilceFilter.options.length <= 1 && Array.isArray(window.ANKARA_ILCELERI)) {
       window.ANKARA_ILCELERI.forEach(i => {
         ilceFilter.appendChild(new Option(i, i));
       });
+    }
+    // Eski toolbar ID hala mevcut mu? Backward compat (v196'da kaldırıldı ama emin olalım)
+    const oldIlceFilter = document.getElementById("isilanlariIlceFilter");
+    if (oldIlceFilter && oldIlceFilter.options.length <= 1 && Array.isArray(window.ANKARA_ILCELERI)) {
+      window.ANKARA_ILCELERI.forEach(i => oldIlceFilter.appendChild(new Option(i, i)));
     }
     // Eğer sayfa açılışında isilanlari tab'ı zaten aktifse yükle (deep link)
     if (document.querySelector('.content-tab.active[data-content-tab="isilanlari"]')) {
